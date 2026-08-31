@@ -155,11 +155,11 @@ external citation exists. A 0.3.0 nobody has read does not improve by becoming a
 
 | Part | States | Repository |
 |---|---|---|
-| **Clean AI Engineering** | *why* — this document | `CleanAIEngineering` |
+| **Clean AI Engineering** | *why* — this document | `clean-ai-engineering` |
 | **AI Assurance Catalog** (AAC) | what must be **TRUE** | `ai-assurance-catalog` |
 | **AI Harness Catalog** (AHC) | what must **EXIST** | `ai-harness-catalog` |
-| **AgentTwin** | what must be **FACED** | *(forthcoming)* |
-| **Reference implementation** | proof the three hold together | *(forthcoming)* |
+| **AgentTwin** | what must be **FACED** | `agenttwin` *(forthcoming)* |
+| **Reference implementation** | proof the three hold together | `reference-agent` *(forthcoming)* |
 
 AAC and AHC are **AI-scoped**, not agent-scoped: their archetypes span
 single-turn transforms, structured extractors, grounded answerers, conversational

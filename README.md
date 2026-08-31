@@ -20,8 +20,8 @@ and the ten principles everything else is answerable to.
 | **Clean AI Engineering** | *why* | this repository |
 | **AI Assurance Catalog** — AAC | what must be **TRUE** | [ai-assurance-catalog](https://github.com/dataagentsai/ai-assurance-catalog) |
 | **AI Harness Catalog** — AHC | what must **EXIST** | [ai-harness-catalog](https://github.com/dataagentsai/ai-harness-catalog) |
-| **AgentTwin** | what must be **FACED** | *forthcoming* |
-| **Reference implementation** | proof the three hold together | *forthcoming* |
+| **AgentTwin** | what must be **FACED** | `agenttwin` — *forthcoming* |
+| **Reference implementation** | proof the three hold together | `reference-agent` — *forthcoming* |
 
 AAC and AHC are **AI-scoped**, not agent-scoped — their archetypes cover
 single-turn transforms, structured extractors, grounded answerers, conversational
