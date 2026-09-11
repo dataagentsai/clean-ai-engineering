@@ -2,10 +2,16 @@
 
 **What *this* agent must do, and what must be true of it.**
 
-Status: **draft 0.0.1.** Not citable. In `drafts/` until it has a schema, two
-worked examples and a validator — at which point it earns its own repository by the
-same test everything else is held to. Premature promotion is how a family of six
-becomes a folder of thirty.
+Status: **draft, `apiVersion: aoas/v0`.** Not citable. In `drafts/` until it has a
+schema, two worked examples and a validator — at which point it earns its own
+repository by the same test everything else is held to. Premature promotion is how
+a family of six becomes a folder of thirty.
+
+| Promotion condition | State |
+|---|---|
+| Schema | ✅ [aoas.schema.json](aoas.schema.json) |
+| Validator | ✅ [tools/validate-aoas.js](../tools/validate-aoas.js) — 22 rules, one table-driven case each at least (`npm test`) |
+| Two worked examples | 1 of 2 |
 
 **Worked example 1:** the reference support agent —
 [examples/support-agent.aoas.yaml](examples/support-agent.aoas.yaml), with
@@ -140,9 +146,19 @@ permanent.
 
 ## Open questions
 
-- **Format.** YAML for the machine-readable parts is the obvious answer given the
-  rest of the family, but the state machines and policies may want a more expressive
-  form than nested mappings. Unresolved, and recorded as unresolved.
+- **Format — resolved for v0, with a stated trigger for reopening it.** YAML, with
+  conditions in the vocabulary the world, the omission oracle and the escalation
+  rules already share (`field`, `equals`, `not_equals`, `at_least`, `at_most`),
+  plus **one** extension: `equals_session`, for the ownership rule the vocabulary
+  could not state (extraction finding E1). Bounds are numbers, so money compares
+  (E7). *Reopen when a second rule needs something the vocabulary cannot say* —
+  arithmetic across fields, an OR, a quantifier. Then adopt an expression
+  language for all four users at once, as `escalation/rules.py` already
+  prescribes; never bolt a second syntax onto one of them.
+- **The vocabulary now has two dialects.** The world file and the escalation
+  rules still type bounds as integers and have no `equals_session`. That is
+  finding E4 in another form, and TODO 1.3 closes it: the world cites the AOAS,
+  and its loader adopts this condition schema rather than keeping its own.
 - **Whether §6 eventually splits out** as a Service Level Spec. Today behaviour and
   thresholds share an author, change together and have one audience, so they are one
   artifact. When SRE and product become different people, the charter's test will

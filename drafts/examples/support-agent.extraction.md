@@ -66,7 +66,9 @@ exact trigger: *a rule needing a comparison across fields is the signal to adopt
 a real expression language for all three at once.* **It is also the rule behind
 the reference's one critical defect, F-016.** The defect is not incidental:
 the rule that would have caught it could not be stated in the form everything
-else is stated in. → AOAS format question; TODO 1.2.
+else is stated in. → **Resolved in TODO 1.2:** one extension, `equals_session`,
+with a stated trigger for moving to an expression language (see the draft's
+open questions).
 
 **E2 · `binding: mcp` sits in the world file.** It names a transport, so it is
 ABS. → TODO 1.4.
@@ -97,7 +99,8 @@ revoke it cannot quietly become permanent. → Amend the draft's §7.
 
 **E7 · Money bounds.** The vocabulary types its bounds as integers. The refund
 gate compares money. Small, but it has to be decided before the schema is.
-→ TODO 1.2.
+→ **Resolved in TODO 1.2:** bounds are numbers in the AOAS schema. The world's
+loader still types them as integers until TODO 1.3.
 
 **E8 · Pinning a pre-1.0 catalog.** Charter §5 pins citations to the major
 version, and major `0` pins nothing. The example pins AAC to `0.12`. → The
@@ -126,3 +129,13 @@ are TODO 3.3.
 Four new items, and every one of them surfaced because a statement had to be
 written somewhere that already had a shape. That is the case for doing the
 extraction before the regeneration rather than after.
+
+---
+
+## Added by the validator
+
+**E9 · The example set a field it never declared.** The first run of
+`tools/validate-aoas.js` (TODO 1.2) reported that `change_address` sets
+`order.address` and `order` has no such field. It was carried over from the
+world, which has no address either — the same gap recorded above as a
+nonconformance, now also caught in the spec. Fixed by declaring the field.

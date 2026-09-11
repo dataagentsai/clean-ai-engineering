@@ -6,7 +6,8 @@
 # rule and the extraction record (support-agent.extraction.md) says which way
 # the reference falls short.
 #
-# Status: draft, worked example for AOAS 0.0.1. Not citable.
+# Status: draft, worked example for AOAS v0. Not citable.
+# Validate: node tools/validate-aoas.js drafts/examples/support-agent.aoas.yaml
 #
 # Conventions
 #   - Conditions use the vocabulary the world file and the escalation rules
@@ -19,7 +20,7 @@
 #     never restated here. If a statement below holds with the domain nouns
 #     removed, it is in the wrong file.
 
-aoas: 0.0.1
+apiVersion: aoas/v0
 agent:
   id: support-agent-clothing
   version: 0.1.0
@@ -62,8 +63,8 @@ purpose:
   # Recognised, in doc 24, and deliberately not operations in this version. The
   # agent may explain the policy; it performs nothing, and claims nothing.
   deferred:
-    - {intent: exchange_request, policy: P-EXCHANGE}
-    - {intent: damaged_item, policy: P-DAMAGE}
+    - {intent: exchange_request, source: doc 24 P-EXCHANGE}
+    - {intent: damaged_item, source: doc 24 P-DAMAGE}
     - {operation: hold_order}
     - {operation: dispatch_replacement}
     - {operation: track_shipment}
@@ -86,6 +87,7 @@ entities:
       customer_id: {type: id, ref: customer.id}
       status: {type: enum, of: order_status}
       total: {type: money}            # the refund gate compares against this, never a stated number
+      address: {type: text, pii: true}   # the validator's first catch: change_address set it, and nothing declared it
       days_since_delivery: {type: int, derived: whole days since delivery}
       final_sale: {type: bool}
       note: {type: text, untrusted: true}   # written by customers and warehouse staff; content, never instruction
@@ -112,6 +114,24 @@ entities:
       ticket: {type: id}
       reason: {type: text}
       state: {type: enum, values: [queued, claimed, resolved, lapsed]}
+
+# Who is asking. What a condition may compare against with `equals_session`.
+session:
+  customer_id: {type: id, ref: customer.id}
+
+# What the conversation has become, as values the escalation rules read. These
+# are inputs this spec requires the harness to maintain — named here so a rule
+# that reads an undeclared fact is a typo the validator catches.
+facts:
+  turn_count: {type: int}
+  termination:
+    type: enum
+    values: [goal_reached, step_budget_exhausted, cost_ceiling_reached,
+             oscillation_detected, awaiting_approval, awaiting_human, refused,
+             unrecoverable_error]
+  consecutive_failed: {type: int}
+  refusals: {type: int}
+  repeated_intent: {type: int}
 
 state_machines:
   order_status:
@@ -140,14 +160,18 @@ state_machines:
 # repeat. How a key is derived and carried is the harness's business (cited
 # under conformance), not this file's.
 
-ownership: &owned
-  # EXTENDS — a cross-field comparison. The shared vocabulary compares a field
-  # to constants; this compares a field to the session. It is the rule behind
-  # the reference's one critical defect, and the vocabulary cannot state it.
-  {field: order.customer_id, equals_session: customer_id}
+# Named conditions, reused below. A named condition must qualify its field
+# (`order.customer_id`, not `customer_id`), because it has no entity of its own.
+conditions:
+  owned: &owned
+    # EXTENDS — a comparison with the session rather than with a constant. The
+    # vocabulary had no way to say it, and it is the rule behind the
+    # reference's one critical defect.
+    {field: order.customer_id, equals_session: customer_id}
 
 operations:
   get_order:
+    entity: order
     side_effect: read
     input: [order_id]
     output: order
@@ -155,6 +179,7 @@ operations:
     authority: agent
 
   cancel_order:
+    entity: order
     side_effect: irreversible
     input: [order_id]
     preconditions:
@@ -166,6 +191,7 @@ operations:
     on_refusal: offer a return once the order is delivered   # P-CANCEL
 
   open_return_request:
+    entity: order
     side_effect: reversible
     input: [order_id]
     preconditions:
@@ -178,6 +204,7 @@ operations:
     authority: agent
 
   change_address:
+    entity: order
     side_effect: reversible
     input: [order_id, address]
     preconditions:
@@ -189,6 +216,7 @@ operations:
     on_refusal: the carrier owns the address once the order has progressed   # P-ADDRESS
 
   request_refund:
+    entity: order
     side_effect: reversible
     input: [order_id]
     preconditions: [*owned]
@@ -197,6 +225,7 @@ operations:
     # The customer is told a request exists. Never that a refund was issued.
 
   issue_refund:
+    entity: order
     side_effect: irreversible
     input: [order_id]
     amount_from: order.total           # never from the conversation
@@ -207,8 +236,8 @@ operations:
     identity: order_id                 # an order is refunded at most once
     authority:
       agent_when:
-        # "Above ₹10,000 needs a person." The bound is money, not an integer —
-        # the shared vocabulary's bounds are typed int today and must admit it.
+        # "Above ₹10,000 needs a person." Bounds are numbers in this format, so
+        # a money field compares — the world's vocabulary types them int (E7).
         - {field: order.total, at_most: 10000}
       otherwise: human_approval
     owed_when:
@@ -218,6 +247,7 @@ operations:
       - {field: status, equals: [returned]}
 
   escalate:
+    entity: escalation
     side_effect: reversible            # a queued escalation lapses
     input: [reason]
     effect: an escalation exists, and the conversation belongs to a person until it resolves or lapses
@@ -267,9 +297,9 @@ policies:
       - order flagged for fraud review     # no such field yet
       - three failed resolution attempts   # partly covered by repeated-intent
 
-  pii:                                 # what counts as personal data for THIS agent
-    - customer.email
-    - customer.phone
+  # Personal data that is not a declared field. Declared fields say so
+  # themselves (`pii: true`) — one statement, in one place.
+  personal_data_in_conversation:
     - payment card numbers typed into the chat
 
 # ---------------------------------------------------------------------------

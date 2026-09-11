@@ -1,0 +1,16 @@
+{
+  "name": "clean-ai-engineering",
+  "version": "0.1.0",
+  "description": "The umbrella of the Clean AI Engineering spec family: the charter, the baseline, and the draft per-agent specification formats.",
+  "license": "Apache-2.0",
+  "private": true,
+  "type": "commonjs",
+  "scripts": {
+    "lint": "node tools/validate-aoas.js",
+    "test": "node --test 'tools/*.test.js' && npm run lint"
+  },
+  "dependencies": {
+    "ajv": "^8.17.1",
+    "js-yaml": "^4.1.0"
+  }
+}

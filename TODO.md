@@ -56,6 +56,12 @@ exposes a defect, it is recorded against the reference, not fixed in passing.
 - **Where.** `drafts/aoas.schema.json`, `tools/` in this repo.
 - **Done when.** The worked example validates, and a deliberately broken copy
   fails for each rule.
+- **Status.** ✅ Done 2026-09-11. `npm test`: 22 rules, 41 table-driven cases,
+  each asserting *which* rule fired; a meta-test fails if a rule is documented,
+  emitted and exercised unequally. Catalog identifiers are checked against
+  sibling checkouts when present. Format decided: the shared vocabulary plus
+  `equals_session`, reopened only when a second rule outgrows it. The
+  validator's first run caught an undeclared field in the example (E9).
 
 ### 1.3 · The AWD format, written down
 
@@ -81,6 +87,10 @@ exposes a defect, it is recorded against the reference, not fixed in passing.
   where the charter says it cannot live.
 - **Why.** Cycle 0 pins the binding (`43` §4). A pin that is not written down is
   not a pin.
+- **First question.** The harness catalog already has a **harness profile**
+  format (`schema/profile.schema.json`) whose `bindings` say which
+  implementation fills each seam. If ABS is an instance of that format, it is
+  not a new one — the charter's §1 test applies before anything is minted.
 - **Where.** With the build: `reference-agent/spec/binding.yaml`.
 - **Done when.** Every layer has a row or a declared absence, and nothing in it
   would change what a customer experiences.

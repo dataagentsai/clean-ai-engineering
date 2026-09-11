@@ -1,0 +1,419 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/dataagentsai/clean-ai-engineering/drafts/aoas.schema.json",
+  "title": "Application Operation Agent Spec",
+  "description": "What one agent must do, and what must be true of it. Draft v0 — not citable. The schema checks shape; tools/validate-aoas.js checks what a schema cannot: that every condition names a field that exists, every transition an operation that makes it, every exclusion the change that would revoke it.",
+  "type": "object",
+  "required": ["apiVersion", "agent", "purpose", "entities", "operations", "policies", "external", "required", "conformance"],
+  "additionalProperties": false,
+  "patternProperties": { "^x_": {} },
+  "properties": {
+    "apiVersion": {
+      "const": "aoas/v0",
+      "description": "Named after the format, never after a tool or a company. v0 while the format is a draft."
+    },
+    "agent": {
+      "type": "object",
+      "required": ["id", "version"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$" },
+        "version": { "type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$" },
+        "currency": { "type": "string", "pattern": "^[A-Z]{3}$", "description": "ISO 4217. Every `money` field is in this currency." }
+      }
+    },
+    "sources": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Where the statements came from. Informative — provenance, not specification."
+    },
+
+    "purpose": {
+      "type": "object",
+      "required": ["serves", "does", "refuses"],
+      "additionalProperties": false,
+      "properties": {
+        "serves": { "type": "string", "minLength": 1 },
+        "does": { "type": "array", "minItems": 1, "items": { "type": "string" } },
+        "refuses": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["id", "what"],
+            "additionalProperties": false,
+            "properties": {
+              "id": { "type": "string", "pattern": "^R-[A-Z0-9]+(-[A-Z0-9]+)*$" },
+              "what": { "type": "string", "minLength": 1 }
+            }
+          },
+          "description": "Normative. What the agent must not do is testable only against an explicit list."
+        },
+        "deferred": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "minProperties": 1,
+            "properties": {
+              "intent": { "type": "string" },
+              "operation": { "type": "string" },
+              "source": { "type": "string" }
+            },
+            "oneOf": [{ "required": ["intent"] }, { "required": ["operation"] }]
+          },
+          "description": "Recognised and deliberately not built in this version. Stated so its absence is a decision, not an oversight."
+        }
+      }
+    },
+
+    "entities": {
+      "type": "object",
+      "minProperties": 1,
+      "propertyNames": { "pattern": "^[a-z][a-z0-9_]*$" },
+      "additionalProperties": { "$ref": "#/$defs/entity" }
+    },
+    "session": {
+      "type": "object",
+      "propertyNames": { "pattern": "^[a-z][a-z0-9_]*$" },
+      "additionalProperties": { "$ref": "#/$defs/field" },
+      "description": "Who is asking. The only values `equals_session` may compare against."
+    },
+    "facts": {
+      "type": "object",
+      "propertyNames": { "pattern": "^[a-z][a-z0-9_]*$" },
+      "additionalProperties": { "$ref": "#/$defs/field" },
+      "description": "What the conversation has become, as values policies read. Declared so a rule over an undeclared fact fails validation instead of silently never firing."
+    },
+    "state_machines": {
+      "type": "object",
+      "propertyNames": { "pattern": "^[a-z][a-z0-9_]*$" },
+      "additionalProperties": { "$ref": "#/$defs/state_machine" }
+    },
+    "conditions": {
+      "type": "object",
+      "propertyNames": { "pattern": "^[a-z][a-z0-9_]*$" },
+      "additionalProperties": { "$ref": "#/$defs/condition" },
+      "description": "Named conditions for reuse. A named condition has no entity of its own, so its field must be qualified."
+    },
+
+    "operations": {
+      "type": "object",
+      "minProperties": 1,
+      "propertyNames": { "pattern": "^[a-z][a-z0-9_]*$" },
+      "additionalProperties": { "$ref": "#/$defs/operation" }
+    },
+
+    "policies": {
+      "type": "object",
+      "additionalProperties": false,
+      "patternProperties": {
+        "^P-[A-Z0-9]+(-[A-Z0-9]+)*$": {
+          "type": "object",
+          "required": ["rule", "via"],
+          "additionalProperties": false,
+          "properties": {
+            "rule": { "type": "string", "minLength": 1 },
+            "via": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "type": "string" } }
+          },
+          "description": "A rule in words, and the operations whose conditions enforce it. A policy no operation enforces is a preference."
+        },
+        "^x_": {}
+      },
+      "properties": {
+        "approval": {
+          "type": "object",
+          "required": ["approver", "valid_for"],
+          "additionalProperties": false,
+          "properties": {
+            "approver": { "type": "string" },
+            "valid_for": { "$ref": "#/$defs/duration" },
+            "while_waiting": { "type": "string" }
+          }
+        },
+        "escalation": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "on_request": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["id", "when"],
+                "additionalProperties": false,
+                "properties": { "id": { "$ref": "#/$defs/slug" }, "when": { "type": "string" } }
+              }
+            },
+            "on_condition": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["id", "when"],
+                "additionalProperties": false,
+                "properties": {
+                  "id": { "$ref": "#/$defs/slug" },
+                  "when": { "$ref": "#/$defs/condition" },
+                  "priority": { "type": "integer", "minimum": 1 },
+                  "ttl": { "$ref": "#/$defs/duration" }
+                }
+              },
+              "description": "First match wins, so order is part of the specification."
+            },
+            "each_rule_fires": { "type": "string" },
+            "max_per_conversation": { "type": "integer", "minimum": 1 },
+            "queued_ttl": { "$ref": "#/$defs/duration" },
+            "on_lapse": { "type": "string" },
+            "the_customer_is_told": { "type": "string" },
+            "deferred_triggers": { "type": "array", "items": { "type": "string" } }
+          }
+        },
+        "personal_data_in_conversation": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Personal data that is not a declared field. Declared fields carry `pii: true` themselves."
+        }
+      }
+    },
+
+    "external": {
+      "type": "object",
+      "propertyNames": { "pattern": "^[a-z][a-z0-9_]*$" },
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "owns": { "type": "array", "items": { "type": "string" } },
+          "operations": { "type": "array", "items": { "type": "string" } },
+          "decides": { "type": "array", "items": { "type": "string" } },
+          "receives": { "type": "array", "items": { "type": "string" } },
+          "refusal_is_a_result": { "type": "string" },
+          "consistency": { "type": "string" },
+          "idempotency": { "type": "string" },
+          "latency": { "type": "string" },
+          "failure_modes": { "type": "array", "items": { "$ref": "#/$defs/slug_snake" } }
+        }
+      },
+      "description": "The contract with each system the agent depends on. The contract is domain knowledge; the transport that carries it is a binding and does not appear here."
+    },
+
+    "required": {
+      "type": "object",
+      "required": ["properties"],
+      "additionalProperties": false,
+      "properties": {
+        "properties": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["id", "must", "evidence"],
+            "additionalProperties": false,
+            "properties": {
+              "id": { "type": "string", "pattern": "^Q-[A-Z0-9]+(-[A-Z0-9]+)*$" },
+              "must": { "type": "string", "minLength": 1 },
+              "evidence": { "$ref": "#/$defs/evidence" }
+            }
+          }
+        },
+        "undeclared": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Properties this agent plainly has an answer to and nobody has written down. Stated as absent rather than left out."
+        }
+      }
+    },
+
+    "conformance": {
+      "type": "object",
+      "required": ["archetypes", "aac"],
+      "additionalProperties": false,
+      "properties": {
+        "archetypes": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "type": "string", "pattern": "^A([1-9]|10)$" }
+        },
+        "aac": { "$ref": "#/$defs/claim", "properties": { "excluded": { "items": { "properties": { "id": { "pattern": "^AAC-[0-9]{4}$" } } } } } },
+        "ahc": { "$ref": "#/$defs/claim", "properties": { "excluded": { "items": { "properties": { "id": { "pattern": "^AHC-[0-9]{4}$" } } } } } }
+      }
+    }
+  },
+
+  "$defs": {
+    "slug": { "type": "string", "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$" },
+    "slug_snake": { "type": "string", "pattern": "^[a-z][a-z0-9_]*$" },
+    "duration": { "type": "string", "pattern": "^[0-9]+(s|m|h|d)$" },
+    "evidence": {
+      "enum": ["assertion", "inspection", "scenario", "acceptance"],
+      "description": "Charter §6: every MUST names how it is demonstrated."
+    },
+
+    "field": {
+      "type": "object",
+      "required": ["type"],
+      "additionalProperties": false,
+      "properties": {
+        "type": { "enum": ["id", "text", "email", "phone", "int", "number", "money", "bool", "date", "timestamp", "enum"] },
+        "values": { "type": "array", "minItems": 1, "uniqueItems": true },
+        "of": { "type": "string", "description": "An enum whose values are the states of a named state machine." },
+        "ref": { "type": "string", "pattern": "^[a-z][a-z0-9_]*\\.[a-z][a-z0-9_]*$" },
+        "derived": { "type": "string" },
+        "pii": { "type": "boolean" },
+        "untrusted": { "type": "boolean", "description": "Written by someone other than the system. Content, never instruction." }
+      },
+      "if": { "properties": { "type": { "const": "enum" } } },
+      "then": { "oneOf": [{ "required": ["values"] }, { "required": ["of"] }] },
+      "else": { "not": { "anyOf": [{ "required": ["values"] }, { "required": ["of"] }] } }
+    },
+
+    "entity": {
+      "type": "object",
+      "required": ["key", "fields"],
+      "additionalProperties": false,
+      "properties": {
+        "key": { "type": "string" },
+        "fields": {
+          "type": "object",
+          "minProperties": 1,
+          "propertyNames": { "pattern": "^[a-z][a-z0-9_]*$" },
+          "additionalProperties": { "$ref": "#/$defs/field" }
+        },
+        "invariants": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["name", "when", "then"],
+            "additionalProperties": false,
+            "properties": {
+              "name": { "type": "string" },
+              "when": { "$ref": "#/$defs/condition" },
+              "then": { "$ref": "#/$defs/condition" }
+            }
+          },
+          "description": "Which combinations of fields can coexist — what the world can BE, not what it permits."
+        }
+      }
+    },
+
+    "state_machine": {
+      "type": "object",
+      "required": ["states", "transitions"],
+      "additionalProperties": false,
+      "properties": {
+        "states": { "type": "array", "minItems": 2, "uniqueItems": true, "items": { "type": "string" } },
+        "terminal": { "type": "array", "uniqueItems": true, "items": { "type": "string" } },
+        "transitions": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": ["from", "to", "by"],
+            "additionalProperties": false,
+            "properties": {
+              "from": {
+                "oneOf": [
+                  { "type": "string" },
+                  { "type": "array", "minItems": 1, "items": { "type": "string" } }
+                ],
+                "description": "A state, a list of states, or `any_except_terminal`."
+              },
+              "to": { "type": "string" },
+              "by": { "type": "string", "description": "An operation, or `external` for a change something else makes." }
+            }
+          }
+        },
+        "concurrent_writers": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+
+    "condition": {
+      "type": "object",
+      "required": ["field"],
+      "additionalProperties": false,
+      "minProperties": 2,
+      "properties": {
+        "field": { "type": "string", "pattern": "^[a-z][a-z0-9_]*(\\.[a-z][a-z0-9_]*)?$" },
+        "equals": { "type": "array", "minItems": 1 },
+        "not_equals": { "type": "array", "minItems": 1 },
+        "at_least": { "type": "number" },
+        "at_most": { "type": "number" },
+        "equals_session": { "type": "string" }
+      },
+      "description": "The vocabulary the world, the omission oracle and the escalation rules share, plus `equals_session`. Bounds are numbers, so money compares. A rule needing more — arithmetic across fields, OR, a quantifier — is the signal to adopt an expression language for all of them at once, not to add a second syntax here."
+    },
+
+    "condition_list": { "type": "array", "items": { "$ref": "#/$defs/condition" } },
+
+    "operation": {
+      "type": "object",
+      "required": ["entity", "side_effect", "input", "authority"],
+      "additionalProperties": false,
+      "properties": {
+        "entity": { "type": "string" },
+        "side_effect": {
+          "enum": ["read", "reversible", "irreversible"],
+          "description": "What repeating it costs. Irreversible means repeating charges someone twice."
+        },
+        "input": { "type": "array", "uniqueItems": true, "items": { "type": "string" } },
+        "output": { "type": "string" },
+        "amount_from": { "type": "string", "description": "Where a money amount comes from. Never the conversation." },
+        "preconditions": { "$ref": "#/$defs/condition_list" },
+        "effect": {
+          "oneOf": [
+            { "type": "string", "minLength": 1 },
+            { "type": "object", "minProperties": 1, "description": "Field → new value. `$name` means the input of that name." }
+          ]
+        },
+        "identity": {
+          "oneOf": [
+            { "type": "string" },
+            { "type": "array", "minItems": 1, "items": { "type": "string" } }
+          ],
+          "description": "The DOMAIN meaning of \"the same request\". How a key is derived and carried belongs to the harness."
+        },
+        "authority": {
+          "oneOf": [
+            { "enum": ["agent", "human_approval"] },
+            {
+              "type": "object",
+              "required": ["agent_when", "otherwise"],
+              "additionalProperties": false,
+              "properties": {
+                "agent_when": { "$ref": "#/$defs/condition_list" },
+                "otherwise": { "const": "human_approval" }
+              }
+            }
+          ]
+        },
+        "owed_when": {
+          "$ref": "#/$defs/condition_list",
+          "description": "Owed, not merely permitted. Without it an omission is invisible to every other check."
+        },
+        "on_refusal": { "type": "string", "description": "What to offer instead. The reason and the offer, never the wording." }
+      }
+    },
+
+    "claim": {
+      "type": "object",
+      "required": ["version", "claims"],
+      "additionalProperties": false,
+      "properties": {
+        "version": { "type": "string", "pattern": "^[0-9]+(\\.[0-9x]+){0,2}$" },
+        "claims": { "type": "string" },
+        "excluded": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["id", "reason", "revisit_when"],
+            "additionalProperties": false,
+            "properties": {
+              "id": { "type": "string" },
+              "reason": { "type": "string", "minLength": 1 },
+              "revisit_when": { "type": "string", "minLength": 1 }
+            }
+          },
+          "description": "Excluded, not \"not applicable\". An exclusion that names the change that would revoke it cannot quietly become permanent."
+        }
+      }
+    }
+  }
+}
