@@ -185,6 +185,15 @@ is not expressible) is a missing AOAS operation, not a UI nicety.
 Every addition passes the domain-noun test: a universal spec never gains
 "order", "refund" or "customer".
 
+**AHC and AAC are filled in pairs.** Every capability names the obligations
+that verify it, one to many. The existing catalog already holds to this: all 98
+capabilities cite one to five obligations (291 links), and 108 of 110
+obligations are cited back. The two that are not — **AAC-0109** (repetition
+detected and broken) and **AAC-0110** (a claimed action is supported by its
+result) — came from this reference in 0.12.0 and have no capability yet: two of
+the eighteen, seen from the other side. Each new capability lands with its
+obligations, new ones where the audit found none.
+
 ### G0.7 · Tell the generator the shape
 
 - **Baseline** — one profile item: every harness port is an interface, and only
@@ -193,16 +202,35 @@ Every addition passes the domain-noun test: a universal spec never gains
 - **The A6 blueprint** in AHC — the module map, ports and single wiring point,
   **extracted from the decomposed reference**, not designed beside it.
 
-### G0.8 · Make the oracle portable
+### G0.8 · Complete AgentTwin — prove the agent works in simulation
+
+The 657 tests prove the parts. Almost all of them script the model. **What
+they do not prove is that the agent, with a real model, handles real
+conversations against a world that misbehaves.** AgentTwin is the instrument for
+that, and it is not finished.
 
 - **A scenario format in AWD.** Scenarios live in pytest today, welded to this
-  implementation. A declarative scenario — world, actor script, assertions over
-  the run — is what lets the same suite judge a regenerated agent, and it is
-  what G2 will need to write hotel scenarios without code.
-- **The black-box agent contract** — the chat surface, the session opening, the
-  tool seam the world projects into, the approval and escalation surfaces —
-  stated so an agent that never saw the reference can implement it.
-- **Done when.** The reference passes its scenarios through the contract alone.
+  implementation. A declarative scenario — world, actor, perturbations, and
+  assertions over the run — is what lets the same suite judge a regenerated
+  agent in G1 and a hotel agent in G2 without new code.
+- **Actors and perturbations into the format.** The customer (scripted,
+  state-machine, or model-driven), the approver and the desk colleague; and slow
+  systems, stale reads and channel errors — declared, not constructed in Python.
+- **The black-box agent contract** — chat, the session opening, the tool seam
+  the world projects into, the approval and escalation surfaces — so a scenario
+  drives any implementation without importing it.
+- **Coverage from the spec, not from taste.** Every AOAS operation on both sides
+  of every policy boundary; every escalation rule; approvals granted, refused
+  and expired; adversarial content in fields someone else wrote; each
+  perturbation against each irreversible operation; multi-turn customers who do
+  not know their order number. The Assurance Map (G0.1) says which statements no
+  scenario reaches.
+- **Live runs.** The real model, N runs per scenario, **scored as pass rates,
+  never as pass/fail**, with cost per scenario — on the free hosted provider the
+  reference already uses.
+- **Done when.** The reference passes its scenarios through the contract alone,
+  and a **simulation report is published with its failures in it** — the
+  artifact that proves the agent works, and says exactly where it does not.
 
 ### G0.9 · The binding and the manifest
 
