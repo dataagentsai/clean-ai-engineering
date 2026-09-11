@@ -147,6 +147,22 @@ The `Agent` class is 481 lines doing eleven things; `handle` itself is 23.
 Each extracted collaborator either maps to an AHC capability or is a gap for
 G0.6 — the entrypoint's version of "a layer with no module is a finding".
 
+**Then the other oversized units**, measured in code lines excluding docstrings,
+in this order:
+
+| Unit | Size | What it mixes |
+|---|---|---|
+| `loop.run` | 151-line function | step execution, tool dispatch, budget checks, termination, and refund-specific approval handling — the loop imports `RefundRequested`, so a second approvable action edits the loop |
+| `MCPToolClient` | 126-line class | listing, binding, the idempotency ledger, transport, error mapping; F-017 lives in the seam between guard and transport |
+| `serve.build`, `reviewer.build` | 85 + 57, 92 | routes plus their own wiring, which belongs to the composition root |
+| `approvals`, `escalation` | 330, 357 lines | pure rule, store, workflow and reply wording in one module each |
+| `telemetry` | 449 lines | attribute names, span-shape validator, redaction, provider setup |
+| `cassette` | 344 lines | fingerprint, file I/O, recorder, player — test infrastructure, last |
+
+`policy` is cohesive and stays. The size ceilings of G0.3 start as a
+**ratchet** — today's worst value, lowered after each step — so they block
+growth from day one without blocking the refactor.
+
 ### G0.5 · Close the findings, spec first
 
 Each as its own commit with its own tagged test, starting from the spec
@@ -167,6 +183,45 @@ Also the reference's own `TODO.md` where it serves G1: T-001 (a session opening
 is not expressible) is a missing AOAS operation, not a UI nicety.
 
 ### G0.6 · Fill the specs from what G0.1–G0.5 exposed
+
+Every missing feature is one of three kinds, and each is completed differently:
+
+| Kind | Examples | How it is completed |
+|---|---|---|
+| **In the code, missing from the spec** — most of them | circuit breaker, orphan-safe trimming, stored-transcript bound, mandatory tool result schema, typed malformed-output boundary, deterministic router, escalation ownership, lapse, caps and cooldown, spend by route | **Reverse-engineer**: capability + obligations, tag the existing test. The code barely changes — and without this, regeneration loses all of them |
+| **Missing from both** | compaction by **summary** (today context bloat is handled only by dropping whole exchanges, and the code says why: a summary inherits the provenance of what it summarised); one error taxonomy; a map from each terminal state to what the user is told; a declared policy for malformed output | **Spec first**: capability and obligation, then build it, tagged tests, then scenarios |
+| **Specified, broken in the code** | F-014, F-016–F-021 | G0.5 |
+
+**From the NFR and cross-cutting audit** (ISO/IEC 25010:2023 and 26 concerns,
+all 98 capabilities read; most rows covered). The genuine gaps, ranked by what a
+regenerated agent would lose, each an agentic delta rather than restated
+practice:
+
+1. **Action-claim binding** — a statement that an action happened is checked
+   against that action's recorded outcome. No capability discharges AAC-0110.
+2. **Egress allowlist** — destinations reachable by tools, and by links or images
+   in output, enforced outside the model.
+3. **Cache keys include the resolved configuration** — otherwise a rollback is
+   incomplete while caches serve the old model's answers.
+4. **Retention and erasure across derived artifacts** — memory, summaries,
+   checkpoints, fixtures, dataset rows. Nothing behind AAC-0095's retention half.
+5. **Behavioural canary** — the Baseline's own delta row, answered by nothing.
+6. **Tool-definition provenance and version** — descriptions are prompt text that
+   can change remotely.
+7. **Streamed-output screening** — AAC-0092 has nothing real to verify.
+8. **Per-caller token and spend quota** — today only a design decision.
+9. **Recalled memory fenced as untrusted and recorded per recall.**
+10. **Prefix caching and token classes** — cached, uncached and reasoning tokens
+    priced apart.
+
+Also: caching mostly partial (prompt caching and invalidation on version change
+are gaps), memory erasure does not reach summaries or checkpoints, versioning
+omits the tool-definition text. Bookkeeping: AHC-0042 should discharge
+AAC-0109; AAC-0096 asks for more cache-key dimensions than AHC-0068 requires.
+
+Which of these the support agent needs now is itself a statement: it does not
+stream, has no cross-session memory and no cache, so 7, 9 and most caching rows
+enter its AOAS as **exclusions with a `revisit_when`**, not as work.
 
 - **AHC** — about eighteen capabilities the reference has and no catalog
   requires: escalation (ownership lock, queue and lapse, what the customer is
@@ -225,6 +280,35 @@ that, and it is not finished.
   perturbation against each irreversible operation; multi-turn customers who do
   not know their order number. The Assurance Map (G0.1) says which statements no
   scenario reaches.
+- **The simulators, against what exists** (checked 2026-09-11):
+
+  | Simulator | Today | Missing |
+  |---|---|---|
+  | Human — personas | scripted and state-machine customers; approver; desk colleague | a declared persona catalogue (does not know the order number, impatient, second language); the model-driven customer is a declared seam, not built |
+  | External systems | the world projected as a tool server (`mock`); recordings (`replay`) | `shadow` — call real, serve mock, diff |
+  | Data | constrained combinatorial eligibility cases (in the reference, driven by the world) | generation driven by the AOAS and moved into AgentTwin; bulk synthetic records |
+  | Time | a timeline that schedules faults by call number | **a world clock that advances** — days since delivery, approval and escalation expiry. G2 needs it first: a hotel is all dates |
+  | Chaos and network | slow, channel error, stale read — on the tool channel | **the model provider as a perturbable system** — throttling, outage, malformed output. It is an external dependency, so it belongs in the world; today it is only scripted in unit tests |
+  | Cost | not simulated — measured | stays measured: live runs report cost per scenario; budget exhaustion is a harness test. AgentTwin twins the world, never the agent's model |
+
+- **The attack suites, against what exists:**
+
+  | Suite | Today | Missing |
+  |---|---|---|
+  | Prompt injection | one planted instruction in a field someone else wrote, a handful of cases | a generated set, hundreds of cases, across every untrusted field and tool result |
+  | Hallucination | the truth oracle (state claims against the world) and entity grounding | a generated knowledge-mismatch set |
+  | PII leakage | card-number echo guard, telemetry redaction | a leakage set across replies, traces and stored transcripts |
+  | Jailbreak | none as a suite | a generated set |
+  | Latency and load | none — AAC-0007 declared not exercised | load against the live provider, through the fan-out limiter |
+  | Memory poisoning | not applicable — no cross-session memory | an exclusion with `revisit_when`, until memory exists |
+  | Tool abuse | scope tests | F-016 is exactly this and is open; a generated set of cross-customer and out-of-scope calls |
+
+  **Attack suites are generated scenario sets, derived from obligations.** The
+  AAC obligation says what must hold; the AWD format carries a generator, a seed
+  and a count, so "two hundred injection cases" is one declaration, reproducible,
+  and runs unchanged against a regenerated agent. Attack corpora and red-team
+  tools are realisations and are named only in the binding.
+
 - **Live runs.** The real model, N runs per scenario, **scored as pass rates,
   never as pass/fail**, with cost per scenario — on the free hosted provider the
   reference already uses.
