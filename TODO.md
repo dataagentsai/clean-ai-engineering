@@ -231,7 +231,7 @@ statement it enforces:
 
 | Finding | Statement it enforces |
 |---|---|
-| **F-016** any customer can act on any order *(critical)* | AOAS `P-OWNERSHIP` |
+| ~~**F-016** any customer can act on any order *(critical)*~~ ✅ 2026-09-12 | AOAS `P-OWNERSHIP` — enforced where the tool executes; the session travels in `_meta` |
 | **F-019** cost ceiling unreachable from the entrypoint | AOAS `Q-COST` |
 | **F-020** three reply paths skip the guardrails | AAC — output screened on every path |
 | **F-018** refund status answered as order status | AOAS — the refund-status operation, not yet declared |

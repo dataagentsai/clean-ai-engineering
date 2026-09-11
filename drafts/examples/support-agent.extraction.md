@@ -121,7 +121,7 @@ are TODO 3.3.
 
 | AOAS statement | v0.1.0 | Recorded as |
 |---|---|---|
-| P-OWNERSHIP on every order operation | Any authenticated customer can act on any order | **F-016 (critical)** |
+| P-OWNERSHIP on every order operation | ~~Any authenticated customer can act on any order~~ — **conforms since 2026-09-12**: the caller's session reaches the order system, which answers a stranger as not found | F-016 — fixed |
 | `issue_refund.amount_from: order.total` | The world has no `total`; the gate compares a number the model supplied | F-014 |
 | `issue_refund` within ₹10,000 proceeds without a person | A below-threshold request executes nothing at all | F-014 |
 | `issue_refund` never on a `refunded` order | The world declares no guard; only an in-process key protects against a repeat | **new**, with F-017 |
