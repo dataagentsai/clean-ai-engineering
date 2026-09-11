@@ -75,6 +75,13 @@ In order. Each item is a series of commits that keep the suite green.
   statement no test tags is a spec nothing verifies.
 - **Done when.** The map is generated, never hand-written, and lists both
   remainders. They become the work list for G0.6.
+- **Status.** 🔧 In progress 2026-09-11. The machinery is in `reference-agent`:
+  `discharges` accepts AAC, AHC, Baseline and AOAS ids (`P-`, `R-`, `Q-`,
+  `op:`, `esc:`, `ext:`); an unknown id fails collection; `pytest
+  --assurance-map` writes `evals/ASSURANCE-MAP.md`. **Baseline before tagging:
+  91 of 396 test functions tagged; AOAS 0/33, AAC 44/49, AHC 0/60, Baseline
+  0/12.** Tagging the rest is under way, with every honest *cannot tag*
+  recorded as the finding it is.
 
 ### G0.2 · One tag scheme across all six specs
 
