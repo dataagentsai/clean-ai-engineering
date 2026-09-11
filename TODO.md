@@ -240,7 +240,7 @@ statement it enforces:
 | ~~**F-021** approval expiry on the wall clock~~ ✅ 2026-09-12 | AHC L9 — no clock outside the injected seam; `now` required, so a missed clock is a type error |
 | ~~**F-022** retry, throttle and breaker never called~~ ✅ 2026-09-12 | AHC-0005, AHC-0021, AHC-0024 — `ResilientLLM` at the model choke point |
 | ~~**F-023** the tool-result bound misses structured results~~ ✅ 2026-09-12 | AOAS `Q-TOOL-RESULT` — one rendering, measured and sent |
-| **F-024** with no escalation store the agent still promises a colleague | AAC-0110 — no claimed action without the record |
+| ~~**F-024** with no escalation store the agent still promises a colleague~~ ✅ 2026-09-12 | AAC-0110 and AOAS `escalate.on_refusal` (new) — it refuses, and `Escalated` now requires a ticket |
 | **F-025** the repeated-intent rule cannot fire | AOAS `R-REPEAT` — the fact it reads is never defined |
 | **F-026** a blocked reply keeps the result type it was | AHC-0094 — a refused reply is a refusal |
 | extraction nonconformances — address never changed, R-STYLE/R-FRAUD unenforced | AOAS `change_address`, `R-STYLE`, `R-FRAUD` |

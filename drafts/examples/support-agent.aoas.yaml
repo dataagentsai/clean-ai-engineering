@@ -261,6 +261,10 @@ operations:
     input: [reason]
     effect: an escalation exists, and the conversation belongs to a person until it resolves or lapses
     authority: agent
+    # There is nowhere to escalate to when no desk is reachable. Saying it
+    # plainly and staying with the request is the offer; "let me pass you to a
+    # colleague" with no record behind it is a claimed action (F-024).
+    on_refusal: say the handover cannot be made and stay with the request
 
 # ---------------------------------------------------------------------------
 # 4 · Policies
