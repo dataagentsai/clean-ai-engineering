@@ -232,12 +232,13 @@ statement it enforces:
 | Finding | Statement it enforces |
 |---|---|
 | ~~**F-016** any customer can act on any order *(critical)*~~ ✅ 2026-09-12 | AOAS `P-OWNERSHIP` — enforced where the tool executes; the session travels in `_meta` |
-| **F-019** cost ceiling unreachable from the entrypoint | AOAS `Q-COST` |
-| **F-020** three reply paths skip the guardrails | AAC — output screened on every path |
-| **F-018** refund status answered as order status | AOAS — the refund-status operation, not yet declared |
+| ~~**F-019** cost ceiling unreachable from the entrypoint~~ ✅ 2026-09-12 | AOAS `Q-COST` — a per-task meter from the config |
+| ~~**F-020** three reply paths skip the guardrails~~ ✅ 2026-09-12 | AHC-0094 — a `REPLY` position screened where every reply leaves |
+| ~~**F-018** refund status answered as order status~~ ✅ 2026-09-12 | AOAS `P-REFUND-STATUS`, declared first |
 | **F-014** refund amount ungrounded | AOAS `issue_refund.amount_from: order.total` |
 | **F-017** idempotency key never leaves the process | AOAS external contract — the order system accepts a key |
 | **F-021** approval expiry on the wall clock | AHC L9 — no clock outside the injected seam |
+| ~~**F-022** retry, throttle and breaker never called~~ ✅ 2026-09-12 | AHC-0005, AHC-0021, AHC-0024 — `ResilientLLM` at the model choke point |
 | extraction nonconformances — address never changed, R-STYLE/R-FRAUD unenforced | AOAS `change_address`, `R-STYLE`, `R-FRAUD` |
 
 Also the reference's own `TODO.md` where it serves G1: T-001 (a session opening
