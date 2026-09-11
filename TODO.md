@@ -135,6 +135,17 @@ In order. Each item is a series of commits that keep the suite green.
   | **Size and complexity ceilings** | the god object, before it is 481 lines |
 
   Readability and naming stay review, and say so.
+- **Status.** ✅ Done 2026-09-12. In `reference-agent`: mypy strict (plus
+  exhaustive matches and ignore-with-code) passes on the whole package; the
+  checks run inside `pytest` (`tests/test_build_checks.py`), verified by
+  planting a type error. Collaborators typed `object` now carry their protocols;
+  a `DeliveryLog` protocol is new; `type: ignore` 19 → 2, both at the vendor SDK
+  boundary. Both matches over a typed union end in `assert_never`. Ceilings as a
+  ratchet at today's worst — complexity 14, statements 50, branches 12, module
+  744 lines — for G0.4 to lower. **Not yet enforceable:** "only the composition
+  root constructs a realisation", because `serve.build` and
+  `scripts/run_server.py` still wire; it becomes an import contract at G0.4
+  step 8.
 
 ### G0.4 · Decompose the entrypoint
 
