@@ -242,7 +242,7 @@ statement it enforces:
 | ~~**F-023** the tool-result bound misses structured results~~ ✅ 2026-09-12 | AOAS `Q-TOOL-RESULT` — one rendering, measured and sent |
 | ~~**F-024** with no escalation store the agent still promises a colleague~~ ✅ 2026-09-12 | AAC-0110 and AOAS `escalate.on_refusal` (new) — it refuses, and `Escalated` now requires a ticket |
 | ~~**F-025** the repeated-intent rule cannot fire~~ ✅ 2026-09-12 | AOAS `facts.repeated_intent` now declares `derived`; validator rule `undefined-fact`. The dissatisfied-customer half is a catalog gap (GAPS §7) |
-| **F-026** a blocked reply keeps the result type it was | AHC-0094 — a refused reply is a refusal |
+| ~~**F-026** a blocked reply keeps the result type it was~~ ✅ 2026-09-12 | AHC-0017, AHC-0094 — a blocked completion is `Refused`; what the turn did keeps its type |
 | extraction nonconformances — address never changed, R-STYLE/R-FRAUD unenforced | AOAS `change_address`, `R-STYLE`, `R-FRAUD` |
 
 Also the reference's own `TODO.md` where it serves G1: T-001 (a session opening
