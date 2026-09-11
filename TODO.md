@@ -239,10 +239,72 @@ existing layers; these are new, each an agentic delta:
     capabilities. Partly in the harness profile's `subject`; owner and lifecycle
     are missing, and a multi-agent system needs it for discovery.
 
+**From the context-engineering check** (eighteen categories, 2026-09-11). AHC
+treats context as a *size* problem; **context rot is a quality problem that
+starts long before the limit** — stale facts, a goal buried under turns,
+failed attempts re-read and repeated. The strong rows are assembly, fencing,
+secrets, retrieval and observability. The gaps:
+
+16. **Freshness of facts in context.** A fact read from the world carries the
+    time it was read; the AOAS declares how long each field stays fresh; a
+    stale fact is re-read before an irreversible action relies on it. F-002 — a
+    stale read became a false confirmation — is this, and today it is caught
+    only after the fact by a guardrail.
+17. **Act before the context is full.** A soft threshold with headroom, and the
+    compaction rules as requirements: never move the stable prefix, whole
+    exchanges only, anchor the goal and the last *n* turns. They exist only in
+    the reference's own design doc (`docs/CONTEXT-BUDGET.html`).
+18. **A summary inherits the least-trusted provenance of what it summarised.**
+    Today a design question in AHC-0045 and a docstring in the reference.
+19. **A structured facts record beside the transcript** — goal, entities in
+    play, actions taken, what is pending. It resists rot, it is free, and it is
+    the source the escalation handoff should be built from. Missing in both;
+    the reference's `TurnNote` is its seed.
+20. **Environmental facts are rendered by the harness and recorded** — time,
+    locale, tenant, permissions — never inferred by the model, and captured so
+    a run that saw "today" can be replayed.
+21. **Segment priority is declared**, not left to a design question — what is
+    pinned, what goes first.
+22. **The budget's ruler is stated.** Provider tokens, or a declared
+    approximation and its error: the reference counts characters because its
+    provider has no token counter, which is a fair proxy for prose and a poor
+    one for JSON.
+23. **The tool surface is scoped to the request and stable in order** — what
+    the model is offered follows identity and state, and does not reshuffle
+    between calls (every reshuffle invalidates the cached prefix).
+24. **Rot is measured.** Quality sliced by context-length bucket — a segment
+    label (AHC-0090) and an obligation — or degradation with length is
+    invisible.
+
+**From the reasoning check** (ten categories, eight patterns). Reasoning
+techniques are the model's, and they rot fastest; AHC is right to prescribe
+none. What each technique needs *around* it is a component, and most exist —
+budgets outside the model (AHC-0041), no-progress detection (0042), bounded
+depth and fan-out (0048, 0097), the judge as a versioned component (0081–0084),
+typed uncertain verdicts (0082), abstention (0063). The deltas not yet
+recorded:
+
+25. **An aggregation rule is declared and recorded** wherever several model
+    outputs are combined — votes, debate, consensus, tree-of-thought branch
+    selection — with its tie-break, so the combined answer is reproducible from
+    the parts.
+26. **Reasoning tokens are budgeted and accounted apart** — a thinking budget
+    is a cost and latency control, and folds into item 10's token classes.
+
+Planning (item 12), clarification (item 11) and verification of claims (item 1)
+already cover the rest.
+
 Deliberately *not* capabilities: topologies (supervisor–worker, swarm,
 planner–executor), reasoning techniques (reflection, self-critique, consensus)
 and plugin mechanisms. They are patterns and realisations; the first two go to
 the pattern library in G0.7, the third to the binding.
+
+**For the support agent, in G0**, the context work in the order its own design
+doc already set — cheapest and most certain first: freshness before irreversible
+actions (16), the facts record (19), a deduplicator over repeated tool calls,
+then the soft threshold with anchored, exchange-safe compaction (17, 18) —
+built spec-first, after measuring, because short support conversations may
+never reach it.
 
 Which of these the support agent needs now is itself a statement: it does not
 stream, has no cross-session memory and no cache, so 7, 9 and most caching rows
@@ -281,11 +343,18 @@ obligations, new ones where the audit found none.
   swap and regeneration all stand on it.
 - **The A6 blueprint** in AHC — the module map, ports and single wiring point,
   **extracted from the decomposed reference**, not designed beside it.
-- **The pattern library** — orchestration and reasoning patterns (router,
-  ReAct loop, saga with compensation, outbox, supervisor–worker,
-  planner–executor, reflection), informative like realisations, each citing
+- **The pattern library** — informative like realisations, each pattern citing
   the capabilities it discharges: *no pattern without a capability*. Blueprints
-  reference patterns; capabilities never do.
+  reference patterns; capabilities never do. Three families to start:
+  - **Orchestration** — router ahead of the loop, ReAct loop, saga with
+    compensation, outbox, supervisor–worker.
+  - **Reasoning** — direct, planner → executor, tree of thoughts, reflection,
+    reviewer, debate, consensus, supervisor; each with its best use and the
+    components it cannot run safely without.
+  - **Context** — the reference's seven handlers (bounder, deduplicator,
+    offloader, trimmer, structurer, compactor, selector) and its *which handler,
+    given what signal* table, lifted out of `docs/CONTEXT-BUDGET.html`, where a
+    regenerated agent would never find them.
 
 ### G0.8 · Complete AgentTwin — prove the agent works in simulation
 
