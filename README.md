@@ -18,10 +18,14 @@ and the ten principles everything else is answerable to.
 | Part | States | Where |
 |---|---|---|
 | **Clean AI Engineering** | *why* | this repository |
+| **The Spec Charter** | what a spec in this family **is** | [SPEC-CHARTER.md](SPEC-CHARTER.md) |
+| **The Baseline** | what we **cite rather than restate** | [BASELINE.md](BASELINE.md) |
 | **AI Assurance Catalog** — AAC | what must be **TRUE** | [ai-assurance-catalog](https://github.com/dataagentsai/ai-assurance-catalog) |
 | **AI Harness Catalog** — AHC | what must **EXIST** | [ai-harness-catalog](https://github.com/dataagentsai/ai-harness-catalog) |
-| **AgentTwin** | what must be **FACED** | `agenttwin` — *forthcoming* |
-| **Reference implementation** | proof the three hold together | `reference-agent` — *forthcoming* |
+| **Agent World Description** — AWD | what must be **FACED** | `agenttwin` — *forthcoming* |
+| **Application Operation Agent Spec** — AOAS | what **this agent** must **DO** | [drafts/AOAS.md](drafts/AOAS.md) — *draft* |
+| **Agent Binding Spec** — ABS | **which realisation** satisfies each capability | with the build |
+| **Reference implementation** | proof they hold together | `reference-agent` — *forthcoming* |
 
 AAC and AHC are **AI-scoped**, not agent-scoped — their archetypes cover
 single-turn transforms, structured extractors, grounded answerers, conversational
@@ -30,6 +34,16 @@ reference implementation are agent-shaped and named accordingly.
 
 *AgentTwin twins the agent's **world**, not the agent. The agent under test is
 real; its environment is the twin.*
+
+**Where does a statement go?** Three questions settle it — is it universal or about
+this agent, is it a property, a component, an environment or a behaviour, and does
+it name a technology. The routing rule and the dependency invariant that keeps the
+catalogs neutral are in the [Spec Charter](SPEC-CHARTER.md).
+
+**And an agent is a software system.** The family does not restate software
+engineering — it cites it, and carries only the delta that non-determinism creates.
+[BASELINE.md](BASELINE.md) holds the references, the crosswalk that makes them
+actionable, and the twelve baseline items an agent system must actually demonstrate.
 
 ## A note on what this is not
 
