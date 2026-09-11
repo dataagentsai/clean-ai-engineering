@@ -15,7 +15,7 @@ it is read.
 | | Goal | Passes when |
 |---|---|---|
 | **G0** | **The customer support agent is solid — and the specs with it** | the reference passes the three build-time checks, every finding is closed or accepted, and every test traces to a spec statement |
-| **G1** | **Delete the reference code; the specs regenerate a similar agent** | a blind generation passes the four gates below. If it does not, a spec is incomplete — and the divergence says which |
+| **G1** | **Regenerate the support agent into a separate folder, from the specs alone** | the reference stays where it is and is never read during generation; the generated agent passes the four gates below. If it does not, a spec is incomplete — and the divergence says which |
 | **G2** | **The same universal specs generate a hotel customer support agent** | a blind generation from the universal specs plus a hotel AOAS and world passes the same four gates, with no hotel noun added to a universal spec |
 
 **G0 comes first because it produces what G1 and G2 consume.** A god object
@@ -219,17 +219,25 @@ complete harness profile. Then it is frozen.
 
 ---
 
-## G1 · Regenerate the support agent from the specs alone
+## G1 · Regenerate the support agent into a separate folder, from the specs alone
+
+The reference is kept — it is the comparison — and is never read while
+generating. Keeping it on the same machine makes blindness something to
+enforce, not assume.
 
 ### G1.1 · Pre-register
 
 Before the first generation, written down and committed:
 
 - the four gates and their thresholds;
-- **the blind protocol** — a fresh workspace holding only the manifest's
-  bundle; a generator session with no user memory, no project instructions and
-  no filesystem path to the reference; one fixed, short prompt. A generator
-  that can read the reference, or whose memory describes it, is not blind;
+- **the blind protocol** — the generation folder holds only the manifest's
+  bundle, and sits **outside the home directory** (e.g. under `/Users/Shared`),
+  so no parent `CLAUDE.md` and no project memory that describes the reference
+  is loaded; the session's settings **deny reads** of the reference, AgentTwin's
+  worlds and the strategy repository; one fixed, short prompt. A remote session
+  that holds only the bundle is the stronger version of the same thing. A
+  generator that can read the reference, or whose instructions describe it, is
+  not blind;
 - the generator pinned — model, version, settings — and **N = 3** runs per spec
   version, because one run says nothing about a stochastic generator;
 - the gap classes, from the routing rule: AAC · AHC · AOAS · AWD · binding ·
