@@ -337,5 +337,9 @@ Deliberately after G2; each depends on something the goals will teach.
   violation appears, not before (charter §3).
 - **Actors and perturbations** into the AWD format; **shadow mode** built, so a
   world's fidelity is verified rather than asserted.
+- **Compliance crosswalks** in AAC — ISO/IEC 42001, NIST AI RMF, EU AI Act.
+  Only OWASP LLM exists today, so the governance Concern View cannot yet reach
+  organisational governance. Not needed to generate an agent; needed to sell
+  the audit.
 - **Publish** — the convergence curve, the gap-type distribution, and what the
   generator contributed versus what the specification did.

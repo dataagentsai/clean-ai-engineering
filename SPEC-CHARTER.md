@@ -66,6 +66,28 @@ section of an existing artifact, or a derived view.
 That test is the whole reason this register is short, and it is the test a seventh
 proposal must pass — naming which of the three it satisfies.
 
+### Proposed artifacts, and where they went
+
+Recorded so the question is answered once. An eight-part set was proposed on
+11 September 2026. Five parts are artifacts already in the register; three are
+cross-cutting concerns, which §4a of the spec-family decomposition settles: a
+concern decomposes across the artifacts by modality and is kept visible as a
+**generated view**, not a ninth document.
+
+| Proposed | Here | Why |
+|---|---|---|
+| Agent Application Spec — business behaviour | **AOAS** | Same artifact |
+| Agent Harness Spec — architecture, orchestration, memory, tools | **AHC** | L4 control loop, L5 state and memory, L3 tools |
+| Agent Assurance Spec — quality, safety, evaluation, compliance | **AAC** | Compliance through its crosswalks |
+| Agent Simulation Platform Spec | **AWD** | A description format and a reference runner — deliberately not a platform |
+| Agent Binding Spec | **ABS** | Same artifact |
+| Agent Deployment Spec — environments, scaling, secrets | **ABS** for the concrete choices, **AHC L15** for what agents change (model, prompt and tool schema in the rollback set; canary on behaviour), and the **Baseline** for the rest | Same author and change rate as the binding — fails the §1 test as a separate artifact |
+| Agent Observability Spec — tracing, logs, metrics, cost, replay | **AHC L11, L9, L13** with their **AAC** obligations; the tools in **ABS** | A concern: generated as the observability Concern View |
+| Agent Governance Spec — versioning, approvals, audit, policy | **AHC L15, L14, L16, L7**; **AOAS** policies and approval rules; this charter for spec versioning; organisational governance cited through AAC's ISO/IEC 42001 crosswalk | A concern: generated as the governance Concern View |
+
+A reader who wants eight documents gets eight pages: five authored, three
+generated. The three generated ones cannot disagree with their sources.
+
 ---
 
 ## 2 · The routing rule
