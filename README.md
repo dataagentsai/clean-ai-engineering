@@ -22,10 +22,10 @@ and the ten principles everything else is answerable to.
 | **The Baseline** | what we **cite rather than restate** | [BASELINE.md](BASELINE.md) |
 | **AI Assurance Catalog** — AAC | what must be **TRUE** | [ai-assurance-catalog](https://github.com/dataagentsai/ai-assurance-catalog) |
 | **AI Harness Catalog** — AHC | what must **EXIST** | [ai-harness-catalog](https://github.com/dataagentsai/ai-harness-catalog) |
-| **Agent World Description** — AWD | what must be **FACED** | `agenttwin` — *forthcoming* |
+| **Agent World Description** — AWD | what must be **FACED** | [agenttwin](https://github.com/dataagentsai/agenttwin) — *private* |
 | **Application Operation Agent Spec** — AOAS | what **this agent** must **DO** | [drafts/AOAS.md](drafts/AOAS.md) — *draft* |
 | **Agent Binding Spec** — ABS | **which realisation** satisfies each capability | with the build |
-| **Reference implementation** | proof they hold together | `reference-agent` — *forthcoming* |
+| **Reference implementation** | proof they hold together | [reference-agent](https://github.com/dataagentsai/reference-agent) — *private* |
 
 AAC and AHC are **AI-scoped**, not agent-scoped — their archetypes cover
 single-turn transforms, structured extractors, grounded answerers, conversational
