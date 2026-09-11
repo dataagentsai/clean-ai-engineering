@@ -180,6 +180,29 @@ regeneration all stand on it) — and the **A6 blueprint**: one module per layer
 ports as interfaces, one wiring point, extracted from the decomposed reference.
 Without this, regeneration reproduces the god object.
 
+**The principles the generator is held to** (stated by the owner, 2026-09-11),
+cited rather than restated, each with the check that makes it more than a wish.
+The citation anchor is ISO/IEC 25010:2023 *maintainability* — modularity,
+analysability, modifiability, testability — already in the Baseline's reference
+list; SOLID and clean-code practice are cited as the established reading of it.
+
+| Principle | 25010 | How it is checked, deterministically |
+|---|---|---|
+| Single responsibility | modularity | function and class length limits; module size; one layer per module (import contract) |
+| Open/closed | modifiability | variation by registry or strategy — a new route, handler or approvable action adds an entry, never edits a dispatcher (review + the F-018 test shape) |
+| Liskov | modifiability | every port implementation passes the same contract test suite (in-memory and Postgres stores alike) |
+| Interface segregation | modularity | protocols small and per-seam; no `object` + `type: ignore` in place of one (type checker) |
+| Dependency inversion, loose coupling | modularity | business logic depends on protocols; only the composition root constructs (import contract + a construction check) |
+| Limited blast radius | modularity | layered import contract with `exhaustive = true`; a change to one layer fails no other layer's tests |
+| Low complexity, readable | analysability | cyclomatic complexity ceiling (`C901`), statements per function, nesting depth |
+| Testable in isolation | testability | every collaborator constructible with fakes; no wall clock or network outside an injected seam (F-021 is the counter-example) |
+| Meaningful names | analysability | review — the one row with no mechanical check, said so rather than pretended |
+
+Thresholds are the adopter's, as everywhere in the family; the reference states
+its own in its lint configuration. The decomposed reference (1b.1) is the first
+thing held to them, so the rules are proven satisfiable before a generator is
+asked to satisfy them.
+
 ---
 
 ## Tier 2 — The instrument, and cycle 0
