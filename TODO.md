@@ -182,159 +182,28 @@ statement it enforces:
 Also the reference's own `TODO.md` where it serves G1: T-001 (a session opening
 is not expressible) is a missing AOAS operation, not a UI nicety.
 
-### G0.6 · Fill the specs from what G0.1–G0.5 exposed
+### G0.6 · Fill the gaps the support agent actually hits
 
-Every missing feature is one of three kinds, and each is completed differently:
+The catalog-wide gaps found by five audits live in **[GAPS.md](GAPS.md)** — a
+register, not a queue. G0.6 takes from it only what G0.1's Assurance Map shows
+this agent hits, plus what G0.1–G0.5 expose directly. Every missing feature is
+one of three kinds:
 
-| Kind | Examples | How it is completed |
-|---|---|---|
-| **In the code, missing from the spec** — most of them | circuit breaker, orphan-safe trimming, stored-transcript bound, mandatory tool result schema, typed malformed-output boundary, deterministic router, escalation ownership, lapse, caps and cooldown, spend by route | **Reverse-engineer**: capability + obligations, tag the existing test. The code barely changes — and without this, regeneration loses all of them |
-| **Missing from both** | compaction by **summary** (today context bloat is handled only by dropping whole exchanges, and the code says why: a summary inherits the provenance of what it summarised); one error taxonomy; a map from each terminal state to what the user is told; a declared policy for malformed output | **Spec first**: capability and obligation, then build it, tagged tests, then scenarios |
-| **Specified, broken in the code** | F-014, F-016–F-021 | G0.5 |
+| Kind | How it is completed |
+|---|---|
+| **In the code, missing from the spec** — circuit breaker, orphan-safe trimming, the deterministic router, escalation lapse and caps, mandatory result schema | **Reverse-engineer**: capability + obligations, tag the existing test. Without this, regeneration loses them |
+| **Missing from both** — freshness of facts before irreversible actions, the structured facts record, summary provenance, one error taxonomy | **Spec first**: capability and obligation, then build, tagged tests, then scenarios |
+| **Specified, broken in the code** — F-014, F-016–F-021 | G0.5 |
 
-**From the NFR and cross-cutting audit** (ISO/IEC 25010:2023 and 26 concerns,
-all 98 capabilities read; most rows covered). The genuine gaps, ranked by what a
-regenerated agent would lose, each an agentic delta rather than restated
-practice:
+For the support agent the context work runs in the order its own design doc
+set: freshness (register 16), the facts record (19), a deduplicator over
+repeated tool calls, then the soft threshold with anchored, exchange-safe
+compaction (17, 18) — after measuring, because short support conversations may
+never reach it. What it does not need (it does not stream, has no cross-session
+memory, no cache) enters its AOAS as exclusions.
 
-1. **Action-claim binding** — a statement that an action happened is checked
-   against that action's recorded outcome. No capability discharges AAC-0110.
-2. **Egress allowlist** — destinations reachable by tools, and by links or images
-   in output, enforced outside the model.
-3. **Cache keys include the resolved configuration** — otherwise a rollback is
-   incomplete while caches serve the old model's answers.
-4. **Retention and erasure across derived artifacts** — memory, summaries,
-   checkpoints, fixtures, dataset rows. Nothing behind AAC-0095's retention half.
-5. **Behavioural canary** — the Baseline's own delta row, answered by nothing.
-6. **Tool-definition provenance and version** — descriptions are prompt text that
-   can change remotely.
-7. **Streamed-output screening** — AAC-0092 has nothing real to verify.
-8. **Per-caller token and spend quota** — today only a design decision.
-9. **Recalled memory fenced as untrusted and recorded per recall.**
-10. **Prefix caching and token classes** — cached, uncached and reasoning tokens
-    priced apart.
-
-Also: caching mostly partial (prompt caching and invalidation on version change
-are gaps), memory erasure does not reach summaries or checkpoints, versioning
-omits the tool-definition text. Bookkeeping: AHC-0042 should discharge
-AAC-0109; AAC-0096 asks for more cache-key dimensions than AHC-0068 requires.
-
-**From the twenty-category harness check** (2026-09-11). Most categories map to
-existing layers; these are new, each an agentic delta:
-
-11. **Clarification as a typed outcome** — the run suspends awaiting the user's
-    answer, distinct from escalation and from refusal.
-12. **A model-produced plan is a typed, recorded artifact, validated before any
-    step executes.** AHC-0072 covers declared topologies, not plans the model
-    writes at run time.
-13. **In-flight runs survive shutdown and upgrade** — every run is completed,
-    checkpointed or visibly failed, never half-executed; a resumed run continues
-    under the configuration it started with, or records the switch. Services
-    drain in seconds; agent runs hold irreversible steps for minutes.
-14. **Learned procedures are configuration** — anything the system writes that
-    later instructs it (procedural memory, self-edited prompts) passes the same
-    release gate as a prompt change. Episodic and semantic memory already map
-    to sessions, compaction and the retrieval corpus.
-15. **An agent manifest** — name, version, owner, lifecycle state and advertised
-    capabilities. Partly in the harness profile's `subject`; owner and lifecycle
-    are missing, and a multi-agent system needs it for discovery.
-
-**From the context-engineering check** (eighteen categories, 2026-09-11). AHC
-treats context as a *size* problem; **context rot is a quality problem that
-starts long before the limit** — stale facts, a goal buried under turns,
-failed attempts re-read and repeated. The strong rows are assembly, fencing,
-secrets, retrieval and observability. The gaps:
-
-16. **Freshness of facts in context.** A fact read from the world carries the
-    time it was read; the AOAS declares how long each field stays fresh; a
-    stale fact is re-read before an irreversible action relies on it. F-002 — a
-    stale read became a false confirmation — is this, and today it is caught
-    only after the fact by a guardrail.
-17. **Act before the context is full.** A soft threshold with headroom, and the
-    compaction rules as requirements: never move the stable prefix, whole
-    exchanges only, anchor the goal and the last *n* turns. They exist only in
-    the reference's own design doc (`docs/CONTEXT-BUDGET.html`).
-18. **A summary inherits the least-trusted provenance of what it summarised.**
-    Today a design question in AHC-0045 and a docstring in the reference.
-19. **A structured facts record beside the transcript** — goal, entities in
-    play, actions taken, what is pending. It resists rot, it is free, and it is
-    the source the escalation handoff should be built from. Missing in both;
-    the reference's `TurnNote` is its seed.
-20. **Environmental facts are rendered by the harness and recorded** — time,
-    locale, tenant, permissions — never inferred by the model, and captured so
-    a run that saw "today" can be replayed.
-21. **Segment priority is declared**, not left to a design question — what is
-    pinned, what goes first.
-22. **The budget's ruler is stated.** Provider tokens, or a declared
-    approximation and its error: the reference counts characters because its
-    provider has no token counter, which is a fair proxy for prose and a poor
-    one for JSON.
-23. **The tool surface is scoped to the request and stable in order** — what
-    the model is offered follows identity and state, and does not reshuffle
-    between calls (every reshuffle invalidates the cached prefix).
-24. **Rot is measured.** Quality sliced by context-length bucket — a segment
-    label (AHC-0090) and an obligation — or degradation with length is
-    invisible.
-
-**From the reasoning check** (ten categories, eight patterns). Reasoning
-techniques are the model's, and they rot fastest; AHC is right to prescribe
-none. What each technique needs *around* it is a component, and most exist —
-budgets outside the model (AHC-0041), no-progress detection (0042), bounded
-depth and fan-out (0048, 0097), the judge as a versioned component (0081–0084),
-typed uncertain verdicts (0082), abstention (0063). The deltas not yet
-recorded:
-
-25. **An aggregation rule is declared and recorded** wherever several model
-    outputs are combined — votes, debate, consensus, tree-of-thought branch
-    selection — with its tie-break, so the combined answer is reproducible from
-    the parts.
-26. **Reasoning tokens are budgeted and accounted apart** — a thinking budget
-    is a cost and latency control, and folds into item 10's token classes.
-
-Planning (item 12), clarification (item 11) and verification of claims (item 1)
-already cover the rest.
-
-Deliberately *not* capabilities: topologies (supervisor–worker, swarm,
-planner–executor), reasoning techniques (reflection, self-critique, consensus)
-and plugin mechanisms. They are patterns and realisations; the first two go to
-the pattern library in G0.7, the third to the binding.
-
-**For the support agent, in G0**, the context work in the order its own design
-doc already set — cheapest and most certain first: freshness before irreversible
-actions (16), the facts record (19), a deduplicator over repeated tool calls,
-then the soft threshold with anchored, exchange-safe compaction (17, 18) —
-built spec-first, after measuring, because short support conversations may
-never reach it.
-
-Which of these the support agent needs now is itself a statement: it does not
-stream, has no cross-session memory and no cache, so 7, 9 and most caching rows
-enter its AOAS as **exclusions with a `revisit_when`**, not as work.
-
-- **AHC** — about eighteen capabilities the reference has and no catalog
-  requires: escalation (ownership lock, queue and lapse, what the customer is
-  told, caps, over-escalation rate, `escalated` as an outcome); context
-  (tool-call pair integrity, compaction trigger, transcript bound); errors
-  (circuit breaker, unrecoverable termination, one taxonomy, terminal state →
-  what the user sees); structured output (mandatory result schema, a repair
-  path); deterministic-first (a rule-based router ahead of the model; a
-  deterministic answer never reaches the model; the cost of each path recorded).
-  Lifted from the module that does it, written to AHC's linter.
-- **AAC** — the loop obligations the A6 archetype is thin on (trajectory,
-  robustness), wherever G0.1 finds a tested behaviour no obligation names.
-- **AOAS** — whatever G0.1's untagged tests describe that is domain behaviour.
-- **Charter** — the pre-1.0 pinning clause (E8).
-
-Every addition passes the domain-noun test: a universal spec never gains
-"order", "refund" or "customer".
-
-**AHC and AAC are filled in pairs.** Every capability names the obligations
-that verify it, one to many. The existing catalog already holds to this: all 98
-capabilities cite one to five obligations (291 links), and 108 of 110
-obligations are cited back. The two that are not — **AAC-0109** (repetition
-detected and broken) and **AAC-0110** (a claimed action is supported by its
-result) — came from this reference in 0.12.0 and have no capability yet: two of
-the eighteen, seen from the other side. Each new capability lands with its
-obligations, new ones where the audit found none.
+Also here: the charter's pre-1.0 pinning clause (E8), and AHC-0042 discharging
+AAC-0109.
 
 ### G0.7 · Tell the generator the shape
 
@@ -520,6 +389,10 @@ Deliberately after G2; each depends on something the goals will teach.
   violation appears, not before (charter §3).
 - **Actors and perturbations** into the AWD format; **shadow mode** built, so a
   world's fidelity is verified rather than asserted.
+- **The catalog gap register** — [GAPS.md](GAPS.md): forty-odd AHC and AAC gaps
+  from five audits, each an agentic delta. Filled in pairs, from running code
+  where it exists, as agents hit them. G0.6 and G2.4 draw from it; the rest wait
+  there, owned and dated.
 - **Compliance crosswalks** in AAC — ISO/IEC 42001, NIST AI RMF, EU AI Act.
   Only OWASP LLM exists today, so the governance Concern View cannot yet reach
   organisational governance. Not needed to generate an agent; needed to sell
