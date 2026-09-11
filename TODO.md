@@ -1,273 +1,278 @@
 # TODO
 
-The work that turns the family from **two catalogs and a draft** into a set of
-specifications a generator can be handed — and a measurement that says whether
-they were enough.
+The work that turns the family into a set of specifications a generator can be
+handed — and a measurement that says whether they were enough.
 
-The programme and its reasoning are in the strategy repository (`43` — the
-regeneration programme, `44` — the spec family). This file is the queue, in the
-order the dependencies force. Each item says **what**, **why**, **where**, and
+Reasoning in the strategy repository (`43` — the regeneration programme, `44` —
+the spec family). This file is the queue. Each item says **what**, **why** and
 **done when**, because an item that says only "add X" gets re-argued every time
 it is read.
 
-**Standing constraint.** None of this is revenue work. It runs capped, in the
-authority block, and before December only Tier 1 and Tier 2 are in scope.
-
 ---
 
-## Tier 1 — The per-agent specs, extracted from the reference
+## The three goals
 
-The reference agent already *contains* all three per-agent specifications —
-tangled into one world file, a strategy document and a stack page. Tier 1 is
-separating them by the charter's routing rule. **Nothing here is authored from
-an armchair**; every statement is lifted from something that runs, and a
-statement that will not route cleanly is a finding, not an inconvenience.
+| | Goal | Passes when |
+|---|---|---|
+| **G0** | **The customer support agent is solid — and the specs with it** | the reference passes the three build-time checks, every finding is closed or accepted, and every test traces to a spec statement |
+| **G1** | **Delete the reference code; the specs regenerate a similar agent** | a blind generation passes the four gates below. If it does not, a spec is incomplete — and the divergence says which |
+| **G2** | **The same universal specs generate a hotel customer support agent** | a blind generation from the universal specs plus a hotel AOAS and world passes the same four gates, with no hotel noun added to a universal spec |
 
-The reference is **frozen at `v0.1.0`** while this happens. Where extraction
-exposes a defect, it is recorded against the reference, not fixed in passing.
+**G0 comes first because it produces what G1 and G2 consume.** A god object
+regenerated faithfully is not a success, and a spec extracted from code nobody
+trusts is not a spec.
 
-### 1.1 · The support agent's AOAS — worked example 1
+### One rule that joins G0 to G1: spec first, per change
 
-- **What.** The support agent's behaviour and required properties, in the seven
-  sections of [drafts/AOAS.md](drafts/AOAS.md), from doc 24, `worlds/clothing.yaml`
-  and the policy, approval, escalation and identity code.
-- **Why.** AOAS is upstream of the other two: the world is built to exercise what
-  the AOAS declares, and the binding realises what it requires. Writing a real one
-  is also the only honest way to settle the draft's open format question.
-- **Where.** [drafts/examples/support-agent.aoas.yaml](drafts/examples/support-agent.aoas.yaml),
-  with the extraction record beside it.
-- **Done when.** Every operation, policy and threshold the reference enforces is
-  stated; every one it does not enforce is stated too and marked as a
-  nonconformance of `v0.1.0`; the statements that did not route are listed.
-- **Status.** ✅ Done 2026-09-11. Eight routing findings (E1–E8) and four new
-  nonconformances, in [the extraction record](drafts/examples/support-agent.extraction.md).
-  E1 decides 1.2's first question: the shared condition vocabulary cannot state
-  the ownership rule behind F-016. E8 needs a pre-1.0 pinning clause in the
-  charter.
+Every change to the reference during G0 starts in a spec — the statement goes
+into AOAS, AHC, AAC, AWD, the binding or the Baseline, placed by the charter's
+routing rule — then the code, then a test **tagged with the statement's id**.
+A change that cannot name its statement is either a gap (write the statement)
+or not worth making. This is how "make the agent solid" and "make the specs
+solid" become the same work instead of two.
 
-### 1.2 · AOAS schema and validator
+### "Similar" is four gates, fixed before the first generation
 
-- **What.** A JSON Schema for the machine-readable form, and a validator that
-  checks an AOAS file against it plus the cross-references a schema cannot see
-  (an operation's precondition names a field the entity declares; an escalation
-  names a rule that exists).
-- **Why.** Two of the three promotion conditions in the draft. And a validator is
-  what makes an AOAS a contract rather than a document.
-- **Where.** `drafts/aoas.schema.json`, `tools/` in this repo.
-- **Done when.** The worked example validates, and a deliberately broken copy
-  fails for each rule.
-- **Status.** ✅ Done 2026-09-11. `npm test`: 22 rules, 41 table-driven cases,
-  each asserting *which* rule fired; a meta-test fails if a rule is documented,
-  emitted and exercised unequally. Catalog identifiers are checked against
-  sibling checkouts when present. Format decided: the shared vocabulary plus
-  `equals_session`, reopened only when a second rule outgrows it. The
-  validator's first run caught an undeclared field in the example (E9).
+Code is never diffed as a gate. A generation is similar when it passes:
 
-### 1.3 · The AWD format, written down
-
-- **What.** The world-description format as a specification: what `loader.py`
-  already accepts, as prose plus a JSON Schema. Move both worlds into `agenttwin`
-  as worked examples, and make them **cite the AOAS** for entities, operations and
-  policies instead of restating them — so a world keeps only what is its own:
-  fidelity, seed, records, actors, perturbations, resolution.
-- **Why.** Today the policy lives *in the world file*. Under the charter it is an
-  AOAS statement that the world projects. Until they are separated, a world and an
-  agent spec that disagree have no way to be told apart from one that agrees.
-- **Where.** `agenttwin` — `SPEC.md`, `schema/`, `examples/`. Resolves the
-  README's open decision (fixtures versus worked examples): they are worked
-  examples.
-- **Done when.** `clothing.yaml` loads from AOAS + world, the reference suite
-  passes unchanged, and no domain rule appears in both files.
-- **Status.** ✅ Done 2026-09-11. `agenttwin` has `SPEC.md`, a JSON Schema and
-  36 table-driven loader tests on a lending-library fixture. A world now *cites*
-  its AOAS and the loader rejects one that declares entities, actions or
-  policies. Reference suite 657 → 657. Six test fixtures changed shape (they
-  built worlds in the old inline form); no assertion changed. **Revised on
-  contact:** the worlds stay with the reference agent — they cite its spec and
-  change with it — and `SPEC.md` links to them as the worked example.
-  Electronics is now a 70-line RFC 7386 `extends` of the clothing AOAS instead
-  of a 131-line fork. The world enforces one new rule the AOAS states (no
-  refund of a refunded order), and reports six statements no world can enforce
-  (ownership ×5, the address write) as `unenforced` instead of skipping them.
-  One correction to my own reading: electronics' missing `required_when` was
-  not drift — a test pins it — and the variant now deletes it explicitly.
-
-### 1.4 · The support agent's ABS
-
-- **What.** The binding for the reference build — each AHC layer, the capability
-  identifiers it satisfies, the realisation, its version. Lifted from
-  `docs/PRODUCTION-STACK.md`. Also takes `binding: mcp` out of the world file,
-  where the charter says it cannot live.
-- **Why.** Cycle 0 pins the binding (`43` §4). A pin that is not written down is
-  not a pin.
-- **First question.** The harness catalog already has a **harness profile**
-  format (`schema/profile.schema.json`) whose `bindings` say which
-  implementation fills each seam. If ABS is an instance of that format, it is
-  not a new one — the charter's §1 test applies before anything is minted.
-- **Where.** With the build: `reference-agent/spec/binding.yaml`.
-- **Revised 2026-09-11.** Proposed as the reference's AHC **harness profile**:
-  every capability its shape owes, either bound or an accepted gap. That is also
-  how "the reference implements all of AHC" becomes a check instead of a claim.
-  Best done after 1b, when the capabilities it answers for exist.
-- **Done when.** Every layer has a row or a declared absence, and nothing in it
-  would change what a customer experiences.
-
-### 1.5 · The Build Manifest format
-
-- **What.** A few lines of YAML naming the exact version of every input to one
-  generation or evaluation run: AAC, AHC, Baseline profile, AOAS, AWD, ABS,
-  generator model and settings.
-- **Why.** Without it no cycle is reproducible, and "we regenerated and it
-  improved" is unfalsifiable.
-- **Where.** Format in [SPEC-CHARTER.md](SPEC-CHARTER.md) §1; one instance per run.
-- **Done when.** A manifest exists for the reference itself, and the Baseline
-  profile is a named input in it ([BASELINE.md](BASELINE.md) requires this).
-
-## Tier 1b — Bring the reference and the catalogs level
-
-Added 2026-09-11 from two review questions (`reference-agent` R-018, R-019).
-**The key goal decides the order:** a spec set that, with a binding, regenerates
-*similar* features and code when the reference is deleted — or for another
-agent, shape or domain. So anything the reference does that no spec states is a
-gap, and anything the specs require that the reference does not do is a defect.
-
-### 1b.1 · Decompose the entrypoint — nine steps, each green
-
-The `Agent` class is 481 lines doing eleven things; `handle` itself is 23. Steps,
-each a commit that keeps the suite at 657+:
-
-1. Type the seams: a `DeliveryLog` protocol; the existing seven protocols as
-   parameter types instead of `object` + `type: ignore`.
-2. Move the pure helpers to the layers they belong to (`_bind` → `contracts`,
-   `_facts` → `escalation.rules`, `_note`/`_record` → `state`, `_refusal_text` →
-   `router`), re-exported so tests importing them still pass.
-3. `TurnPersister` — bound, checkpoint, record.
-4. `HandoffDesk` behind a `Handoff` protocol, with a null desk replacing three
-   `is None` branches.
-5. `ApprovalResumer` behind a `PendingWork` protocol.
-6. A `DirectHandler` registry keyed by the router's handler name.
-7. A `RouteDispatcher` — route kind → handler.
-8. `_turn` to ~30 lines: gates → route → dispatch → Tier 2 → **enforce** →
-   record → persist.
-9. `build` owns all wiring, including the meter and policy rules it cannot
-   accept today.
-
-Behaviour-changing fixes ride as their own commits with their own tests:
-**F-018** (refund status), **F-019** (cost ceiling), **F-020** (guardrails on
-every path), **F-021** (injected clock). Retag `v0.2.0`; freeze again before
-cycle 0.
-
-### 1b.2 · Reverse-engineer the AHC gaps
-
-About eighteen capabilities the reference has and no catalog requires, across
-escalation (ownership lock, queue and lapse, what the customer is told, caps,
-over-escalation rate, `escalated` as an outcome), context (tool-call pair
-integrity, compaction trigger, transcript bound), errors (circuit breaker,
-unrecoverable termination, one taxonomy, terminal state → what the user sees),
-structured output (mandatory result schema, a repair path), and
-deterministic-first (a rule-based router ahead of the model; a deterministic
-answer never reaches the model; the cost of each path recorded). Each lifted
-from the module that does it, written to AHC's linter, with the reference test
-that exercises it named in the commit — never in the capability, which may not
-cite an agent.
-
-### 1b.3 · Tell the generator the shape
-
-AHC's scope excludes design principles, correctly. They route to two places:
-a **Baseline profile item** — every AHC port is an interface, and only the
-composition root constructs a realisation (the binding swap, the world swap and
-regeneration all stand on it) — and the **A6 blueprint**: one module per layer,
-ports as interfaces, one wiring point, extracted from the decomposed reference.
-Without this, regeneration reproduces the god object.
-
-**The principles the generator is held to — three checks, not a list.**
-
-Principles proliferate; checks do not. So the rule is the Baseline's own
-*make it executable*, applied strictly: **a design principle enters the spec
-only as a deterministic check. Everything else is a citation** — ISO/IEC
-25010:2023 *maintainability*, and SOLID and clean-code practice as its
-established reading — and is not listed, because a list is what nobody enforces.
-
-Three checks cover what was asked for, and each fails at build time, not run
-time:
-
-| Check | Catches, before anything runs |
+| Gate | Measured by |
 |---|---|
-| **Strict static typing** — a type checker in strict mode; no `type: ignore` without a reason; `assert_never` on every match over a typed union | a component that does not satisfy its interface (Liskov, interface segregation); wiring the wrong implementation; a new result or route kind nobody handles; `object` standing in for a protocol |
-| **The import contract** — layered, `exhaustive = true`; only the composition root imports realisations | coupling, a dependency pointing the wrong way, a change whose blast radius crosses a layer |
-| **Size and complexity ceilings** — function and module length, cyclomatic complexity | the god object, before it is 481 lines |
+| **Behaviour** | the AgentTwin scenario suite, through the black-box agent contract |
+| **Features** | the feature inventory — every tagged feature of the reference is exercised and passes |
+| **Structure** | the blueprint: one module per harness layer, ports as interfaces, and the three build-time checks (strict types, import contract, size and complexity) |
+| **Harness** | the harness profile: every capability the shape owes is realised or an accepted gap |
 
-Readability and naming stay review, and say so. The reference is held to all
-three first (1b.1), so they are proven satisfiable before a generator is asked
-to satisfy them. **Today it runs no type checker at all** — nineteen
-`type: ignore`, no `assert_never` — so the first of the three is also the
-first step of the decomposition.
+Line-level similarity is reported, descriptively, and never decides anything.
 
 ---
 
-## Tier 2 — The instrument, and cycle 0
+## Done
 
-Doc 43's WP1 and WP2. Nothing here can start before Tier 1, because the
-generator's inputs are Tier 1's outputs.
-
-### 2.1 · The black-box agent contract
-
-- **What.** The interface the oracle drives *any* agent through — the chat
-  surface, the tool seam the world projects into, the approval and escalation
-  surfaces — stated so a regenerated agent can implement it without reading the
-  reference.
-- **Why.** Most of the reference's tests reach into its modules. An oracle that
-  can only test the implementation it was written against cannot answer whether
-  a *different* implementation is equivalent.
-- **Done when.** The scenario suite runs against the reference through this
-  contract alone.
-
-### 2.2 · Package the oracle
-
-- **What.** One command: an agent behind the 2.1 contract in, a report out —
-  AgentTwin scenario pass rate, AAC obligations exercised, AHC layer coverage,
-  Baseline profile items detected.
-- **Done when.** The reference produces its report through it, with its
-  not-exercised list intact.
-
-### 2.3 · Pre-register
-
-- **What.** Before the first generation: what counts as convergence, the
-  generator pinned (model, version, settings, prompt), N runs per spec version,
-  the gap classification (AAC · AHC · AOAS · AWD · Baseline · generator), and the
-  **baseline decision** — does cycle 0 receive doc 24's prose or the formal AOAS?
-  Only the first preserves WP3's measurement of what AOAS adds.
-- **Why.** Otherwise the person writing the specs is the person judging the
-  output, and the experiment cannot fail.
-
-### 2.4 · Cycle 0
-
-- **What.** Blind-regenerate the support agent from the manifest's inputs alone,
-  N times. Classify every divergence at the moment it is found.
-- **Done when.** A convergence count and a gap-type distribution exist, failures
-  included.
+- **1.1 · The support agent's AOAS** — extracted from the reference, with the
+  record of what did not route ([drafts/examples/](drafts/examples/)). E1–E9,
+  four new nonconformances.
+- **1.2 · AOAS schema and validator** — `npm test`: 22 rules, 60 table-driven
+  tests. Format: the shared condition vocabulary plus `equals_session`.
+- **1.3 · The AWD format** — a world cites the AOAS and cannot declare the
+  domain (`agenttwin/SPEC.md`); electronics is a 70-line RFC 7386 variant;
+  reference suite 657 → 657.
+- **Review findings recorded** — F-018–F-021 and R-018/R-019 in `reference-agent`.
 
 ---
 
-## Tier 3 — After cycle 0
+## G0 · The support agent solid, and the specs with it
 
-Deliberately later. Each depends on something cycle 0 will teach.
+In order. Each item is a series of commits that keep the suite green.
 
-- **3.1 · WP3.** Re-run cycle 0 with the formal AOAS, if 2.3 chose prose for the
-  baseline. The difference is the first real result.
-- **3.2 · A second AOAS, chosen by shape.** A contrasting agent from `43` §5 —
-  long-horizon stateful (hotel booking) is the strongest candidate. With 1.2 this
-  meets the promotion condition, and AOAS earns its own repository.
-- **3.3 · Close the reference's nonconformances** that 1.1 names — F-016
-  (ownership), F-014 (ungrounded refund amount), F-017 (key stops at the process).
-  They do not block cycle 0: the oracle measures against the specs, not against
-  the reference. Retag when done.
-- **3.4 · Concern tags and the derived views.** ISO/IEC 25010 vocabulary, plus
-  *cost*, on every statement; an evidence method on every MUST; then generate the
-  Assurance Map and the Concern View. Never hand-write either.
-- **3.5 · The cross-reference check** for the dependency invariant — when the
-  first violation appears, not before (charter §3).
-- **3.6 · Free the binding** — cycle 0 again with the generator choosing its own
-  stack. Its own experiment, publishable either way.
-- **3.7 · World variants.** `electronics.yaml` is a fork of `clothing.yaml` where
-  it should be a variant; it will not survive the tenth world.
+### G0.1 · Tag every test with the statements it discharges
+
+- **What.** Extend the reference's `discharges` marker — today 92 tests, AAC ids
+  only — to AHC ids and the agent's own AOAS ids (`P-CANCEL`, `R-STYLE`,
+  `Q-COST`, operation names). Generate the **Assurance Map** from the markers.
+- **Why.** It is doc 25's method, reused: write the cases, tag each with what it
+  discharges, and **the unmapped remainder is the gap.** A test tagged with no
+  spec statement is a feature no spec requires — exactly what G1 would lose. A
+  statement no test tags is a spec nothing verifies.
+- **Done when.** The map is generated, never hand-written, and lists both
+  remainders. They become the work list for G0.5.
+
+### G0.2 · The three build-time checks, strict types first
+
+- **What.** A type checker in strict mode, in the lint run and the suite. The
+  seven existing protocols as parameter types instead of `object` +
+  `type: ignore` (nineteen today); `assert_never` on every match over a typed
+  union; a `DeliveryLog` protocol. Then size and complexity ceilings.
+- **Why.** Catch at build time what today is caught only if a test happens to
+  run it. After this, every later step is checked the moment it lands.
+- **The rule it follows.** A design principle enters the spec only as a
+  deterministic check; everything else is a citation — ISO/IEC 25010:2023
+  *maintainability*, with SOLID and clean-code practice as its reading. Three
+  checks, not a list:
+
+  | Check | Catches, before anything runs |
+  |---|---|
+  | **Strict static typing** | a component that does not satisfy its interface; the wrong implementation wired; a new result or route kind nobody handles |
+  | **The import contract** — layered, exhaustive; only the composition root imports realisations | coupling, a dependency pointing the wrong way, a change whose blast radius crosses a layer |
+  | **Size and complexity ceilings** | the god object, before it is 481 lines |
+
+  Readability and naming stay review, and say so.
+
+### G0.3 · Decompose the entrypoint
+
+The `Agent` class is 481 lines doing eleven things; `handle` itself is 23.
+
+1. Move the pure helpers to their layers (`_bind` → `contracts`, `_facts` →
+   `escalation.rules`, `_note`/`_record` → `state`, `_refusal_text` → `router`),
+   re-exported so tests importing them still pass.
+2. `TurnPersister` — bound, checkpoint, record.
+3. `HandoffDesk` behind a `Handoff` protocol; a null desk replaces three
+   `is None` branches.
+4. `ApprovalResumer` behind a `PendingWork` protocol.
+5. A `DirectHandler` registry keyed by the router's handler name.
+6. A `RouteDispatcher` — route kind → handler.
+7. `_turn` to ~30 lines: gates → route → dispatch → Tier 2 → **enforce** →
+   record → persist.
+8. `build` owns all wiring, including the meter and policy rules it cannot
+   accept today; `scripts/run_server.py` and `serve.build` stop wiring.
+
+Each extracted collaborator either maps to an AHC capability or is a gap for
+G0.5 — the entrypoint's version of "a layer with no module is a finding".
+
+### G0.4 · Close the findings, spec first
+
+Each as its own commit with its own tagged test, starting from the spec
+statement it enforces:
+
+| Finding | Statement it enforces |
+|---|---|
+| **F-016** any customer can act on any order *(critical)* | AOAS `P-OWNERSHIP` |
+| **F-019** cost ceiling unreachable from the entrypoint | AOAS `Q-COST` |
+| **F-020** three reply paths skip the guardrails | AAC — output screened on every path |
+| **F-018** refund status answered as order status | AOAS — the refund-status operation, not yet declared |
+| **F-014** refund amount ungrounded | AOAS `issue_refund.amount_from: order.total` |
+| **F-017** idempotency key never leaves the process | AOAS external contract — the order system accepts a key |
+| **F-021** approval expiry on the wall clock | AHC L9 — no clock outside the injected seam |
+| extraction nonconformances — address never changed, R-STYLE/R-FRAUD unenforced | AOAS `change_address`, `R-STYLE`, `R-FRAUD` |
+
+Also the reference's own `TODO.md` where it serves G1: T-001 (a session opening
+is not expressible) is a missing AOAS operation, not a UI nicety.
+
+### G0.5 · Fill the specs from what G0.1–G0.4 exposed
+
+- **AHC** — about eighteen capabilities the reference has and no catalog
+  requires: escalation (ownership lock, queue and lapse, what the customer is
+  told, caps, over-escalation rate, `escalated` as an outcome); context
+  (tool-call pair integrity, compaction trigger, transcript bound); errors
+  (circuit breaker, unrecoverable termination, one taxonomy, terminal state →
+  what the user sees); structured output (mandatory result schema, a repair
+  path); deterministic-first (a rule-based router ahead of the model; a
+  deterministic answer never reaches the model; the cost of each path recorded).
+  Lifted from the module that does it, written to AHC's linter.
+- **AAC** — the loop obligations the A6 archetype is thin on (trajectory,
+  robustness), wherever G0.1 finds a tested behaviour no obligation names.
+- **AOAS** — whatever G0.1's untagged tests describe that is domain behaviour.
+- **Charter** — the pre-1.0 pinning clause (E8).
+
+Every addition passes the domain-noun test: a universal spec never gains
+"order", "refund" or "customer".
+
+### G0.6 · Tell the generator the shape
+
+- **Baseline** — one profile item: every harness port is an interface, and only
+  the composition root constructs a realisation. The binding swap, the world
+  swap and regeneration all stand on it.
+- **The A6 blueprint** in AHC — the module map, ports and single wiring point,
+  **extracted from the decomposed reference**, not designed beside it.
+
+### G0.7 · Make the oracle portable
+
+- **A scenario format in AWD.** Scenarios live in pytest today, welded to this
+  implementation. A declarative scenario — world, actor script, assertions over
+  the run — is what lets the same suite judge a regenerated agent, and it is
+  what G2 will need to write hotel scenarios without code.
+- **The black-box agent contract** — the chat surface, the session opening, the
+  tool seam the world projects into, the approval and escalation surfaces —
+  stated so an agent that never saw the reference can implement it.
+- **Done when.** The reference passes its scenarios through the contract alone.
+
+### G0.8 · The binding and the manifest
+
+- **Binding spec** — proposed as the reference's AHC **harness profile** (the
+  format already exists): every capability its shape owes, realised or an
+  accepted gap. It is also how "the agent implements all of AHC" becomes a check.
+  Takes `x_binding` out of the worlds.
+- **Build Manifest** — the exact version of every input to one generation:
+  AAC, AHC, Baseline, blueprint, AOAS, AWD, binding, generator.
+
+**G0 is done when** `v0.2.0` is tagged with: the three checks passing, every
+finding closed or accepted, the Assurance Map showing no untagged test, and a
+complete harness profile. Then it is frozen.
+
+---
+
+## G1 · Regenerate the support agent from the specs alone
+
+### G1.1 · Pre-register
+
+Before the first generation, written down and committed:
+
+- the four gates and their thresholds;
+- **the blind protocol** — a fresh workspace holding only the manifest's
+  bundle; a generator session with no user memory, no project instructions and
+  no filesystem path to the reference; one fixed, short prompt. A generator
+  that can read the reference, or whose memory describes it, is not blind;
+- the generator pinned — model, version, settings — and **N = 3** runs per spec
+  version, because one run says nothing about a stochastic generator;
+- the gap classes, from the routing rule: AAC · AHC · AOAS · AWD · binding ·
+  Baseline · blueprint · **generator** — the last for failures a second
+  generator does not reproduce.
+
+### G1.2 · Package the oracle
+
+One command: an implementation behind the agent contract in, the four gates out.
+
+### G1.3 · Cycle 0, then cycles until convergence
+
+Generate N times; run the gates; **classify every divergence the moment it is
+found**, fix it in the spec the routing rule names, and regenerate. Record the
+number of cycles and the distribution of gap types. That curve, and that
+distribution, are the result.
+
+---
+
+## G2 · The hotel customer support agent from the same universal specs
+
+**What stays the same:** AAC, AHC, Baseline, blueprint, and the binding. **What
+is new:** a hotel AOAS and a hotel world — and nothing else.
+
+### G2.1 · Write the hotel AOAS — with no reference to extract from
+
+Written from the domain, as a domain owner would. It is the test of whether
+AOAS is writable without code. **Expected to strain the format**: bookings are
+long-horizon and stateful — holds that expire, modification windows, dates
+compared with dates, availability contended by other guests. A condition over
+two fields (check-in against the cancellation deadline) is the trigger, already
+written down, for moving all four condition consumers to an expression language
+at once.
+
+### G2.2 · Write the hotel world and scenarios
+
+In the G0.7 scenario format. There is no reference implementation, so **the
+oracle is these scenarios** — derived from the hotel AOAS, the way the support
+agent's eligibility cases were derived from its world.
+
+### G2.3 · Generate, measure, classify
+
+Same protocol as G1. Behaviour against the hotel scenarios; structure against
+the same blueprint, so the two agents' module maps should be near-identical;
+features against the universal part of the support agent's inventory
+(escalation, context, errors, deterministic-first all carry over).
+
+### G2.4 · Fix universal gaps, then re-run G1
+
+Every gap G2 finds in a universal spec is fixed there — **and G1 is re-run**,
+because a universal fix that breaks the support agent's regeneration was not
+universal. This is the regression test for the whole family.
+
+### G2.5 · AOAS earns its repository
+
+Two agents of different shape meet the promotion condition.
+
+---
+
+## Later
+
+Deliberately after G2; each depends on something the goals will teach.
+
+- **A third shape** — read-only advisory or fully autonomous — to see whether
+  convergence cycles fall.
+- **Free the binding** — the generator chooses its own stack. Does the spec
+  still converge?
+- **Concern tags** (ISO/IEC 25010 vocabulary plus *cost*) on every statement,
+  and the generated Concern View.
+- **The cross-reference check** for the dependency invariant — when the first
+  violation appears, not before (charter §3).
+- **Actors and perturbations** into the AWD format; **shadow mode** built, so a
+  world's fidelity is verified rather than asserted.
+- **Publish** — the convergence curve, the gap-type distribution, and what the
+  generator contributed versus what the specification did.
