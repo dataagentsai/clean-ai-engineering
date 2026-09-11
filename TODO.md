@@ -105,6 +105,10 @@ exposes a defect, it is recorded against the reference, not fixed in passing.
   implementation fills each seam. If ABS is an instance of that format, it is
   not a new one — the charter's §1 test applies before anything is minted.
 - **Where.** With the build: `reference-agent/spec/binding.yaml`.
+- **Revised 2026-09-11.** Proposed as the reference's AHC **harness profile**:
+  every capability its shape owes, either bound or an accepted gap. That is also
+  how "the reference implements all of AHC" becomes a check instead of a claim.
+  Best done after 1b, when the capabilities it answers for exist.
 - **Done when.** Every layer has a row or a declared absence, and nothing in it
   would change what a customer experiences.
 
@@ -118,6 +122,63 @@ exposes a defect, it is recorded against the reference, not fixed in passing.
 - **Where.** Format in [SPEC-CHARTER.md](SPEC-CHARTER.md) §1; one instance per run.
 - **Done when.** A manifest exists for the reference itself, and the Baseline
   profile is a named input in it ([BASELINE.md](BASELINE.md) requires this).
+
+## Tier 1b — Bring the reference and the catalogs level
+
+Added 2026-09-11 from two review questions (`reference-agent` R-018, R-019).
+**The key goal decides the order:** a spec set that, with a binding, regenerates
+*similar* features and code when the reference is deleted — or for another
+agent, shape or domain. So anything the reference does that no spec states is a
+gap, and anything the specs require that the reference does not do is a defect.
+
+### 1b.1 · Decompose the entrypoint — nine steps, each green
+
+The `Agent` class is 481 lines doing eleven things; `handle` itself is 23. Steps,
+each a commit that keeps the suite at 657+:
+
+1. Type the seams: a `DeliveryLog` protocol; the existing seven protocols as
+   parameter types instead of `object` + `type: ignore`.
+2. Move the pure helpers to the layers they belong to (`_bind` → `contracts`,
+   `_facts` → `escalation.rules`, `_note`/`_record` → `state`, `_refusal_text` →
+   `router`), re-exported so tests importing them still pass.
+3. `TurnPersister` — bound, checkpoint, record.
+4. `HandoffDesk` behind a `Handoff` protocol, with a null desk replacing three
+   `is None` branches.
+5. `ApprovalResumer` behind a `PendingWork` protocol.
+6. A `DirectHandler` registry keyed by the router's handler name.
+7. A `RouteDispatcher` — route kind → handler.
+8. `_turn` to ~30 lines: gates → route → dispatch → Tier 2 → **enforce** →
+   record → persist.
+9. `build` owns all wiring, including the meter and policy rules it cannot
+   accept today.
+
+Behaviour-changing fixes ride as their own commits with their own tests:
+**F-018** (refund status), **F-019** (cost ceiling), **F-020** (guardrails on
+every path), **F-021** (injected clock). Retag `v0.2.0`; freeze again before
+cycle 0.
+
+### 1b.2 · Reverse-engineer the AHC gaps
+
+About eighteen capabilities the reference has and no catalog requires, across
+escalation (ownership lock, queue and lapse, what the customer is told, caps,
+over-escalation rate, `escalated` as an outcome), context (tool-call pair
+integrity, compaction trigger, transcript bound), errors (circuit breaker,
+unrecoverable termination, one taxonomy, terminal state → what the user sees),
+structured output (mandatory result schema, a repair path), and
+deterministic-first (a rule-based router ahead of the model; a deterministic
+answer never reaches the model; the cost of each path recorded). Each lifted
+from the module that does it, written to AHC's linter, with the reference test
+that exercises it named in the commit — never in the capability, which may not
+cite an agent.
+
+### 1b.3 · Tell the generator the shape
+
+AHC's scope excludes design principles, correctly. They route to two places:
+a **Baseline profile item** — every AHC port is an interface, and only the
+composition root constructs a realisation (the binding swap, the world swap and
+regeneration all stand on it) — and the **A6 blueprint**: one module per layer,
+ports as interfaces, one wiring point, extracted from the decomposed reference.
+Without this, regeneration reproduces the god object.
 
 ---
 
