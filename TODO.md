@@ -168,6 +168,28 @@ The `Agent` class is 481 lines doing eleven things; `handle` itself is 23.
 Each extracted collaborator either maps to an AHC capability or is a gap for
 G0.6 — the entrypoint's version of "a layer with no module is a finding".
 
+**Status — the entrypoint: ✅ done 2026-09-12**, eight commits, suite green and
+strict types clean after each (683 → 689 tests). `Agent` went from 481 lines
+doing eleven things to an orchestrator whose `_turn` reads as its sequence;
+the module from 744 to 305 lines, with four collaborators beside it — each one
+job, each behind a protocol, each with a null object where the old code
+branched on `None`:
+
+| Collaborator | One job | AHC it realises |
+|---|---|---|
+| `TurnPersister` | bound, checkpoint, hand back what was stored | AHC-0044, AHC-0067 |
+| `HandoffDesk` / `NoDesk` (`Handoff`) | hold, lapse, Tier 1 and Tier 2 raises, reply wording | AHC-0070 — and the escalation gaps in GAPS.md §1 |
+| `ApprovalFlow` / `NoApprovals` (`PendingWork`) | offer the request tool, resume a decision | AHC-0057 |
+| `direct.HANDLERS` | deterministic answers by the router's handler name | **none** — deterministic-first is a catalog gap |
+
+Also: pure helpers moved to the layers that own their data; serve now takes
+the agent's own stores and refuses a different one at startup (it could have
+worked a different escalation queue from the agent's); F-018 is visible in the
+registry instead of hidden; the module-size ratchet fell 744 → 449. Deviation
+from the plan, kept deliberately: the four-way dispatch stayed a method, not a
+`RouteDispatcher` class — a class around one exhaustive `match` adds a hop and
+removes nothing. **Next here: the other oversized units** — `loop.run` first.
+
 **Then the other oversized units**, measured in code lines excluding docstrings,
 in this order:
 
