@@ -271,6 +271,13 @@ policies:
   P-REFUND:
     rule: to the original payment method; a refund above ₹10,000 needs a person
     via: [request_refund, issue_refund]
+  P-REFUND-STATUS:
+    # Answered from the order's status — the only refund state the order system
+    # holds. refunded: a refund was issued, to the original payment method;
+    # returned: the return arrived and the refund is being processed; anything
+    # else: there is no refund on this order. Never a date, never an amount.
+    rule: refund status is answered from the order's status, deterministically, and never promises a date or an amount
+    via: [get_order]
   P-OWNERSHIP:
     rule: a customer may see and act on only the orders they placed
     via: [get_order, cancel_order, open_return_request, change_address, request_refund, issue_refund]
