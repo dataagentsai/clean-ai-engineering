@@ -310,6 +310,35 @@ function aoasIssues(doc, opts = {}) {
   return issues;
 }
 
+// --------------------------------------------------------------- extends
+/*
+ * A variant is its base plus an RFC 7386 JSON Merge Patch: objects merge,
+ * null deletes, anything else — lists included — replaces. Cited, not
+ * invented. AgentTwin's loader implements the same section of the same RFC,
+ * and the two are held to the same examples.
+ */
+function mergePatch(target, patch) {
+  if (patch === null || typeof patch !== "object" || Array.isArray(patch)) return patch;
+  const result = target && typeof target === "object" && !Array.isArray(target) ? { ...target } : {};
+  for (const [k, v] of Object.entries(patch)) {
+    if (v === null) delete result[k];
+    else result[k] = mergePatch(result[k], v);
+  }
+  return result;
+}
+
+function loadAoas(file, depth = 0) {
+  if (depth > 8) throw new Error(`${file}: extends nested more than 8 deep — a cycle?`);
+  const doc = yaml.load(fs.readFileSync(file, "utf8"));
+  if (!doc || !doc.extends) return doc;
+  const { extends: parent, ...patch } = doc;
+  const base = loadAoas(path.join(path.dirname(file), parent.path), depth + 1);
+  const found = `${base.agent.id}@${base.agent.version}`;
+  const wanted = `${parent.id}@${parent.version}`;
+  if (found !== wanted) throw new Error(`${file} extends ${wanted}, and ${parent.path} is ${found}`);
+  return mergePatch(base, patch);
+}
+
 // ------------------------------------------------------------------- CLI
 function catalogIds(dir, prefix) {
   if (!fs.existsSync(dir)) return null;
@@ -331,8 +360,10 @@ if (require.main === module) {
 
   let failed = 0;
   for (const f of files) {
-    const issues = aoasIssues(yaml.load(fs.readFileSync(f, "utf8")), opts);
     const rel = path.relative(process.cwd(), f);
+    let doc;
+    try { doc = loadAoas(f); } catch (e) { failed += 1; console.log(`✗ ${rel} — cannot load: ${e.message}`); continue; }
+    const issues = aoasIssues(doc, opts);
     if (!issues.length) { console.log(`✓ ${rel}`); continue; }
     failed += 1;
     console.log(`✗ ${rel} — ${issues.length} issue(s)`);
@@ -341,4 +372,4 @@ if (require.main === module) {
   process.exit(failed ? 1 : 0);
 }
 
-module.exports = { aoasIssues, TECHNOLOGY };
+module.exports = { aoasIssues, loadAoas, mergePatch, TECHNOLOGY };

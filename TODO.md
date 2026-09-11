@@ -78,6 +78,19 @@ exposes a defect, it is recorded against the reference, not fixed in passing.
   examples.
 - **Done when.** `clothing.yaml` loads from AOAS + world, the reference suite
   passes unchanged, and no domain rule appears in both files.
+- **Status.** ✅ Done 2026-09-11. `agenttwin` has `SPEC.md`, a JSON Schema and
+  36 table-driven loader tests on a lending-library fixture. A world now *cites*
+  its AOAS and the loader rejects one that declares entities, actions or
+  policies. Reference suite 657 → 657. Six test fixtures changed shape (they
+  built worlds in the old inline form); no assertion changed. **Revised on
+  contact:** the worlds stay with the reference agent — they cite its spec and
+  change with it — and `SPEC.md` links to them as the worked example.
+  Electronics is now a 70-line RFC 7386 `extends` of the clothing AOAS instead
+  of a 131-line fork. The world enforces one new rule the AOAS states (no
+  refund of a refunded order), and reports six statements no world can enforce
+  (ownership ×5, the address write) as `unenforced` instead of skipping them.
+  One correction to my own reading: electronics' missing `required_when` was
+  not drift — a test pins it — and the variant now deletes it explicitly.
 
 ### 1.4 · The support agent's ABS
 

@@ -286,7 +286,8 @@
             "properties": {
               "name": { "type": "string" },
               "when": { "$ref": "#/$defs/condition" },
-              "then": { "$ref": "#/$defs/condition" }
+              "then": { "$ref": "#/$defs/condition" },
+              "because": { "type": "string", "description": "Why the combination cannot exist. Quoted when a seeded row breaks it." }
             }
           },
           "description": "Which combinations of fields can coexist — what the world can BE, not what it permits."

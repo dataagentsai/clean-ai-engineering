@@ -14,7 +14,8 @@ const assert = require("node:assert/strict");
 const fs = require("fs");
 const path = require("path");
 const yaml = require("js-yaml");
-const { aoasIssues } = require("./validate-aoas");
+const os = require("os");
+const { aoasIssues, loadAoas, mergePatch } = require("./validate-aoas");
 
 const EXAMPLE = yaml.load(
   fs.readFileSync(path.join(__dirname, "../drafts/examples/support-agent.aoas.yaml"), "utf8")
@@ -107,4 +108,59 @@ test("every rule is documented, emitted, and exercised", () => {
   assert.deepEqual([...documented].sort(), [...emitted].sort(), "the header and the code disagree about the rules");
   const untested = [...documented].filter((r) => !exercised.has(r));
   assert.deepEqual(untested, [], "a rule with no case can go quiet unnoticed");
+});
+
+// RFC 7386 Appendix A, row for row. AgentTwin's merge_patch is held to the same
+// table, so the two implementations cannot drift apart unnoticed.
+const MERGE_PATCH = [
+  [{ a: "b" }, { a: "c" }, { a: "c" }],
+  [{ a: "b" }, { b: "c" }, { a: "b", b: "c" }],
+  [{ a: "b" }, { a: null }, {}],
+  [{ a: "b", b: "c" }, { a: null }, { b: "c" }],
+  [{ a: ["b"] }, { a: "c" }, { a: "c" }],
+  [{ a: "c" }, { a: ["b"] }, { a: ["b"] }],
+  [{ a: { b: "c" } }, { a: { b: "d", c: null } }, { a: { b: "d" } }],
+  [{ a: [{ b: "c" }] }, { a: [1] }, { a: [1] }],
+  [["a", "b"], ["c", "d"], ["c", "d"]],
+  [{ a: "b" }, ["c"], ["c"]],
+  [{ a: "foo" }, null, null],
+  [{ a: "foo" }, "bar", "bar"],
+  [{ e: null }, { a: 1 }, { e: null, a: 1 }],
+  [[1, 2], { a: "b", c: null }, { a: "b" }],
+  [{}, { a: { bb: { ccc: null } } }, { a: { bb: {} } }],
+];
+for (const [i, [target, patch, expected]] of MERGE_PATCH.entries()) {
+  test(`RFC 7386 appendix A, example ${i + 1}`, () => {
+    assert.deepEqual(mergePatch(structuredClone(target), patch), expected);
+  });
+}
+
+// [name, base agent written into the tmp dir, what extends cites, error or null]
+const EXTENDS = [
+  ["a variant of the right base resolves", "support-agent-clothing@0.1.0", "support-agent-clothing@0.1.0", null],
+  ["a variant citing another version fails", "support-agent-clothing@0.2.0", "support-agent-clothing@0.1.0", /is support-agent-clothing@0.2.0/],
+  ["a variant citing another agent fails", "someone-else@0.1.0", "support-agent-clothing@0.1.0", /is someone-else@0.1.0/],
+];
+for (const [name, has, cites, error] of EXTENDS) {
+  test(`extends — ${name}`, () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "aoas-"));
+    const [hid, hver] = has.split("@");
+    const [cid, cver] = cites.split("@");
+    fs.writeFileSync(path.join(dir, "base.yaml"), yaml.dump({ ...EXAMPLE, agent: { ...EXAMPLE.agent, id: hid, version: hver } }));
+    fs.writeFileSync(path.join(dir, "variant.yaml"), yaml.dump({ apiVersion: "aoas/v0", extends: { id: cid, version: cver, path: "base.yaml" }, agent: { id: "variant" } }));
+    const load = () => loadAoas(path.join(dir, "variant.yaml"));
+    if (error) { assert.throws(load, error); return; }
+    const doc = load();
+    assert.equal(doc.agent.id, "variant");
+    assert.equal(doc.agent.version, hver, "an unpatched field is inherited");
+    assert.deepEqual(aoasIssues(doc, {}), []);
+  });
+}
+
+test("the electronics variant resolves and validates", () => {
+  const doc = loadAoas(path.join(__dirname, "../drafts/examples/support-agent-electronics.aoas.yaml"));
+  assert.equal(doc.operations.open_return_request.preconditions[2].at_most, 14);
+  assert.equal(doc.operations.issue_refund.owed_when, undefined, "null in a merge patch deletes the inherited obligation");
+  assert.deepEqual(doc.operations.issue_refund.preconditions, EXAMPLE.operations.issue_refund.preconditions, "and leaves the rest of the operation inherited");
+  assert.deepEqual(aoasIssues(doc, {}), []);
 });

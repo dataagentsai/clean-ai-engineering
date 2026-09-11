@@ -71,18 +71,23 @@ with a stated trigger for moving to an expression language (see the draft's
 open questions).
 
 **E2 · `binding: mcp` sits in the world file.** It names a transport, so it is
-ABS. → TODO 1.4.
+ABS. → Staged in 1.3: transport and scopes now sit in the world's `x_binding`,
+explicitly outside the format; they leave for the binding spec in TODO 1.4.
 
 **E3 · AgentTwin's format code names a domain action.** `agenttwin/projection.py`
 special-cases `issue_refund` to add an `amount` parameter. A world-description
 runtime that knows one store's refund tool has a domain noun inside the format.
 The fix is for operations to declare their inputs — which the AOAS now does —
-and the projection to read them. → TODO 1.3.
+and the projection to read them. → **Partly closed in 1.3**: the format's
+default refusal no longer says "order". The `issue_refund` special case stays
+until TODO 3.3, because removing it removes the `amount` input the reference
+depends on — it is the same fix as F-014, and belongs with it.
 
 **E4 · The same rule lives in two places.** Every `allowed_when` in
 `clothing.yaml` is an AOAS precondition. Until the world cites the AOAS, an
 agent spec and a world that disagree are indistinguishable from ones that
-agree. → TODO 1.3.
+agree. → **Closed in 1.3**: the world cites the AOAS and cannot declare the
+rules; the loader composes them.
 
 **E5 · Refusal wording is user-visible.** `clothing.yaml` carries refusal
 sentences. Under the charter a prompt's wording is output, but these sentences

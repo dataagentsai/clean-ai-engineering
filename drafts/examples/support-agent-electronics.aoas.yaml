@@ -1,0 +1,81 @@
+# Application Operation Agent Spec — a VARIANT, not a second worked example.
+#
+# The same agent for an electronics store: fourteen-day returns instead of
+# thirty, and cancellation allowed one state later because these orders are
+# picked by hand. Everything else is inherited from the clothing spec as an
+# RFC 7386 JSON Merge Patch — objects merge, `null` deletes, lists replace whole.
+#
+# It replaces a 131-line fork (reference-agent worlds/electronics.yaml) whose
+# own comment predicted it would not survive the tenth world.
+#
+# One difference was carried by an ABSENCE in that fork: it never declared
+# `required_when`, and a test (test_a_second_world_can_owe_something_different)
+# pins that the electronics store therefore owes nothing on a returned order.
+# Here that is a stated decision — `owed_when: null` deletes the inherited
+# obligation — rather than something a reader has to notice is missing.
+#
+# Same shape as its base, so it does not count towards AOAS's promotion
+# condition. That needs an agent of a different shape.
+
+apiVersion: aoas/v0
+extends:
+  id: support-agent-clothing
+  version: 0.1.0
+  path: support-agent.aoas.yaml
+
+agent:
+  id: support-agent-electronics
+
+purpose:
+  serves: >
+    A signed-in customer of one electronics store, about orders they placed.
+  # Lists replace whole. Restated without R-STYLE, which a clothing store needs
+  # and an electronics store does not.
+  refuses:
+    - id: R-DISCOUNT
+      what: negotiating price, or offering any discount, voucher or coupon not in a published promotion
+    - id: R-OTHER-CUSTOMER
+      what: anything about an order the signed-in customer did not place
+    - id: R-ACCOUNT
+      what: account deletion, and changes to a payment method
+    - id: R-DELIVERY-DATE
+      what: a delivery date the carrier record does not state
+    - id: R-FRAUD
+      what: adjudicating whether anything is fraud
+
+state_machines:
+  order_status:
+    # Restated because one transition changed. Forget this and the validator
+    # reports precondition-mismatch on cancel_order — which is the point of it.
+    transitions:
+      - {from: pending, to: confirmed, by: external}
+      - {from: confirmed, to: picked, by: external}
+      - {from: picked, to: shipped, by: external}
+      - {from: shipped, to: out_for_delivery, by: external}
+      - {from: out_for_delivery, to: delivered, by: external}
+      - {from: [pending, confirmed, picked], to: cancelled, by: cancel_order}
+      - {from: delivered, to: returned, by: external}
+      - {from: any_except_terminal, to: refunded, by: issue_refund}
+
+operations:
+  cancel_order:
+    preconditions:
+      - {field: order.customer_id, equals_session: customer_id}
+      - {field: status, equals: [pending, confirmed, picked]}
+  issue_refund:
+    # Deleted, not forgotten. The electronics store states no refund obligation
+    # once a return is received; the clothing store does. A second spec that
+    # owes something different is the property the omission oracle is tested on.
+    owed_when: null
+  open_return_request:
+    preconditions:
+      - {field: order.customer_id, equals_session: customer_id}
+      - {field: status, equals: [delivered]}
+      - {field: days_since_delivery, at_most: 14}
+      - {field: final_sale, equals: [false]}
+
+policies:
+  P-CANCEL:
+    rule: cancellation while pending, confirmed or picked; once shipped, refuse and offer return-on-delivery
+  P-RETURN:
+    rule: within 14 days of delivery; final-sale items never
