@@ -235,7 +235,7 @@ statement it enforces:
 | ~~**F-019** cost ceiling unreachable from the entrypoint~~ ✅ 2026-09-12 | AOAS `Q-COST` — a per-task meter from the config |
 | ~~**F-020** three reply paths skip the guardrails~~ ✅ 2026-09-12 | AHC-0094 — a `REPLY` position screened where every reply leaves |
 | ~~**F-018** refund status answered as order status~~ ✅ 2026-09-12 | AOAS `P-REFUND-STATUS`, declared first |
-| **F-014** refund amount ungrounded | AOAS `issue_refund.amount_from: order.total` |
+| ~~**F-014** refund amount ungrounded~~ ✅ 2026-09-12 | AOAS `issue_refund.amount_from: order.total`; `agent_when` gained "returned" — the threshold alone let a planted note ask for a refund of a shipped order |
 | **F-017** idempotency key never leaves the process | AOAS external contract — the order system accepts a key |
 | ~~**F-021** approval expiry on the wall clock~~ ✅ 2026-09-12 | AHC L9 — no clock outside the injected seam; `now` required, so a missed clock is a type error |
 | ~~**F-022** retry, throttle and breaker never called~~ ✅ 2026-09-12 | AHC-0005, AHC-0021, AHC-0024 — `ResilientLLM` at the model choke point |

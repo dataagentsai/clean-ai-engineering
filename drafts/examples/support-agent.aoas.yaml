@@ -238,9 +238,16 @@ operations:
     identity: order_id                 # an order is refunded at most once
     authority:
       agent_when:
+        # Alone, the agent refunds only what is owed and small. "Owed" was
+        # missing until F-014 made the automatic path real: with the threshold
+        # the only condition, a shipped order nobody had returned was refundable
+        # on request, and a note planted in the order was enough to ask. A
+        # person may still refund in any state (doc 24's matrix); the agent may
+        # not decide that on its own.
+        - {field: status, equals: [returned]}
         # "Above ₹10,000 needs a person." Bounds are numbers in this format, so
         # a money field compares — the world's vocabulary types them int (E7).
-        - {field: order.total, at_most: 10000}
+        - {field: total, at_most: 10000}
       otherwise: human_approval
     owed_when:
       # Owed, not merely permitted. An agent that opens a return and never

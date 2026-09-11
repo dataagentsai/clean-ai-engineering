@@ -85,7 +85,10 @@ For each operation the agent may perform:
 - **preconditions** — what must be true before it may run
 - **effects** — what changes, and whether the change is reversible
 - **idempotency** — whether repetition is safe, and what the identity key is
-- **authority** — may the agent do this alone, or is approval required
+- **authority** — may the agent do this alone, or is approval required. A
+  condition list — `preconditions`, `agent_when`, `owed_when` — holds when every
+  condition in it holds; one that fails is enough to refuse, to need approval,
+  or not to owe
 
 **Side-effecting, non-idempotent operations are the ones worth writing carefully.**
 They are where loop failures land, and they are why the reference agent's domain is

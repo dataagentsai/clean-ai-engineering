@@ -81,7 +81,9 @@ The fix is for operations to declare their inputs — which the AOAS now does �
 and the projection to read them. → **Partly closed in 1.3**: the format's
 default refusal no longer says "order". The `issue_refund` special case stays
 until TODO 3.3, because removing it removes the `amount` input the reference
-depends on — it is the same fix as F-014, and belongs with it.
+depends on — it is the same fix as F-014, and belongs with it. → **Closed
+2026-09-12 with F-014**: a projected tool takes only its entity's key, and the
+format code names no action.
 
 **E4 · The same rule lives in two places.** Every `allowed_when` in
 `clothing.yaml` is an AOAS precondition. Until the world cites the AOAS, an
@@ -122,10 +124,10 @@ are TODO 3.3.
 | AOAS statement | v0.1.0 | Recorded as |
 |---|---|---|
 | P-OWNERSHIP on every order operation | ~~Any authenticated customer can act on any order~~ — **conforms since 2026-09-12**: the caller's session reaches the order system, which answers a stranger as not found | F-016 — fixed |
-| `issue_refund.amount_from: order.total` | The world has no `total`; the gate compares a number the model supplied | F-014 |
-| `issue_refund` within ₹10,000 proceeds without a person | A below-threshold request executes nothing at all | F-014 |
-| `issue_refund` never on a `refunded` order | The world declares no guard; only an in-process key protects against a repeat | **new**, with F-017 |
-| The order system accepts a caller-supplied key | The key never leaves the process | F-017 |
+| `issue_refund.amount_from: order.total` | ~~The world has no `total`; the gate compares a number the model supplied~~ — **conforms since 2026-09-12**: every order has a total, the request tool takes no amount, and the gate reads the order | F-014 — fixed |
+| `issue_refund` within ₹10,000 proceeds without a person | ~~A below-threshold request executes nothing at all~~ — **conforms since 2026-09-12**, with the spec corrected: the agent refunds alone only an order that is `returned` *and* within the limit. The threshold alone let a planted note ask for a refund of a shipped order | F-014 — fixed, spec changed |
+| `issue_refund` never on a `refunded` order | ~~The world declares no guard~~ — **conforms since 1.3**: the precondition is composed into the world, which refuses a second refund under a fresh key | closed |
+| The order system accepts a caller-supplied key | ~~The key never leaves the process~~ — **conforms since 2026-09-12**: the key travels in `_meta` and the stand-in replays a write it has answered | F-017 — fixed |
 | `change_address` takes the new address | The world's action takes only the order id and changes nothing; addresses are absent from `fidelity.not_faithful_about` as well as from the entity | **new** |
 | `customer.phone` is personal data | The world's customer has no phone field | **new**, minor |
 | R-STYLE and R-FRAUD are refused | No router rule or guardrail covers either | **new** |
