@@ -74,9 +74,38 @@ In order. Each item is a series of commits that keep the suite green.
   spec statement is a feature no spec requires — exactly what G1 would lose. A
   statement no test tags is a spec nothing verifies.
 - **Done when.** The map is generated, never hand-written, and lists both
-  remainders. They become the work list for G0.5.
+  remainders. They become the work list for G0.6.
 
-### G0.2 · The three build-time checks, strict types first
+### G0.2 · One tag scheme across all six specs
+
+- **What.** Two axes shared by every spec. Anything more has to earn its place
+  the way a principle does, by driving a generated view or a check.
+
+  | Axis | Values, cited not invented | Authored or derived | Drives |
+  |---|---|---|---|
+  | **`phase`** | ISO/IEC/IEEE 12207 technical processes: requirements · architecture · design · implementation · verification · operation | **Derived** from where a statement sits: AOAS → requirements; AHC requirement and position → architecture; AHC design decisions and the blueprint → design; the binding → implementation; AAC obligations and AWD scenarios → verification, with AAC's stage placing S5–S6 in operation. Never tagged per item | the generation brief, assembled phase by phase: requirements, then architecture, design and verification, the order a builder works in |
+  | **`concern`** | ISO/IEC 25010:2023's nine quality characteristics, plus **`cost`** as the one agentic addition | **Authored** on every statement: AAC obligation, AHC capability, AOAS item, AWD scenario | the **Concern View**: everything about privacy, cost or reliability across all six specs on one generated page. An NFR is a statement whose concern is not functional suitability, so this *is* the NFR view |
+
+- **Why derived for phase.** The family's artifact split already is the phase
+  split, because each artifact answers a different kind of question with a
+  different verification method. Tagging phase per item would restate the file
+  a statement lives in, and a restatement drifts.
+- **Revising what exists.**
+  - AAC's eighteen home-grown `dimension` values become **facets under a
+    concern**, through a crosswalk (e.g. `privacy` → security · confidentiality;
+    `latency` → performance efficiency; `grounding`, `trajectory`, `tool-use` →
+    functional suitability; `observability` → maintainability · analysability;
+    `cost` → cost).
+  - AAC's `stages` gain their derived 12207 process.
+  - AHC gains `concern`.
+  - Layers, positions and archetypes stay as they are. They are structural
+    axes, not phase or concern.
+- **Where.** The rule goes into the Spec Charter as a new section on tags; the
+  crosswalk goes into AAC's taxonomy; the linters enforce presence and vocabulary.
+- **Done when.** Every statement in all six specs has a concern, every phase is
+  derivable, and the Concern View and Assurance Map are generated from the tags.
+
+### G0.3 · The three build-time checks, strict types first
 
 - **What.** A type checker in strict mode, in the lint run and the suite. The
   seven existing protocols as parameter types instead of `object` +
@@ -97,7 +126,7 @@ In order. Each item is a series of commits that keep the suite green.
 
   Readability and naming stay review, and say so.
 
-### G0.3 · Decompose the entrypoint
+### G0.4 · Decompose the entrypoint
 
 The `Agent` class is 481 lines doing eleven things; `handle` itself is 23.
 
@@ -116,9 +145,9 @@ The `Agent` class is 481 lines doing eleven things; `handle` itself is 23.
    accept today; `scripts/run_server.py` and `serve.build` stop wiring.
 
 Each extracted collaborator either maps to an AHC capability or is a gap for
-G0.5 — the entrypoint's version of "a layer with no module is a finding".
+G0.6 — the entrypoint's version of "a layer with no module is a finding".
 
-### G0.4 · Close the findings, spec first
+### G0.5 · Close the findings, spec first
 
 Each as its own commit with its own tagged test, starting from the spec
 statement it enforces:
@@ -137,7 +166,7 @@ statement it enforces:
 Also the reference's own `TODO.md` where it serves G1: T-001 (a session opening
 is not expressible) is a missing AOAS operation, not a UI nicety.
 
-### G0.5 · Fill the specs from what G0.1–G0.4 exposed
+### G0.6 · Fill the specs from what G0.1–G0.5 exposed
 
 - **AHC** — about eighteen capabilities the reference has and no catalog
   requires: escalation (ownership lock, queue and lapse, what the customer is
@@ -156,7 +185,7 @@ is not expressible) is a missing AOAS operation, not a UI nicety.
 Every addition passes the domain-noun test: a universal spec never gains
 "order", "refund" or "customer".
 
-### G0.6 · Tell the generator the shape
+### G0.7 · Tell the generator the shape
 
 - **Baseline** — one profile item: every harness port is an interface, and only
   the composition root constructs a realisation. The binding swap, the world
@@ -164,7 +193,7 @@ Every addition passes the domain-noun test: a universal spec never gains
 - **The A6 blueprint** in AHC — the module map, ports and single wiring point,
   **extracted from the decomposed reference**, not designed beside it.
 
-### G0.7 · Make the oracle portable
+### G0.8 · Make the oracle portable
 
 - **A scenario format in AWD.** Scenarios live in pytest today, welded to this
   implementation. A declarative scenario — world, actor script, assertions over
@@ -175,7 +204,7 @@ Every addition passes the domain-noun test: a universal spec never gains
   stated so an agent that never saw the reference can implement it.
 - **Done when.** The reference passes its scenarios through the contract alone.
 
-### G0.8 · The binding and the manifest
+### G0.9 · The binding and the manifest
 
 - **Binding spec** — proposed as the reference's AHC **harness profile** (the
   format already exists): every capability its shape owes, realised or an
@@ -237,7 +266,7 @@ at once.
 
 ### G2.2 · Write the hotel world and scenarios
 
-In the G0.7 scenario format. There is no reference implementation, so **the
+In the G0.8 scenario format. There is no reference implementation, so **the
 oracle is these scenarios** — derived from the hotel AOAS, the way the support
 agent's eligibility cases were derived from its world.
 
@@ -268,8 +297,6 @@ Deliberately after G2; each depends on something the goals will teach.
   convergence cycles fall.
 - **Free the binding** — the generator chooses its own stack. Does the spec
   still converge?
-- **Concern tags** (ISO/IEC 25010 vocabulary plus *cost*) on every statement,
-  and the generated Concern View.
 - **The cross-reference check** for the dependency invariant — when the first
   violation appears, not before (charter §3).
 - **Actors and perturbations** into the AWD format; **shadow mode** built, so a
