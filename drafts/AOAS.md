@@ -10,7 +10,7 @@ a family of six becomes a folder of thirty.
 | Promotion condition | State |
 |---|---|
 | Schema | ✅ [aoas.schema.json](aoas.schema.json) |
-| Validator | ✅ [tools/validate-aoas.js](../tools/validate-aoas.js) — 22 rules, one table-driven case each at least (`npm test`) |
+| Validator | ✅ [tools/validate-aoas.js](../tools/validate-aoas.js) — 23 rules, one table-driven case each at least (`npm test`) |
 | Two worked examples | 1 of 2 |
 
 **Worked example 1:** the reference support agent —

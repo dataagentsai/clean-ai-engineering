@@ -20,6 +20,7 @@
  *   bound-type                     a numeric bound on a field that is not a number
  *   unknown-session-field          `equals_session` names nothing the session declares
  *   unknown-fact                   an escalation rule reads a fact nobody maintains
+ *   undefined-fact                 a fact is typed and never says what computes it
  *   unknown-state-machine          an enum is `of` a machine that does not exist
  *   unknown-state                  a transition or terminal names a state not in the machine
  *   unknown-operation              a transition, policy or system names a missing operation
@@ -252,6 +253,14 @@ function aoasIssues(doc, opts = {}) {
     if (!/^P-/.test(pn)) continue;
     for (const o of p.via) if (!operations[o]) add("unknown-operation", `policies.${pn}.via`, `"${o}" is not an operation`);
   }
+  // A fact is computed from the conversation, so its declaration is a type and
+  // nothing else until it says how it is computed. `repeated_intent` was typed
+  // `int` and never defined; the reference counted it in a way that could not
+  // reach the rule's threshold, and nothing disagreed (F-025).
+  for (const [fn, f] of Object.entries(facts)) {
+    if (!f.derived) add("undefined-fact", `facts.${fn}`, `is typed and never defined — say what computes it in \`derived\``);
+  }
+
   const esc = doc.policies.escalation || {};
   (esc.on_condition || []).forEach((r, i) => checkCondition(r.when, `policies.escalation.on_condition[${i}]`, { facts: true }));
 

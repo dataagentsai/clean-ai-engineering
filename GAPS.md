@@ -150,6 +150,17 @@ the pattern library (TODO G0.7), the third to the binding.
 - AAC-0092 rests on AHC-0015, which is about stream completion, not screening
   (gap 7). AAC-0082 (drift) rests only on AHC-0055, which alerts on silence.
 
+## 7 · Found while fixing the reference agent
+
+- **A dissatisfied customer is not a repeated intent.** `repeated-intent` counts
+  turns carrying the same classified intent; a customer who says "that is not
+  good enough" three times carries none, so no rule sees them (F-025, closed for
+  what it could close). The AOAS names the trigger — *three failed resolution
+  attempts* — and no spec here defines a **failed resolution attempt**: a turn
+  the agent completed and the customer came back from is the only available
+  signal, and saying so needs a statement, not a heuristic. Both catalogs are
+  silent on whether an agent must notice that its answers are not landing.
+
 ## What the support agent does not need
 
 It does not stream, keeps no cross-session memory and has no response cache, so

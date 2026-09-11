@@ -124,16 +124,25 @@ session:
 # What the conversation has become, as values the escalation rules read. These
 # are inputs this spec requires the harness to maintain — named here so a rule
 # that reads an undeclared fact is a typo the validator catches.
+# What the conversation has become. Each says how it is computed: a fact that is
+# only typed is a number every implementation invents differently, and an
+# escalation rule over it fires somewhere and never here (F-025).
 facts:
-  turn_count: {type: int}
+  turn_count: {type: int, derived: turns taken in this conversation}
   termination:
     type: enum
+    derived: "why the loop stopped on the latest turn, or absent if it never ran"
     values: [goal_reached, step_budget_exhausted, cost_ceiling_reached,
              oscillation_detected, awaiting_approval, awaiting_human, refused,
              unrecoverable_error]
-  consecutive_failed: {type: int}
-  refusals: {type: int}
-  repeated_intent: {type: int}
+  consecutive_failed: {type: int, derived: "turns ending in failure, counting back from the latest until one did not"}
+  refusals: {type: int, derived: turns in this conversation the agent refused}
+  repeated_intent:
+    type: int
+    # However each was answered. A customer who asks again has not been
+    # resolved, whatever the turn that answered them recorded — counting only
+    # unanswered turns is what made the rule unreachable.
+    derived: "turns carrying the latest turn's intent, counting back from it until the intent changes"
 
 state_machines:
   order_status:
