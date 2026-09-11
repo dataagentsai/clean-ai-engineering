@@ -219,6 +219,31 @@ are gaps), memory erasure does not reach summaries or checkpoints, versioning
 omits the tool-definition text. Bookkeeping: AHC-0042 should discharge
 AAC-0109; AAC-0096 asks for more cache-key dimensions than AHC-0068 requires.
 
+**From the twenty-category harness check** (2026-09-11). Most categories map to
+existing layers; these are new, each an agentic delta:
+
+11. **Clarification as a typed outcome** — the run suspends awaiting the user's
+    answer, distinct from escalation and from refusal.
+12. **A model-produced plan is a typed, recorded artifact, validated before any
+    step executes.** AHC-0072 covers declared topologies, not plans the model
+    writes at run time.
+13. **In-flight runs survive shutdown and upgrade** — every run is completed,
+    checkpointed or visibly failed, never half-executed; a resumed run continues
+    under the configuration it started with, or records the switch. Services
+    drain in seconds; agent runs hold irreversible steps for minutes.
+14. **Learned procedures are configuration** — anything the system writes that
+    later instructs it (procedural memory, self-edited prompts) passes the same
+    release gate as a prompt change. Episodic and semantic memory already map
+    to sessions, compaction and the retrieval corpus.
+15. **An agent manifest** — name, version, owner, lifecycle state and advertised
+    capabilities. Partly in the harness profile's `subject`; owner and lifecycle
+    are missing, and a multi-agent system needs it for discovery.
+
+Deliberately *not* capabilities: topologies (supervisor–worker, swarm,
+planner–executor), reasoning techniques (reflection, self-critique, consensus)
+and plugin mechanisms. They are patterns and realisations; the first two go to
+the pattern library in G0.7, the third to the binding.
+
 Which of these the support agent needs now is itself a statement: it does not
 stream, has no cross-session memory and no cache, so 7, 9 and most caching rows
 enter its AOAS as **exclusions with a `revisit_when`**, not as work.
@@ -256,6 +281,11 @@ obligations, new ones where the audit found none.
   swap and regeneration all stand on it.
 - **The A6 blueprint** in AHC — the module map, ports and single wiring point,
   **extracted from the decomposed reference**, not designed beside it.
+- **The pattern library** — orchestration and reasoning patterns (router,
+  ReAct loop, saga with compensation, outbox, supervisor–worker,
+  planner–executor, reflection), informative like realisations, each citing
+  the capabilities it discharges: *no pattern without a capability*. Blueprints
+  reference patterns; capabilities never do.
 
 ### G0.8 · Complete AgentTwin — prove the agent works in simulation
 
