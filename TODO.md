@@ -206,6 +206,24 @@ in this order:
 **ratchet** — today's worst value, lowered after each step — so they block
 growth from day one without blocking the refactor.
 
+**Status — the other units: ✅ done 2026-09-12.** Every step green (690 tests,
+strict types, import contract, span contract).
+
+| Unit | Became |
+|---|---|
+| `loop.run` | a driver over `_Run`, one phase per method; the loop now catches a generic `contracts.ApprovalRequested` and no longer knows refunds exist |
+| `MCPToolClient` | `MCPTransport` (the only MCP speaker) + `GatedTools` (the four P5 checks over any transport) |
+| `serve.build`, `reviewer.build` | wiring only — handlers are module functions, desk state on `app.state` |
+| `approvals`, `escalation` | packages: policy / store / workflow / refund, and wording / capacity / store / workflow |
+| `telemetry` | names, redaction and the span contract split out; the runtime stays, because moving its globals would silently disable the span check |
+| `cassette` | **kept whole** — its classes change together for one reason, the replay format |
+
+**Ceilings, before → after:** complexity 14 → 8, statements 50 → 24,
+branches 12 → 7, module 744 → 416 lines. **New build check:** only the module
+that defines a store, client or transport may construct it — verified by
+planting one. **Next: G0.5**, the behaviour-changing fixes, each from its spec
+statement.
+
 ### G0.5 · Close the findings, spec first
 
 Each as its own commit with its own tagged test, starting from the spec
