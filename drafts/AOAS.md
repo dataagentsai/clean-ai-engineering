@@ -7,6 +7,11 @@ worked examples and a validator — at which point it earns its own repository b
 same test everything else is held to. Premature promotion is how a family of six
 becomes a folder of thirty.
 
+**Worked example 1:** the reference support agent —
+[examples/support-agent.aoas.yaml](examples/support-agent.aoas.yaml), with
+[the record of extracting it](examples/support-agent.extraction.md). Read the
+record first; the findings are the output.
+
 ---
 
 ## Why this exists
@@ -111,9 +116,14 @@ always situational.*
 
 ### 7 · Conformance claims
 
-Which catalog identifiers this agent claims, and which it declares not applicable —
-**with a reason for each exclusion.** A declared, reasoned exclusion is a
-contribution; a silent one is a gap.
+Which catalog identifiers this agent claims, and which it excludes — **with a
+reason for each exclusion, and the change that would revoke it.** A declared,
+reasoned exclusion is a contribution; a silent one is a gap.
+
+*Excluded, not "not applicable".* The reference implementation refuses the
+second label on purpose: it is the one every inconvenient obligation eventually
+acquires. An exclusion that names its `revisit_when` cannot quietly become
+permanent.
 
 ---
 

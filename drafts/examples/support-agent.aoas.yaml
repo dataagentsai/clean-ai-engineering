@@ -1,0 +1,335 @@
+# Application Operation Agent Spec — worked example 1
+#
+# The customer-support agent for a clothing e-commerce store: what it must do,
+# and what must be true of it. Extracted from the reference implementation at
+# v0.1.0, not written ahead of it. Where the two disagree, this file states the
+# rule and the extraction record (support-agent.extraction.md) says which way
+# the reference falls short.
+#
+# Status: draft, worked example for AOAS 0.0.1. Not citable.
+#
+# Conventions
+#   - Conditions use the vocabulary the world file and the escalation rules
+#     already share: {field, equals: [..], not_equals: [..], at_least, at_most}.
+#     One rule needed more than that. It is marked `# EXTENDS`, and it is the
+#     evidence for the draft's open format question.
+#   - Every `must` carries `evidence`: assertion | inspection | scenario |
+#     acceptance (charter §6).
+#   - Anything true of every agent is cited by identifier under `conformance`,
+#     never restated here. If a statement below holds with the domain nouns
+#     removed, it is in the wrong file.
+
+aoas: 0.0.1
+agent:
+  id: support-agent-clothing
+  version: 0.1.0
+  currency: INR
+
+sources:
+  - DataAgents.ai/24-support-agent-functional-spec.md
+  - reference-agent@v0.1.0 worlds/clothing.yaml
+  - reference-agent@v0.1.0 src/support_agent/{router,policy,approvals,escalation,identity,config}
+
+# ---------------------------------------------------------------------------
+# 1 · Purpose
+# ---------------------------------------------------------------------------
+purpose:
+  serves: >
+    A signed-in customer of one clothing store, about orders they placed.
+  does:
+    - order status
+    - refund status
+    - cancellation
+    - opening a return
+    - delivery address change
+    - refund requests
+    - handing the conversation to a person
+  # Normative. "Never promise what the system cannot deliver" is testable only
+  # against an explicit list of what it must not do.
+  refuses:
+    - id: R-DISCOUNT
+      what: negotiating price, or offering any discount, voucher or coupon not in a published promotion
+    - id: R-OTHER-CUSTOMER
+      what: anything about an order the signed-in customer did not place
+    - id: R-ACCOUNT
+      what: account deletion, and changes to a payment method
+    - id: R-DELIVERY-DATE
+      what: a delivery date the carrier record does not state
+    - id: R-STYLE
+      what: style or fit advice presented as authoritative
+    - id: R-FRAUD
+      what: adjudicating whether anything is fraud
+  # Recognised, in doc 24, and deliberately not operations in this version. The
+  # agent may explain the policy; it performs nothing, and claims nothing.
+  deferred:
+    - {intent: exchange_request, policy: P-EXCHANGE}
+    - {intent: damaged_item, policy: P-DAMAGE}
+    - {operation: hold_order}
+    - {operation: dispatch_replacement}
+    - {operation: track_shipment}
+
+# ---------------------------------------------------------------------------
+# 2 · Entities and state
+# ---------------------------------------------------------------------------
+entities:
+  customer:
+    key: id
+    fields:
+      id: {type: id}
+      email: {type: email, pii: true}
+      phone: {type: phone, pii: true}
+
+  order:
+    key: id
+    fields:
+      id: {type: id}
+      customer_id: {type: id, ref: customer.id}
+      status: {type: enum, of: order_status}
+      total: {type: money}            # the refund gate compares against this, never a stated number
+      days_since_delivery: {type: int, derived: whole days since delivery}
+      final_sale: {type: bool}
+      note: {type: text, untrusted: true}   # written by customers and warehouse staff; content, never instruction
+    invariants:
+      - name: delivery age implies delivery happened
+        when: {field: days_since_delivery, at_least: 1}
+        then: {field: status, equals: [delivered, returned, refunded]}
+      - name: final sale orders are never returned
+        when: {field: final_sale, equals: [true]}
+        then: {field: status, not_equals: [returned]}
+
+  approval:
+    key: id
+    fields:
+      id: {type: id}
+      order_id: {type: id, ref: order.id}
+      action: {type: enum, values: [issue_refund]}
+      amount: {type: money}
+      outcome: {type: enum, values: [pending, granted, refused, expired]}
+
+  escalation:
+    key: ticket
+    fields:
+      ticket: {type: id}
+      reason: {type: text}
+      state: {type: enum, values: [queued, claimed, resolved, lapsed]}
+
+state_machines:
+  order_status:
+    states: [pending, confirmed, picked, shipped, out_for_delivery, delivered,
+             cancelled, returned, refunded]
+    # `cancelled` ends fulfilment, not money: a cancelled order may still be
+    # refunded. Only `refunded` ends everything.
+    terminal: [refunded]
+    transitions:
+      - {from: pending, to: confirmed, by: external}
+      - {from: confirmed, to: picked, by: external}
+      - {from: picked, to: shipped, by: external}
+      - {from: shipped, to: out_for_delivery, by: external}
+      - {from: out_for_delivery, to: delivered, by: external}
+      - {from: [pending, confirmed], to: cancelled, by: cancel_order}
+      - {from: delivered, to: returned, by: external}        # the warehouse receives the item
+      - {from: any_except_terminal, to: refunded, by: issue_refund}   # doc 24's matrix: approve in every state
+    # The world moves while a conversation is open. A status read at the start
+    # of a turn is a claim about the past by the time a write is attempted.
+    concurrent_writers: [warehouse, carrier]
+
+# ---------------------------------------------------------------------------
+# 3 · Operations
+# ---------------------------------------------------------------------------
+# `identity` is the DOMAIN meaning of "the same request" — what makes a repeat a
+# repeat. How a key is derived and carried is the harness's business (cited
+# under conformance), not this file's.
+
+ownership: &owned
+  # EXTENDS — a cross-field comparison. The shared vocabulary compares a field
+  # to constants; this compares a field to the session. It is the rule behind
+  # the reference's one critical defect, and the vocabulary cannot state it.
+  {field: order.customer_id, equals_session: customer_id}
+
+operations:
+  get_order:
+    side_effect: read
+    input: [order_id]
+    output: order
+    preconditions: [*owned]
+    authority: agent
+
+  cancel_order:
+    side_effect: irreversible
+    input: [order_id]
+    preconditions:
+      - *owned
+      - {field: status, equals: [pending, confirmed]}
+    effect: {status: cancelled}
+    identity: order_id
+    authority: agent
+    on_refusal: offer a return once the order is delivered   # P-CANCEL
+
+  open_return_request:
+    side_effect: reversible
+    input: [order_id]
+    preconditions:
+      - *owned
+      - {field: status, equals: [delivered]}
+      - {field: days_since_delivery, at_most: 30}
+      - {field: final_sale, equals: [false]}
+    effect: a return request exists for the order
+    identity: order_id
+    authority: agent
+
+  change_address:
+    side_effect: reversible
+    input: [order_id, address]
+    preconditions:
+      - *owned
+      - {field: status, equals: [pending]}
+    effect: {address: $address}
+    identity: [order_id, address]      # the same change twice is one change
+    authority: agent
+    on_refusal: the carrier owns the address once the order has progressed   # P-ADDRESS
+
+  request_refund:
+    side_effect: reversible
+    input: [order_id]
+    preconditions: [*owned]
+    effect: an approval exists, or the refund proceeds within the automatic limit
+    authority: agent
+    # The customer is told a request exists. Never that a refund was issued.
+
+  issue_refund:
+    side_effect: irreversible
+    input: [order_id]
+    amount_from: order.total           # never from the conversation
+    preconditions:
+      - *owned
+      - {field: status, not_equals: [refunded]}
+    effect: {status: refunded}
+    identity: order_id                 # an order is refunded at most once
+    authority:
+      agent_when:
+        # "Above ₹10,000 needs a person." The bound is money, not an integer —
+        # the shared vocabulary's bounds are typed int today and must admit it.
+        - {field: order.total, at_most: 10000}
+      otherwise: human_approval
+    owed_when:
+      # Owed, not merely permitted. An agent that opens a return and never
+      # refunds changes nothing wrongly and claims nothing untrue — only this
+      # declaration makes the omission visible.
+      - {field: status, equals: [returned]}
+
+  escalate:
+    side_effect: reversible            # a queued escalation lapses
+    input: [reason]
+    effect: an escalation exists, and the conversation belongs to a person until it resolves or lapses
+    authority: agent
+
+# ---------------------------------------------------------------------------
+# 4 · Policies
+# ---------------------------------------------------------------------------
+policies:
+  P-CANCEL:
+    rule: cancellation while pending or confirmed; once picked, refuse and offer return-on-delivery
+    via: [cancel_order]
+  P-RETURN:
+    rule: within 30 days of delivery; final-sale items never
+    via: [open_return_request]
+  P-ADDRESS:
+    rule: while pending only
+    via: [change_address]
+  P-REFUND:
+    rule: to the original payment method; a refund above ₹10,000 needs a person
+    via: [request_refund, issue_refund]
+  P-OWNERSHIP:
+    rule: a customer may see and act on only the orders they placed
+    via: [get_order, cancel_order, open_return_request, change_address, request_refund, issue_refund]
+
+  approval:
+    approver: an operations reviewer — never the customer whose refund it is
+    valid_for: 24h                     # a stale grant fails closed
+    while_waiting: the conversation continues; the customer is told a request exists and nothing more
+
+  escalation:
+    on_request:                        # Tier 1 — decided from the turn's text alone
+      - {id: asked-for-human, when: the customer asks to speak to a person}
+      - {id: lost-in-transit, when: the item is reported lost in transit}
+    on_condition:                      # Tier 2 — decided from what the conversation has become. First match wins.
+      - {id: loop-exhausted,   when: {field: termination, equals: [step_budget_exhausted, cost_ceiling_reached, oscillation_detected]}, priority: 2, ttl: 15m}
+      - {id: tool-unavailable, when: {field: consecutive_failed, at_least: 2}, priority: 2, ttl: 15m}
+      - {id: repeated-intent,  when: {field: repeated_intent, at_least: 3},    priority: 3, ttl: 30m}
+      - {id: second-refusal,   when: {field: refusals, at_least: 2},           priority: 4, ttl: 30m}
+      - {id: turns-exceeded,   when: {field: turn_count, at_least: 10},        priority: 6, ttl: 45m}
+    each_rule_fires: once per conversation
+    max_per_conversation: 2            # past this, say something true instead of issuing another reference
+    queued_ttl: 30m
+    on_lapse: the conversation returns to the agent, and the customer is told nobody came
+    the_customer_is_told: a reference number, and nothing about when a person will arrive
+    deferred_triggers:
+      - order flagged for fraud review     # no such field yet
+      - three failed resolution attempts   # partly covered by repeated-intent
+
+  pii:                                 # what counts as personal data for THIS agent
+    - customer.email
+    - customer.phone
+    - payment card numbers typed into the chat
+
+# ---------------------------------------------------------------------------
+# 5 · External contracts
+# ---------------------------------------------------------------------------
+# The contract is domain knowledge and lives here. Which protocol carries it is
+# the binding's, and is not stated.
+external:
+  order_system:
+    owns: [order, customer]
+    operations: [get_order, cancel_order, open_return_request, change_address, issue_refund]
+    refusal_is_a_result: >
+      A write whose precondition fails returns {allowed: false, reason} with the
+      current record. It is not an error, and it is not a success.
+    consistency: reads can be stale by the time a write is attempted; the write's own answer is authoritative
+    idempotency: >
+      MUST accept a caller-supplied key on every irreversible operation and
+      treat a repeated key as the same request.
+    failure_modes: [unavailable, slow, stale_read, unknown_record]
+
+  approval_queue:
+    decides: [issue_refund above the automatic limit]
+    latency: asynchronous; may span a process restart; may never be decided
+
+  escalation_desk:
+    receives: [escalation]
+    latency: asynchronous; may never be claimed
+
+# ---------------------------------------------------------------------------
+# 6 · Required properties
+# ---------------------------------------------------------------------------
+required:
+  properties:
+    - {id: Q-COST,  must: model spend per task at most USD 0.50, evidence: assertion}
+    - {id: Q-STEPS, must: at most 12 loop steps per task, evidence: assertion}
+    - {id: Q-OUTPUT, must: at most 4096 output tokens per model call, evidence: assertion}
+    - {id: Q-TOOL-RESULT, must: a tool result enters context at most 8000 characters long, evidence: assertion}
+    - {id: Q-MODEL, must: only a model from the approved list is called, evidence: inspection}
+  undeclared:
+    # Stated as absent rather than left out. Each is a property this agent
+    # plainly has an answer to in production, and nobody has written it down.
+    - latency
+    - availability
+    - data residency
+    - retention of transcripts and traces
+
+# ---------------------------------------------------------------------------
+# 7 · Conformance
+# ---------------------------------------------------------------------------
+conformance:
+  archetypes: [A6, A5]               # a deterministic router ahead of a model-driven loop
+  aac:
+    version: "0.12"                  # pre-1.0: pinned to minor, since major 0 pins nothing
+    claims: all obligations tagged A6 or A5, except those excluded below
+    excluded:
+      - {id: AAC-0092, reason: the agent does not stream output, revisit_when: streaming is added}
+      - {id: AAC-0096, reason: no response cache exists, revisit_when: any response or prompt cache is added}
+      - {id: AAC-0007, reason: latency is undeclared (see required.undeclared), revisit_when: a latency property is declared}
+      - {id: AAC-0014, reason: no production traffic exists, revisit_when: deployed}
+      - {id: AAC-0097, reason: residency is undeclared, revisit_when: a residency property is declared}
+  ahc:
+    version: "0.x"
+    claims: all sixteen layers; a layer with no module is a finding
