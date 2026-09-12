@@ -351,6 +351,7 @@ policies:
       # unknown is the same rule, not an exception to it. Decided 2026-09-12.
       - {id: P-ESC-TOLD, rule: "the customer is told a reference number, and a wait only when one is measured from queue depth and observed throughput"}
       - {id: P-ESC-OWNS, rule: "while a person owns the conversation the agent does not answer it, and only the desk that holds it may close it"}
+      - {id: P-ESC-TIER1, rule: "a rule never replaces a handoff the conversation already has: neither an escalation raised from the turn's own words, nor a decision a person is in the middle of making"}
       - {id: P-ESC-QUEUE, rule: "the queue a reviewer reads holds the open escalations, oldest first, and a closed one leaves it"}
       - {id: P-ESC-OUTCOME, rule: "closing records an outcome from a declared set, once, and the rule that raised it stays with the record"}
     deferred_triggers:
