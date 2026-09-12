@@ -52,6 +52,7 @@ Six authored artifacts. Three derived. Nothing else.
 |---|---|
 | **Assurance Map** | the join across obligations, capabilities, behaviours, worlds and evidence |
 | **Concern View** | everything tagged with one concern, gathered from all five sources |
+| **Pattern View** | which patterns this agent needs, and the statement that made each one necessary |
 | **Build Manifest** | the exact artifact versions handed to one generation or evaluation run |
 
 The moment a derived artifact is hand-edited it begins to disagree with its
@@ -106,6 +107,40 @@ answers this for two artifacts; this extends it to all six.
 > **3 · Does it name a realisation?**
 > Yes → **ABS**. It is a binding, not a specification, however much it feels like
 > design.
+
+### Patterns are not statements
+
+The three questions place a *statement*. They do not place a **pattern** — a
+router ahead of the loop, planner then executor, reflection, a reviewer, a saga
+with compensation, supervisor and workers; or, on the software side, a registry,
+a strategy, a null object, a decorator. A pattern is not a property, a
+component, an environment, a behaviour or a realisation, and for a while this
+document had no answer for it.
+
+> **A pattern is informative, exactly as a realisation is. It cites the
+> capabilities it discharges and it never adds an obligation.**
+
+If adopting a pattern makes something newly *required* — a supervisor must own
+shared state, a compensation must be idempotent — that requirement is a
+capability or an obligation and belongs in a catalog, discharged by the pattern
+rather than declared by it. Without this rule the pattern library becomes the
+back door through which normative content re-enters, and the catalogs stop being
+neutral about how you build.
+
+**Where the choice is recorded, then, is three places and the first is the
+largest:**
+
+| Which pattern | Where | Why there |
+|---|---|---|
+| The one the agent's own statements **force** | **Derived** — the Pattern View | `P-DIRECT` forces a deterministic route ahead of the loop; `authority: human_approval` forces a gate that returns rather than blocks; an irreversible operation with a declared compensation forces a saga; `owed_when` forces an omission check. None of these is a free choice, and writing them down again as decisions would be a second statement of a rule that already exists |
+| The one this **shape** normally uses | The **blueprint**, per archetype | Informative, and the place a generator reads for structure |
+| The one that is a **genuine trade-off** — reflection against a reviewer, one loop against supervisor and workers | The **profile's `decisions` block**, with its `source` | The harness catalog already holds the trade-off unresolved in `design_decisions`; the profile is where a system resolves it. *A default is permitted, a silent default is not* |
+
+**When.** At generation time, from the specifications, and recorded before the
+code exists — pinned in the Build Manifest with the blueprint and library
+versions it read. A pattern that can only be discovered by reading the
+implementation is one a regeneration cannot reproduce, which makes it a finding
+rather than a decision.
 
 ### The tension, named
 

@@ -341,6 +341,33 @@ AAC-0109.
     offloader, trimmer, structurer, compactor, selector) and its *which handler,
     given what signal* table, lifted out of `docs/CONTEXT-BUDGET.html`, where a
     regenerated agent would never find them.
+  - **Software** — the seams the reference already uses to hold variation:
+    registry, versioned rule set, protocol with a null object, method object,
+    decorator, template rendering, projection from the specification. The
+    agentic families answer *how the loop is shaped*; this one answers *where
+    two agents differ*, which is G0.10's question, so the two exercises share a
+    pass.
+- **The selection rule, and its three homes** (charter §2, *Patterns are not
+  statements*). A pattern is informative and **never adds an obligation** — if
+  adopting one makes something newly required, that requirement is a capability
+  and belongs in a catalog. Which pattern this agent uses is then answered in
+  three places, largest first:
+  - **Derived** — the **Pattern View**, generated: the AOAS statement that
+    *forces* each pattern. `P-DIRECT` forces a deterministic route ahead of the
+    loop; `authority: human_approval` forces a gate that returns rather than
+    blocks; an irreversible operation with a declared compensation forces a
+    saga; `owed_when` forces an omission check. Most of this agent's patterns
+    are in this class, which is the finding worth publishing: **the patterns
+    were not chosen, they were entailed.**
+  - **Per shape** — the blueprint names what an A6 normally uses.
+  - **Decided** — the genuine trade-offs with no statement behind them
+    (reflection against a reviewer; one loop against supervisor and workers) go
+    in the profile's `decisions` block with their `source`, under the rule
+    PROFILE.md already states: *a default is permitted, a silent default is not.*
+- **Done when** every pattern in the library cites at least one capability, the
+  Pattern View generates from the AOAS, and the Build Manifest pins the library
+  and blueprint versions a generation read — a pattern discoverable only by
+  reading the implementation is a finding, not a decision.
 
 ### G0.8 · Complete AgentTwin — prove the agent works in simulation
 
@@ -408,7 +435,8 @@ that, and it is not finished.
   accepted gap. It is also how "the agent implements all of AHC" becomes a check.
   Takes `x_binding` out of the worlds.
 - **Build Manifest** — the exact version of every input to one generation:
-  AAC, AHC, Baseline, blueprint, AOAS, AWD, binding, generator.
+  AAC, AHC, Baseline, blueprint, **pattern library**, AOAS, AWD, binding,
+  generator.
 - **One extra column while walking the capabilities.** Writing the profile means
   visiting every capability this shape owes and saying what we bound. For the
   cost of a second field per row, also record **who else could have supplied it**
