@@ -493,6 +493,85 @@ prediction is the point: measured afterwards it is a rationalisation.
 **Ordering.** After G0.7, whose blueprint this feeds and which feeds it back.
 The measurement half is G2.6.
 
+### G0.11 · Composable checks, and what the agent emits
+
+Two questions asked together on 12 September, and they turn out to be the same
+question twice: **is every stage of the turn a list somebody can configure, and
+is every fact the turn produces emitted once in the right shape?** Both are
+about seams that exist and are half-built.
+
+**What is already true.** `Position` declares five places a rule may run and
+**two are ever called** (F-027): a rule configured at `PRE_TOOL` is accepted,
+versioned, and silently never runs. Telemetry is **spans only** — no metrics of
+any kind — so every aggregate question ("refusal rate this release", "escalations
+per hundred turns", "cost per conversation over time") is answerable only by
+aggregating traces, which is the wrong instrument and the reason
+**AHC-0031** (*context size observable per release, not only per call*) is
+unexercised. There is no injectable grader, so **AHC-0028** is unexercised too,
+and nothing evaluates a turn while it is running.
+
+**The controller shape, stated once.** A turn is a pipeline of stages, and each
+stage takes *a list of things to run* — how many and what they do is
+configuration, not code:
+
+| Stage | Takes | Today |
+|---|---|---|
+| before the model | pre-checks | slot exists, never called |
+| after the model | output rules | wired |
+| before a tool | argument and authority checks | written into `GatedTools` as straight-line code |
+| after a tool | result checks | slot exists, never called |
+| before the reply | reply rules | wired |
+| whether to fetch a person | escalation rules | **already a list** — `RuleSet`, versioned, first match wins |
+| whether a request skips the model | routing rules | **already a list** — `router.Rules`, versioned |
+
+Two of the seven are already the shape we want, which is the argument that the
+shape is right; the work is making the other five uniform, and deciding
+honestly which checks are *policy* (composed, ordered, budgeted, versioned) and
+which belong to the tool boundary and should stay where they are. **AHC-0093**
+(*policies compose in a declared order*) and **AHC-0095** (*policy evaluation has
+its own budget and a declared timeout path*) are the statements; both are owed
+and neither is exercised.
+
+**The emission shape.** One table, and the rule is *one fact, one emission point,
+derived downstream — never written twice*:
+
+| Signal | Answers | Reference today |
+|---|---|---|
+| **Trace** | what happened in this one unit of work, and in what order | the whole of it |
+| **Metric** | what is happening across units — rates, distributions, SLOs, per-release trends | **nothing** |
+| **Event / log** | a discrete fact worth keeping that is not a span — a policy decision, a rule firing | carried as span attributes |
+| **Domain record** | what the business must still be able to answer next month — approvals, escalations, the ledger | durable stores, correctly |
+| **Dataset row** | a production turn, replayable as a test case | **nothing** — AHC-0029 unexercised |
+
+**Where each half goes.** The universal statements exist in AHC already
+(0006, 0026, 0028, 0029, 0031, 0090, 0093, 0095) — this is a *wire it and tag it*
+exercise, not an authoring one. Which convention the attributes follow, and
+which platform ingests them, is **realisation**: the OTel GenAI semantic
+conventions are still moving, and the vendor conventions beside them are
+products. So the version we target is pinned in the **binding**, and the
+platform column belongs to G3.1. A capability that says *emit a span per call*
+is portable; a capability that says *emit it in Arize's dialect* is not.
+
+**Sequencing, and why.**
+
+1. **Now, in G0** — the checker seam (F-027, AHC-0093, AHC-0095) and the
+   emission table with metrics. Both are small, both are things a regeneration
+   must reproduce, and the seam is the user-visible shape of the whole design.
+2. **With G0.8** — inline evaluation. A grader in the loop is judgement, and
+   judgement without a scenario suite to score it against is an opinion that
+   costs a model call. AgentTwin's scenarios are what make an inline grader
+   measurable, so AHC-0028 waits for them and arrives with them.
+3. **With G0.8's live runs, then G3.1** — consumption. *A production record
+   becomes a dataset row without re-keying* (AHC-0029) is what makes online
+   evaluation automatable at all; proving it against a real platform is the
+   `platform` column of the stack matrix, and dates as fast as the rest of that
+   layer.
+
+**Done when** every position is wired or deleted, the composition order and the
+evaluation budget are declared, metrics exist for the aggregates the agent is
+judged on, one identifier spans the unit of work, and a production turn can be
+replayed as a test case without a translation step.
+
 **G0 is done when** `v0.2.0` is tagged with: the three checks passing, every
 finding closed or accepted, the Assurance Map showing no untagged test, and a
 complete harness profile. Then it is frozen.
