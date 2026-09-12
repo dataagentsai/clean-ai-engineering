@@ -169,6 +169,14 @@ the pattern library (TODO G0.7), the third to the binding.
   every normative line carries an id or the map silently under-reports. Found
   while settling the wait-estimate decision, 2026-09-12.
 
+- **An authenticated customer who mislaid their reference cannot be served.**
+  Every operation in the reference's AOAS takes an order id, while the session
+  already identifies whose orders they are — so the agent correctly refuses, at
+  length, and the conversation is a wall (F-032, found by a model-driven
+  persona). Neither catalog says an agent must be able to reach the records its
+  *caller* owns without being handed an identifier for them, and this is the
+  commonest awkward customer in support.
+
 ## What the support agent does not need
 
 It does not stream, keeps no cross-session memory and has no response cache, so
