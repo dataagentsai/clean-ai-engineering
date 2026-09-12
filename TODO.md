@@ -249,6 +249,22 @@ statement it enforces:
 Also the reference's own `TODO.md` where it serves G1: T-001 (a session opening
 is not expressible) is a missing AOAS operation, not a UI nicety.
 
+- **Status.** ✅ Done 2026-09-12. Every finding closed, each from the statement
+  it enforces, each proven by disabling the fix and watching the tests fail.
+  **657 → 756 tests.** Exercised: AOAS 32/34, AAC 41/49, AHC 33/60, Baseline
+  4/12; 0 unwired. Both worlds' `unenforced` lists are now empty, and that is
+  pinned. Five changes went into the specs rather than the code, which is the
+  point of doing it this way: `issue_refund.authority` gained "returned" (the
+  threshold alone let a planted note ask for a refund of a shipped order),
+  `escalate` gained `on_refusal`, every fact gained `derived` with a new
+  validator rule behind it, AOAS.md states that a condition list is a
+  conjunction, and AgentTwin's projection carries an operation's declared
+  inputs. **Two decisions still want an answer** — cancel authority (the AOAS
+  lets the agent cancel alone; AHC-0057 asks for approval on anything
+  irreversible) and wait estimates (the AOAS says tell them nothing about time;
+  the code gives a measured estimate). Both are live in the code as the AOAS has
+  them.
+
 ### G0.6 · Fill the gaps the support agent actually hits
 
 The catalog-wide gaps found by five audits live in **[GAPS.md](GAPS.md)** — a
