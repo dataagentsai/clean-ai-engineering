@@ -54,7 +54,7 @@ this order:
 |---|---|
 | **G0.2** | `concern` on AOAS items only, so the Concern View has one source and proves it generates |
 | **G0.10** | the three-layer classification of the existing modules, and the predicted ratio written down — half a day, and the prediction is worthless if written after G2 |
-| **G0.11** | fix F-027 (wire the positions or delete them) and emit counters for the four aggregates the agent is already judged on. The grader and the dataset path wait for G0.8 |
+| **G0.11** | ~~fix F-027~~ ✅ 2026-09-12 — all five positions reached, the composition root can configure them, and a block is typed by what it is (F-028 found on the way). Still owed: counters for the aggregates the agent is judged on. The grader and the dataset path wait for G0.8 |
 | **G3** | nothing — it is correctly last, and its `in-house` column is collected free inside G0.9 |
 
 **G0 comes first because it produces what G1 and G2 consume.** A god object
