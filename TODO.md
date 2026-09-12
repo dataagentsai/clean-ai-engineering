@@ -493,6 +493,30 @@ that, and it is not finished.
 - **Build Manifest** — the exact version of every input to one generation:
   AAC, AHC, Baseline, blueprint, **pattern library**, **the Generation Brief**,
   AOAS, AWD, binding, generator.
+- **Status.** ✅ Done 2026-09-12. The binding spec **did not need inventing**:
+  AHC publishes a profile format and a binding is exactly what it holds, so
+  `reference-agent/harness-profile.yaml` is the ABS the charter describes.
+  Eleven decisions answered from the code, thirteen ports bound, fourteen
+  accepted gaps owned and dated.
+
+  The check that earns it: **67 owed = 45 exercised + 14 accepted gaps + 8
+  believed-met-and-untested**, nothing counted twice, so *"the agent implements
+  all of AHC"* is arithmetic rather than a claim — and a capability added to the
+  catalog tomorrow fails the suite until somebody decides which of the three it
+  is. `x_untested` is deliberately a weaker claim than "met", because a
+  capability claimed without evidence is what the Assurance Map exists to stop.
+
+  `x_binding` is out of the worlds. The authority an operation requires is two
+  statements — *which* operations are privileged is the AOAS, what the privilege
+  is *called* is the binding — and the worlds carried both until this file
+  existed to hold the second. The exhaustive import contract refused the new
+  module until it was placed in the architecture, and the reuse audit refused it
+  until it was classified, which is what those checks are for.
+
+  The **Build Manifest** generates from disk rather than being written, and
+  immediately found the assurance catalog pinning 0.11.4 while its content had
+  moved to 0.13.0 — released properly, with a changelog entry that says what
+  happened.
 - **One extra column while walking the capabilities.** Writing the profile means
   visiting every capability this shape owes and saying what we bound. For the
   cost of a second field per row, also record **who else could have supplied it**
