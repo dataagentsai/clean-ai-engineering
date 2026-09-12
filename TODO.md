@@ -284,6 +284,8 @@ statement it enforces:
 | ~~**F-024** with no escalation store the agent still promises a colleague~~ ✅ 2026-09-12 | AAC-0110 and AOAS `escalate.on_refusal` (new) — it refuses, and `Escalated` now requires a ticket |
 | ~~**F-025** the repeated-intent rule cannot fire~~ ✅ 2026-09-12 | AOAS `facts.repeated_intent` now declares `derived`; validator rule `undefined-fact`. The dissatisfied-customer half is a catalog gap (GAPS §7) |
 | ~~**F-026** a blocked reply keeps the result type it was~~ ✅ 2026-09-12 | AHC-0017, AHC-0094 — a blocked completion is `Refused`; what the turn did keeps its type |
+| ~~**F-027** three of five policy positions declared and never called~~ ✅ 2026-09-12 | AHC-0093, AHC-0094 — every position reached, and the composition root can configure them at all, which it could not |
+| ~~**F-028** a block inside the loop returned as a completion~~ ✅ 2026-09-12 | AHC-0017 — F-026 one layer down, found by the test written for F-027 |
 | ~~extraction nonconformance — the address never changed~~ ✅ 2026-09-12 | AOAS `change_address` — a projected tool carries the operation's declared inputs; both worlds' `unenforced` lists are empty |
 | ~~extraction nonconformance — R-STYLE/R-FRAUD unenforced~~ ✅ 2026-09-12 | AOAS `R-STYLE`, `R-FRAUD` — routed, with the served near-misses in the same table |
 
@@ -317,7 +319,7 @@ one of three kinds:
 |---|---|
 | **In the code, missing from the spec** — circuit breaker, orphan-safe trimming, the deterministic router, escalation lapse and caps, mandatory result schema | **Reverse-engineer**: capability + obligations, tag the existing test. Without this, regeneration loses them |
 | **Missing from both** — freshness of facts before irreversible actions, the structured facts record, summary provenance, one error taxonomy | **Spec first**: capability and obligation, then build, tagged tests, then scenarios |
-| **Specified, broken in the code** — F-014, F-016–F-021 | G0.5 |
+| **Specified, broken in the code** — F-014, F-016–F-028 | G0.5, and G0.11's first slice |
 
 For the support agent the context work runs in the order its own design doc
 set: freshness (register 16), the facts record (19), a deduplicator over
