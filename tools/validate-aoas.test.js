@@ -52,6 +52,8 @@ const CASES = [
   ["a numeric bound on a bool", "bound-type", (d) => (ops(d).open_return_request.preconditions[3] = { field: "final_sale", at_most: 1 })],
   ["ownership against a session field that does not exist", "unknown-session-field", (d) => (d.conditions.owned.equals_session = "user_id")],
   ["a fact that is typed and never defined", "undefined-fact", (d) => delete d.facts.repeated_intent.derived],
+  ["a nested policy statement reusing a policy id", "duplicate-id",
+   (d) => (d.policies.approval.statements[0].id = "P-REFUND")],
   ["an escalation rule over a fact nobody keeps", "unknown-fact", (d) => (d.policies.escalation.on_condition[0].when.field = "termination_reason")],
   ["an enum of a machine that does not exist", "unknown-state-machine", (d) => (d.entities.order.fields.status.of = "order_state")],
   ["a transition to a misspelt state", "unknown-state", (d) => (sm(d).transitions[0].to = "confirmd")],

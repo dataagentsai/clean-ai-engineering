@@ -122,12 +122,10 @@
       "properties": {
         "approval": {
           "type": "object",
-          "required": ["approver", "valid_for"],
+          "required": ["statements"],
           "additionalProperties": false,
           "properties": {
-            "approver": { "type": "string" },
-            "valid_for": { "$ref": "#/$defs/duration" },
-            "while_waiting": { "type": "string" }
+            "statements": { "$ref": "#/$defs/statements" }
           }
         },
         "escalation": {
@@ -158,11 +156,7 @@
               },
               "description": "First match wins, so order is part of the specification."
             },
-            "each_rule_fires": { "type": "string" },
-            "max_per_conversation": { "type": "integer", "minimum": 1 },
-            "queued_ttl": { "$ref": "#/$defs/duration" },
-            "on_lapse": { "type": "string" },
-            "the_customer_is_told": { "type": "string" },
+            "statements": { "$ref": "#/$defs/statements" },
             "deferred_triggers": { "type": "array", "items": { "type": "string" } }
           }
         },
@@ -391,6 +385,24 @@
         },
         "on_refusal": { "type": "string", "description": "What to offer instead. The reason and the offer, never the wording." }
       }
+    },
+
+    "statements": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["id", "rule"],
+        "additionalProperties": false,
+        "properties": {
+          "id": { "type": "string", "pattern": "^P-[A-Z0-9]+(-[A-Z0-9]+)*$" },
+          "rule": { "type": "string", "minLength": 1 },
+          "valid_for": { "$ref": "#/$defs/duration" },
+          "ttl": { "$ref": "#/$defs/duration" },
+          "at_most": { "type": "integer", "minimum": 1 }
+        }
+      },
+      "description": "Normative lines, each with the id a test names to discharge it, each carrying its own parameter where it has one. Prose beside a parameter is two statements of one rule and they drift; prose with no id is a rule the Assurance Map cannot see, which is how this agent's escalation and approval rules went unverified while reading as specified."
     },
 
     "claim": {

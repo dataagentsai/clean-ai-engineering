@@ -284,6 +284,11 @@ function aoasIssues(doc, opts = {}) {
     }
   };
   unique(doc.purpose.refuses.map((r) => r.id), "purpose.refuses");
+  // Every policy id in one space: the keyed policies and the statements nested
+  // under the approval and escalation blocks. A P- id that appears twice names
+  // two different rules to whoever cites it.
+  const nested = ["approval", "escalation"].flatMap((b) => (doc.policies[b] || {}).statements || []);
+  unique([...Object.keys(doc.policies).filter((k) => /^P-/.test(k)), ...nested.map((s) => s.id)], "policies");
   unique([...(esc.on_request || []), ...(esc.on_condition || [])].map((r) => r.id), "policies.escalation");
   unique(doc.required.properties.map((q) => q.id), "required.properties");
   for (const cat of ["aac", "ahc"]) {

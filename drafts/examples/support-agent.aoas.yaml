@@ -121,10 +121,9 @@ entities:
 session:
   customer_id: {type: id, ref: customer.id}
 
-# What the conversation has become, as values the escalation rules read. These
-# are inputs this spec requires the harness to maintain — named here so a rule
-# that reads an undeclared fact is a typo the validator catches.
-# What the conversation has become. Each says how it is computed: a fact that is
+# What the conversation has become, as values the escalation rules read — inputs
+# this spec requires the harness to maintain, so a rule over an undeclared fact
+# is a typo the validator catches. Each says how it is computed: a fact that is
 # only typed is a number every implementation invents differently, and an
 # escalation rule over it fires somewhere and never here (F-025).
 facts:
@@ -302,10 +301,16 @@ policies:
     rule: a customer may see and act on only the orders they placed
     via: [get_order, cancel_order, open_return_request, change_address, request_refund, issue_refund]
 
+  # Each line carries the id a test names to discharge it. They were prose with
+  # no ids until 2026-09-12, and the Assurance Map could not see them: every one
+  # of these is verified in the reference and none of them read as verified.
   approval:
-    approver: an operations reviewer — never the customer whose refund it is
-    valid_for: 24h                     # a stale grant fails closed
-    while_waiting: the conversation continues; the customer is told a request exists and nothing more
+    statements:
+      - {id: P-APPROVER, rule: "a refund is authorised by an operations reviewer, never by the customer whose refund it is"}
+      - {id: P-APPROVAL-TTL, rule: "a grant older than its validity fails closed rather than executing", valid_for: 24h}
+      - {id: P-APPROVAL-FINAL, rule: "a decision is final: a decided approval cannot be decided again"}
+      - {id: P-APPROVAL-WAIT, rule: "while a decision is pending the conversation continues, and the customer is told a request exists and nothing more"}
+      - {id: P-APPROVAL-QUEUE, rule: "the queue a reviewer reads holds the undecided, and a decided approval leaves it"}
 
   escalation:
     on_request:                        # Tier 1 — decided from the turn's text alone
@@ -317,16 +322,20 @@ policies:
       - {id: repeated-intent,  when: {field: repeated_intent, at_least: 3},    priority: 3, ttl: 30m}
       - {id: second-refusal,   when: {field: refusals, at_least: 2},           priority: 4, ttl: 30m}
       - {id: turns-exceeded,   when: {field: turn_count, at_least: 10},        priority: 6, ttl: 45m}
-    each_rule_fires: once per conversation
-    max_per_conversation: 2            # past this, say something true instead of issuing another reference
-    queued_ttl: 30m
-    on_lapse: the conversation returns to the agent, and the customer is told nobody came
-    # A wait is permitted only where it is measured — queue depth over observed
-    # throughput — and forbidden otherwise. "Just a few minutes" from nowhere is
-    # the promise this rule exists to stop; a number the desk's own throughput
-    # produces is a different thing, and saying nothing when the throughput is
-    # unknown is the same rule, not an exception to it. Decided 2026-09-12.
-    the_customer_is_told: a reference number, and a wait only when one is measured from queue depth and observed throughput
+    statements:
+      - {id: P-ESC-ONCE, rule: "each rule fires once per conversation, whatever happens to what it raised"}
+      - {id: P-ESC-CAP, rule: "past the cap the agent says something true instead of issuing another reference", at_most: 2}
+      - {id: P-ESC-TTL, rule: "a queued escalation nobody comes to lapses", ttl: 30m}
+      - {id: P-ESC-LAPSE, rule: "on lapse the conversation returns to the agent, and the customer is told nobody came"}
+      # A wait is permitted only where it is measured — queue depth over observed
+      # throughput — and forbidden otherwise. "Just a few minutes" from nowhere is
+      # the promise this rule exists to stop; a number the desk's own throughput
+      # produces is a different thing, and saying nothing when the throughput is
+      # unknown is the same rule, not an exception to it. Decided 2026-09-12.
+      - {id: P-ESC-TOLD, rule: "the customer is told a reference number, and a wait only when one is measured from queue depth and observed throughput"}
+      - {id: P-ESC-OWNS, rule: "while a person owns the conversation the agent does not answer it, and only the desk that holds it may close it"}
+      - {id: P-ESC-QUEUE, rule: "the queue a reviewer reads holds the open escalations, oldest first, and a closed one leaves it"}
+      - {id: P-ESC-OUTCOME, rule: "closing records an outcome from a declared set, once, and the rule that raised it stays with the record"}
     deferred_triggers:
       - order flagged for fraud review     # no such field yet
       - three failed resolution attempts   # partly covered by repeated-intent
