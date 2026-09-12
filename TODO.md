@@ -678,6 +678,12 @@ Every gap G2 finds in a universal spec is fixed there — **and G1 is re-run**,
 because a universal fix that breaks the support agent's regeneration was not
 universal. This is the regression test for the whole family.
 
+### G2.5 · AOAS earns its repository
+
+Two agents of different shape meet the promotion condition.
+
+---
+
 ### G2.6 · Measure the reuse, against the prediction
 
 G0.10 predicted the split from one agent. Two agents make it measurable: what
@@ -687,12 +693,6 @@ what is structurally identical under a rename, and what is genuinely its own.
 mechanism that came out different in the two agents was under-specified, and the
 per-agent file that came out the same was universal all along and belongs in a
 layer above.
-
-### G2.5 · AOAS earns its repository
-
-Two agents of different shape meet the promotion condition.
-
----
 
 ## G3 · The same specs on a different stack — and what the stacks already give you
 
