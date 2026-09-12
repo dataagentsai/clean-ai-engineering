@@ -117,8 +117,9 @@ dependency can be named.
 | B10 | Input validation exists at every external boundary | Injection arrives as ordinary content |
 | B11 | Errors are typed and propagated, not swallowed | Failure handling cannot classify what it cannot see |
 | B12 | The system runs in a reproducible environment | Otherwise divergence cannot be attributed |
+| B13 | Every dependency on something the system does not own is an interface, and only the composition root constructs a realisation | The world must be swappable for a simulated one, the provider for a recording, and the store for one that survives a restart — none of which is possible if a component reaches for its own collaborator |
 
-Twelve items. **Code coverage thresholds, branching strategy, documentation format
+Thirteen items. **Code coverage thresholds, branching strategy, documentation format
 and estimation practice are deliberately absent** — nothing agentic stands on them,
 so they stay citations.
 
