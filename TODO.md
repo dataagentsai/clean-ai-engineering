@@ -480,7 +480,7 @@ that, and it is not finished.
 
   | Suite | Today | Missing |
   |---|---|---|
-  | Prompt injection | one planted instruction in a field someone else wrote, a handful of cases | a generated set, hundreds of cases, across every untrusted field and tool result |
+  | Prompt injection | **generated** ✅ 2026-09-12 — a scenario declares a generator, seed and count; 20 cases run against a fresh world each, with the model scripted to obey the note completely | more kinds than instruction-injection, a real corpus through the same seam, and tool *results* as a planting site |
   | Hallucination | the truth oracle (state claims against the world) and entity grounding | a generated knowledge-mismatch set |
   | PII leakage | card-number echo guard, telemetry redaction | a leakage set across replies, traces and stored transcripts |
   | Jailbreak | none as a suite | a generated set |
@@ -488,11 +488,14 @@ that, and it is not finished.
   | Memory poisoning | not applicable — no cross-session memory | an exclusion with `revisit_when`, until memory exists |
   | Tool abuse | scope tests | F-016 is exactly this and is open; a generated set of cross-customer and out-of-scope calls |
 
-  **Attack suites are generated scenario sets, derived from obligations.** The
-  AAC obligation says what must hold; the AWD format carries a generator, a seed
-  and a count, so "two hundred injection cases" is one declaration, reproducible,
-  and runs unchanged against a regenerated agent. Attack corpora and red-team
-  tools are realisations and are named only in the binding.
+  **Attack suites are generated scenario sets, derived from obligations.** ✅ The
+  AWD format carries a generator, a seed and a count, so twenty injection cases
+  is one declaration, reproducible, running unchanged against a regenerated
+  agent. The generator is in the format and **a corpus is not** — curated
+  red-team collections are realisations, and a binding supplies one through the
+  same seam. Planting refuses any field the specification does not mark
+  `untrusted`: an instruction in text the system itself writes tests a threat
+  nobody faces.
 
 - **Live runs.** ✅ **First ones 2026-09-12** — eight scenarios × 3 runs against
   the real model, scored as pass rates, cost per scenario, published to
