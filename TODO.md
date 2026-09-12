@@ -23,6 +23,40 @@ G0–G2 were fixed first and G3 was added on 12 September; it varies the third
 axis, and it is last because a stack mapping written against a moving catalog is
 written three times.
 
+### The critical path, and the rule that keeps this list finite
+
+**23 numbered items, 5 done.** Five were added on 12 September in one sitting,
+each defensible on its own, which is how a queue stops being a plan. Two rules,
+then, stated here rather than discovered later:
+
+> **An item enters only if it changes what is built next, or if it is evidence
+> that can fail.** Anything else is a note, and notes go in `GAPS.md`.
+
+> **Every deferrable item names a minimum slice.** An audit with no floor is an
+> audit that never starts, and an exercise nobody can begin in an afternoon is
+> one that waits for a week nobody has.
+
+**What blocks the first evidence.** G1 is the first thing here that can fail —
+everything before it is craft work that always succeeds, which is precisely the
+failure mode this project already wrote down. The path to it is four items, in
+this order:
+
+| | Why it blocks |
+|---|---|
+| **G0.7** | a generator reads the blueprint for structure; without it the third gate is judged by eye |
+| **G0.9** | the binding and the manifest are *what is handed over*; a generation with no pinned inputs is not reproducible |
+| **G0.8** | the behaviour gate needs a drivable scenario suite, and it is the item most likely to find something |
+| **G1.2** | the gates, packaged as one command |
+
+**What does not block it**, and their minimum slices:
+
+| | Minimum slice, if the full item waits |
+|---|---|
+| **G0.2** | `concern` on AOAS items only, so the Concern View has one source and proves it generates |
+| **G0.10** | the three-layer classification of the existing modules, and the predicted ratio written down — half a day, and the prediction is worthless if written after G2 |
+| **G0.11** | fix F-027 (wire the positions or delete them) and emit counters for the four aggregates the agent is already judged on. The grader and the dataset path wait for G0.8 |
+| **G3** | nothing — it is correctly last, and its `in-house` column is collected free inside G0.9 |
+
 **G0 comes first because it produces what G1 and G2 consume.** A god object
 regenerated faithfully is not a success, and a spec extracted from code nobody
 trusts is not a spec.
@@ -210,6 +244,8 @@ in this order:
 `policy` is cohesive and stays. The size ceilings of G0.3 start as a
 **ratchet** — today's worst value, lowered after each step — so they block
 growth from day one without blocking the refactor.
+
+- **Status.** ✅ Done 2026-09-12 (both halves; detail below).
 
 **Status — the other units: ✅ done 2026-09-12.** Every step green (690 tests,
 strict types, import contract, span contract).
