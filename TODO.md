@@ -405,6 +405,80 @@ that, and it is not finished.
 - **Build Manifest** — the exact version of every input to one generation:
   AAC, AHC, Baseline, blueprint, AOAS, AWD, binding, generator.
 
+### G0.10 · The reuse audit — what is the same agent to agent, and what is not
+
+**The question.** If the same specs are used to build a different agent, how
+much of the code is the *same code*? G1 asks whether the specs regenerate this
+agent; G2 asks whether they travel to another domain. Neither asks what
+proportion of what comes out is shared, which seam each difference sits behind,
+and which pattern holds it. Without an answer, "similar structure" in G1's
+third gate is judged by eye.
+
+**A first measurement, 2026-09-12, on the reference alone.** Of 5,182 executable
+lines (docstrings and comments excluded), **175 (3.4%) carry an entity or
+operation word**, and a further 73 (1.4%) carry only the actor's name —
+`customer`, which a hotel would call a guest. **32 of 50 modules carry none.**
+The concentration is where it should be: `approvals/refund.py` 28%,
+`entrypoint/direct.py` 22%, `approvals/policy.py` 44%, `router` 13%.
+
+Treat that as a floor, not the answer. It counts words, and the per-agent
+surface is larger than its vocabulary: reply templates, thresholds, TTLs, price
+tables, desk capacity, refusal patterns and escalation rule sets are all this
+agent's and name no entity. The measurement took three corrections before it was
+honest — `border` contains "order", `return` is a keyword, docstrings are prose —
+which is the argument for classifying by **declaration** rather than by grep.
+
+**Three layers, and the exercise is to place every module in one.**
+
+| Layer | What it is | Reference examples |
+|---|---|---|
+| **Mechanism** | Universal; no agent's domain reaches it. This is the AHC surface | loop, context, tools, ledger, telemetry, resilience, cost, state stores, approval and escalation *workflows*, the policy *engine*, the edge |
+| **Parameterised mechanism** | Universal code, per-agent values. The dangerous middle: it *looks* shared and behaves differently per agent | `router.Rules`, `t2.RuleSet`, `approvals.Policy` (threshold, TTL, owed states), `CLAIM_PATTERNS`, the price map, `Capacity`, the wording templates, the scope names |
+| **Per-agent** | Exists because this domain exists | `entrypoint/direct.py` handlers, `approvals/refund.py`, `contracts/domain.py`, the worlds |
+
+**What the exercise must decide, per item in the lower two layers: which seam
+holds it.** The reference already demonstrates five, and the audit's job is to
+say which is right where, and why — not to invent a sixth:
+
+- **Registry keyed by a declared intent** — `direct.HANDLERS`, with a test that
+  every intent the router names is registered.
+- **Versioned rule set as data** — `router.Rules`, `escalation.RuleSet`: one
+  engine, the agent's values, a version on the values.
+- **Protocol with a null object** — `Handoff`/`NoDesk`, `PendingWork`/
+  `NoApprovals`: absence is a realisation, not a branch.
+- **Template rendering** — `escalation.wording`, the direct route's reply
+  templates: the words are the agent's, the rendering is not.
+- **Projection from the specification** — AgentTwin derives a tool surface from
+  the AOAS and no longer names a single domain noun. **This is the strongest
+  seam and the least exploited**: the open question is how far it reaches into
+  the agent itself. `CLAIM_PATTERNS` is already checked for completeness against
+  the world's irreversible operations — half-derived. Could the refusal rules
+  come from `purpose.refuses`, the direct routes from `P-DIRECT`, the approval
+  policy from `issue_refund.authority`? Every one of those that becomes derived
+  is a per-agent file that no longer has to be written, or regenerated, or kept
+  in step.
+
+**The constraint that decides the shape of the answer.** *No framework* is
+locked, and for a reason the catalogs exist to serve: a framework owns L4, L1
+and L10. So "hoist the mechanism into a library both agents import" is not
+automatically the answer, and the audit must choose between three models with
+evidence rather than taste:
+
+| Model | Reuse mechanism | Cost |
+|---|---|---|
+| **Library** | The mechanism is a package; agents import it | The framework hazard, in the layers the catalogs exist to expose |
+| **Regeneration** | The specs are the reuse; every agent emits all of it | Sameness is measured, never enforced; drift between agents is invisible |
+| **Hybrid** | Ports and patterns fixed by the blueprint; code regenerated; only mechanical, domain-free adapters shared | Two mechanisms to keep honest, and a line to defend about which is which |
+
+**Done when** every module carries a layer, every per-agent item names the AOAS
+statement that produces it (or is recorded as having none — which is a spec
+gap), each seam names its pattern, one model is chosen with its reasons, and a
+**predicted reuse ratio is written down before the hotel agent exists**. The
+prediction is the point: measured afterwards it is a rationalisation.
+
+**Ordering.** After G0.7, whose blueprint this feeds and which feeds it back.
+The measurement half is G2.6.
+
 **G0 is done when** `v0.2.0` is tagged with: the three checks passing, every
 finding closed or accepted, the Assurance Map showing no untagged test, and a
 complete harness profile. Then it is frozen.
@@ -482,6 +556,16 @@ features against the universal part of the support agent's inventory
 Every gap G2 finds in a universal spec is fixed there — **and G1 is re-run**,
 because a universal fix that breaks the support agent's regeneration was not
 universal. This is the regression test for the whole family.
+
+### G2.6 · Measure the reuse, against the prediction
+
+G0.10 predicted the split from one agent. Two agents make it measurable: what
+proportion of the hotel agent's code is byte-identical to the support agent's,
+what is structurally identical under a rename, and what is genuinely its own.
+**A divergence from the prediction is a finding about the specifications** — the
+mechanism that came out different in the two agents was under-specified, and the
+per-agent file that came out the same was universal all along and belongs in a
+layer above.
 
 ### G2.5 · AOAS earns its repository
 
