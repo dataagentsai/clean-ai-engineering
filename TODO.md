@@ -434,17 +434,32 @@ they do not prove is that the agent, with a real model, handles real
 conversations against a world that misbehaves.** AgentTwin is the instrument for
 that, and it is not finished.
 
-- **A scenario format in AWD.** Scenarios live in pytest today, welded to this
-  implementation. A declarative scenario — world, actor, perturbations, and
-  assertions over the run — is what lets the same suite judge a regenerated
-  agent in G1 and a hotel agent in G2 without new code.
+- **A scenario format in AWD.** ✅ **2026-09-12** — `awd-scenario/v0`: the world
+  it cites, the customer it acts as, what the actor says, what the offstage
+  reviewer or colleague does, the faults it schedules, and what must be true
+  afterwards. Six scenarios run from files. The check vocabulary is closed at six
+  kinds and deliberately lopsided — **five read the world, one reads words** —
+  because a suite asserting mostly on prose measures an author's taste in
+  phrasing and breaks the moment a regeneration words its refusal differently.
+  **An unfired fault fails the run**: a scenario whose fault never landed did not
+  test what it claimed and passes for the wrong reason.
 - **Actors and perturbations into the format.** The customer (scripted,
   state-machine, or model-driven), the approver and the desk colleague; and slow
   systems, stale reads and channel errors — declared, not constructed in Python.
-- **The black-box agent contract** — chat, the session opening, the tool seam
-  the world projects into, the approval and escalation surfaces — so a scenario
-  drives any implementation without importing it.
-- **Coverage from the spec, not from taste.** Every AOAS operation on both sides
+- **The black-box agent contract** ✅ **2026-09-12** — `Subject`: three
+  callables, `say` · `reviewer` · `colleague`. The binding builds it, because
+  wiring is the binding's business; the runner knows none of it. A scenario
+  cannot name a tool, a scope, a model or a store, so it cannot be welded to one
+  implementation by accident. `Unrunnable` is kept distinct from a failing
+  check — an agent with no approval queue *failing* an approval scenario reads
+  as a behavioural difference when it is a missing capability.
+- **Coverage from the spec, not from taste.** Measured since 2026-09-12:
+  **17 of 55** statements are exercised by a whole conversation against a world
+  that can refuse, generated into `docs/SCENARIO-COVERAGE.md` with a ratchet that
+  turns one way. The Assurance Map says a statement has a *test*; this says a
+  conversation demonstrated it, and the gap between the two numbers is the honest
+  measure of how much of this agent's behaviour is asserted rather than shown.
+  The unreached 38 are the work list. Every AOAS operation on both sides
   of every policy boundary; every escalation rule; approvals granted, refused
   and expired; adversarial content in fields someone else wrote; each
   perturbation against each irreversible operation; multi-turn customers who do
