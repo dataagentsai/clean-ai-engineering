@@ -53,7 +53,7 @@ this order:
 | | Minimum slice, if the full item waits |
 |---|---|
 | **G0.2** | `concern` on AOAS items only, so the Concern View has one source and proves it generates |
-| **G0.10** | the three-layer classification of the existing modules, and the predicted ratio written down — half a day, and the prediction is worthless if written after G2 |
+| **G0.10** | ~~the three-layer classification and the predicted ratio~~ ✅ 2026-09-12 — 41 mechanism, 6 parameterised, 5 per-agent, a test that a new module must be placed, and the prediction recorded before a second agent exists. Still owed: the seam-by-seam pattern mapping and the library/regeneration/hybrid choice |
 | **G0.11** | ~~fix F-027~~ ✅ 2026-09-12 — all five positions reached, the composition root can configure them, and a block is typed by what it is (F-028 found on the way). Still owed: counters for the aggregates the agent is judged on. The grader and the dataset path wait for G0.8 |
 | **G3** | nothing — it is correctly last, and its `in-house` column is collected free inside G0.9 |
 
@@ -404,6 +404,26 @@ AAC-0109.
   Pattern View generates from the AOAS, and the Build Manifest pins the library
   and blueprint versions a generation read — a pattern discoverable only by
   reading the implementation is a finding, not a decision.
+
+- **Status.** ✅ Done 2026-09-12, except the generated half of the blueprint.
+  The **Baseline** gained B13 (*every dependency the system does not own is an
+  interface, and only the composition root constructs a realisation*), checked
+  in the reference's build in two halves — the second caught a substring bug in
+  its own checker first. The **A6 blueprint**'s architecture narrative is
+  written from the decomposed reference, and its spine is a fact rather than a
+  design: *the composition root's signature is the port list*, and everything in
+  it is a port, versioned configuration, or a per-unit factory. The **pattern
+  library** holds ten entries with both its rules enforced by the linter — no
+  pattern without a capability, and a pattern never adds an obligation; the
+  method object is deliberately absent, being craft rather than a capability.
+  The **Pattern View** generates from the AOAS: **ten patterns entailed, which
+  is every pattern this agent uses and none left over**. The test that can fail
+  is the other direction and it does — a pattern used here that no statement
+  forces is a decision, and the profile is where decisions go.
+
+  Still owed: the generated half of the blueprint (requirements, design
+  decisions and discharges collated from capability tags), which is a renderer
+  rather than a judgement.
 
 ### G0.8 · Complete AgentTwin — prove the agent works in simulation
 
