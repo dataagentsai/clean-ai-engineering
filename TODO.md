@@ -850,6 +850,46 @@ it, like everything else here.
 
 Deliberately after G2; each depends on something the goals will teach.
 
+- **A world discovered from a real data estate.** Both worlds here were written
+  by hand, and both domains were invented. An adopter's is neither: the schema
+  exists, the data exists, and a catalogue has usually already profiled it —
+  tables, primary and foreign keys, column cardinalities, null rates, value
+  distributions. **Discovery is the cheapest path from a real system to a
+  world**, and it is the adoption story the format otherwise lacks: point it at
+  the estate, get a draft AOAS and AWD to argue with.
+
+  | Discovered | Becomes |
+  |---|---|
+  | a table and its primary key | an entity and its `key` |
+  | a foreign key, declared or inferred | a `ref:` — the join stated once, which `World.ontology()` already expects |
+  | a low-cardinality column and its observed values | an `enum` with `values`, or a state machine's states |
+  | observed transitions between states, in order | candidate `transitions`, which is the hardest part of a spec to write from cold |
+  | ranges, null rates, distributions | seeding hints, and a shorter `fidelity.not_faithful_about` |
+  | functional dependencies between columns | **candidate invariants** |
+
+  **The trap, and the whole design turns on it: profiling says what *is*, and a
+  specification says what must be *true*.** Real data carries defects, legacy
+  rows, half-finished migrations and states nobody meant to allow. Derive
+  invariants from it naively and you encode today's bugs as tomorrow's rules —
+  and the world will then refuse to simulate the very situation the agent needs
+  to handle. So: **discovery proposes, a reviewer disposes.** Every derived
+  statement arrives as a draft carrying its provenance — *observed in 41,882
+  rows, 99.7% conformance, 129 exceptions* — because a reviewer can tell a rule
+  from a coincidence only when the exceptions are countable. The AOAS already
+  has `sources`, declared *informative — provenance, not specification*, which
+  is exactly the right shape for it.
+
+  **What to reuse.** The discovery and profiling half is a solved problem with
+  mature tools; the mapping into a declared world, and the ratification step,
+  are ours. See [[ontology-kg-project]] — same estate, same catalogues, and the
+  KG work and this are two readings of one graph.
+
+  **Why it waits.** It needs a real estate to be developed against, and building
+  it from an imagined one is the armchair failure this queue already names. The
+  first honest target is an existing system with real tables and a real
+  catalogue — and if that system is read-only and advisory, it collides usefully
+  with the next item, which would then be one experiment rather than two.
+
 - **A third shape** — read-only advisory or fully autonomous — to see whether
   convergence cycles fall.
 - **The cross-reference check** for the dependency invariant — when the first
