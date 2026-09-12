@@ -169,6 +169,13 @@ state_machines:
 # `identity` is the DOMAIN meaning of "the same request" — what makes a repeat a
 # repeat. How a key is derived and carried is the harness's business (cited
 # under conformance), not this file's.
+#
+# The two are different questions and both are answered. A harness key asks *is
+# this the same call* — a retry of one attempt — and a fresh key is honestly a
+# second call. `identity` asks *is this the same request*, and the system that
+# owns the record answers it: a second refund of one order is refused by
+# `status != refunded` however new the key is. Neither governs the other; a
+# harness that had only the key would refund twice for two genuine attempts.
 
 # Named conditions, reused below. A named condition must qualify its field
 # (`order.customer_id`, not `customer_id`), because it has no entity of its own.
