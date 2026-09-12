@@ -10,13 +10,18 @@ it is read.
 
 ---
 
-## The three goals
+## The goals
 
 | | Goal | Passes when |
 |---|---|---|
 | **G0** | **The customer support agent is solid — and the specs with it** | the reference passes the three build-time checks, every finding is closed or accepted, and every test traces to a spec statement |
 | **G1** | **Regenerate the support agent into a separate folder, from the specs alone** | the reference stays where it is and is never read during generation; the generated agent passes the four gates below. If it does not, a spec is incomplete — and the divergence says which |
 | **G2** | **The same universal specs generate a hotel customer support agent** | a blind generation from the universal specs plus a hotel AOAS and world passes the same four gates, with no hotel noun added to a universal spec |
+| **G3** | **The same specs on a different stack** | the binding alone changes and the four gates still pass; and every AHC capability carries, per stack family, whether that family provides it, hides it, or leaves it to you |
+
+G0–G2 were fixed first and G3 was added on 12 September; it varies the third
+axis, and it is last because a stack mapping written against a moving catalog is
+written three times.
 
 **G0 comes first because it produces what G1 and G2 consume.** A god object
 regenerated faithfully is not a success, and a spec extracted from code nobody
@@ -404,6 +409,15 @@ that, and it is not finished.
   Takes `x_binding` out of the worlds.
 - **Build Manifest** — the exact version of every input to one generation:
   AAC, AHC, Baseline, blueprint, AOAS, AWD, binding, generator.
+- **One extra column while walking the capabilities.** Writing the profile means
+  visiting every capability this shape owes and saying what we bound. For the
+  cost of a second field per row, also record **who else could have supplied it**
+  — one of the six approaches in `taxonomy/construction.yaml` — and whether we
+  built it because it encodes something of ours or because we chose no framework.
+  This is the `in-house` column of G3's matrix, and the reference is the control
+  in that comparison: the only column where we know what every capability cost to
+  build and what it caught. Collected here, published in G3; the walk is not
+  worth doing twice.
 
 ### G0.10 · The reuse audit — what is the same agent to agent, and what is not
 
@@ -573,14 +587,83 @@ Two agents of different shape meet the promotion condition.
 
 ---
 
+## G3 · The same specs on a different stack — and what the stacks already give you
+
+G1 varies the generator, G2 varies the domain. **G3 varies the stack**, which is
+the axis that decides whether the binding is a real seam or only a name. It also
+produces the catalog's own shipped product: D-008 fixed AHC's output as the
+**coverage delta** — *you chose X, here are the N things X does not give you* —
+and that is the transpose of a realization.
+
+**Why not sooner.** `realizations/README.md` already rules on it: *authored last,
+in one dated pass*, because it is the fastest-rotting layer in the family and
+writing it beside a moving catalog means writing it three times. AHC gained seven
+capabilities on 12 September from reading running code, which is what a still-
+moving catalog looks like. **G1 is the signal that it has stopped**: a blind
+regeneration that needs no new capability is the evidence that the surface is
+stable enough to map a stack against. Mapping before then measures our specs,
+not the stacks.
+
+The second reason is harder to undo. A mapping read out of documentation is
+armchair work that feels like progress and cannot fail — the same failure mode
+that produced six cost obligations against one trajectory obligation, and the
+reason catalog gap-filling was pushed behind the runtime in the first place. A
+capability counts as *provided* only when someone can point at the API that
+provides it, **at which position**, and say what happens when it fails.
+
+### G3.1 · The matrix, one dated pass
+
+- **Rows**: every AHC capability, **crossed with position** — never capability
+  alone. "LangGraph checkpoints" and "a gateway enforces a budget" are both true
+  and are true in different places, with different blast radii, and the
+  layer×position axes exist precisely to stop that being flattened.
+- **Columns**: the six approaches, instantiated by family — the Claude Agent
+  SDK and the OpenAI Agents SDK (`framework`), LangChain/LangGraph (`framework`),
+  a gateway or proxy (`gateway`), hosted tracing, datasets and evaluation
+  (`platform`), open-source evaluation and replay libraries (`open-source`),
+  cloud-managed equivalents (`cloud-native`), and **the reference itself**
+  (`in-house`, the control).
+- **Cells**: provided · partial · absent · *hidden* — the fourth being the one
+  that matters, a capability the stack satisfies in a way that removes your
+  ability to observe or change it. D-008's hand pass over the Claude Agent SDK
+  found three real losses and **five layers it would have hidden**.
+- **Where it lives**: `realizations/` in AHC, the only layer where products may
+  be named, versioned separately because it will go stale. Never in capability
+  text, which stays portable and product-free.
+- **The by-product worth having**: for each capability we hand-rolled, whether
+  we would buy it in production. The reference hand-rolled deliberately — a
+  framework owns L4, L1 and L10, the layers the catalogs exist to expose — and
+  saying so plainly is what makes the artifact credible: *we built it to see it;
+  here is what you should buy.* Candidates already visible: retry, throttling and
+  the circuit breaker; the cassette; cost metering; the span contract; the
+  reviewer desk.
+
+### G3.2 · Rebind the reference and re-run the gates
+
+Take the same AOAS, AHC, Baseline and blueprint, change **only** the binding —
+one framework, or a gateway plus hosted evaluation — regenerate, and run G1's
+four gates. This is *Free the binding*, promoted out of Later and sequenced:
+**after G2**, because G2 varies the domain with the stack held fixed, and
+varying two axes at once makes a failure unattributable.
+
+What it tests is not the framework. It is whether the binding spec carries
+enough for a generator to bind the same behaviour to different machinery — and
+every gate failure classifies as *the binding under-specified this* or *the
+stack cannot express it*, which is the first honest evidence for either claim.
+
+### G3.3 · Publish the delta and the method
+
+The artifact is the method plus one worked column, not a bake-off table: a
+comparison dates in a quarter and every vendor disputes it, while a profile an
+adopter can re-run against their own stack does not. Ships with the failures in
+it, like everything else here.
+
 ## Later
 
 Deliberately after G2; each depends on something the goals will teach.
 
 - **A third shape** — read-only advisory or fully autonomous — to see whether
   convergence cycles fall.
-- **Free the binding** — the generator chooses its own stack. Does the spec
-  still converge?
 - **The cross-reference check** for the dependency invariant — when the first
   violation appears, not before (charter §3).
 - **Actors and perturbations** into the AWD format; **shadow mode** built, so a
