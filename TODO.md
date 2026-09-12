@@ -469,11 +469,11 @@ that, and it is not finished.
 
   | Simulator | Today | Missing |
   |---|---|---|
-  | Human — personas | scripted and state-machine customers; approver; desk colleague | a declared persona catalogue (does not know the order number, impatient, second language); the model-driven customer is a declared seam, not built |
+  | Human — personas | scripted and state-machine customers, **declared in the scenario file** since 2026-09-12; approver and desk declared too | a persona catalogue (does not know the order number, impatient, second language); the model-driven customer is a declared seam, not built |
   | External systems | the world projected as a tool server (`mock`); recordings (`replay`) | `shadow` — call real, serve mock, diff |
   | Data | constrained combinatorial eligibility cases (in the reference, driven by the world) | generation driven by the AOAS and moved into AgentTwin; bulk synthetic records — **and a build/buy answer first**: relational synthetic-data tools already model keys, types and distributions, and they start from *real data to learn from*, which a hotel agent does not have. What is ours is the **declared** starting point and the refusal of an impossible row; what is not ours is volume, skew and dirty long tails. Decide before writing a generator, and record it as a row in G3.1's matrix |
   | Time | a timeline that schedules faults by call number | **a world clock that advances** — days since delivery, approval and escalation expiry. G2 needs it first: a hotel is all dates |
-  | Chaos and network | slow, channel error, stale read — on the tool channel | **the model provider as a perturbable system** — throttling, outage, malformed output. It is an external dependency, so it belongs in the world; today it is only scripted in unit tests |
+  | Chaos and network | slow, channel error, stale read on the tool channel; **the provider throttling, failing or returning nonsense** ✅ 2026-09-12, declared by kind and mapped to exceptions by the binding | load, and faults that span a conversation rather than a call |
   | Cost | not simulated — measured | stays measured: live runs report cost per scenario; budget exhaustion is a harness test. AgentTwin twins the world, never the agent's model |
 
 - **The attack suites, against what exists:**
