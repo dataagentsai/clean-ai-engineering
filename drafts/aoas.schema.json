@@ -251,6 +251,8 @@
         "of": { "type": "string", "description": "An enum whose values are the states of a named state machine." },
         "ref": { "type": "string", "pattern": "^[a-z][a-z0-9_]*\\.[a-z][a-z0-9_]*$" },
         "derived": { "type": "string" },
+        "advances": { "enum": ["days"], "description": "A counter that runs with world time, so a window can close while a conversation is still open." },
+        "advances_when": { "$ref": "#/$defs/condition", "description": "When the counter runs. Absent means always. Usually the invariant that says when the field may be non-zero, pointed forwards." },
         "pii": { "type": "boolean" },
         "untrusted": { "type": "boolean", "description": "Written by someone other than the system. Content, never instruction." }
       },

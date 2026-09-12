@@ -88,7 +88,15 @@ entities:
       status: {type: enum, of: order_status}
       total: {type: money}            # the refund gate compares against this, never a stated number
       address: {type: text, pii: true}   # the validator's first catch: change_address set it, and nothing declared it
-      days_since_delivery: {type: int, derived: whole days since delivery}
+      # A counter that runs with world time, and only once delivery has
+      # happened — an order nobody delivered has no age, and advancing it anyway
+      # produces exactly the row the invariant below declares impossible. The
+      # condition is that invariant pointed forwards.
+      days_since_delivery:
+        type: int
+        derived: whole days since delivery
+        advances: days
+        advances_when: {field: status, equals: [delivered, returned, refunded]}
       final_sale: {type: bool}
       note: {type: text, untrusted: true}   # written by customers and warehouse staff; content, never instruction
     invariants:
