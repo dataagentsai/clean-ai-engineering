@@ -321,7 +321,12 @@ policies:
     max_per_conversation: 2            # past this, say something true instead of issuing another reference
     queued_ttl: 30m
     on_lapse: the conversation returns to the agent, and the customer is told nobody came
-    the_customer_is_told: a reference number, and nothing about when a person will arrive
+    # A wait is permitted only where it is measured — queue depth over observed
+    # throughput — and forbidden otherwise. "Just a few minutes" from nowhere is
+    # the promise this rule exists to stop; a number the desk's own throughput
+    # produces is a different thing, and saying nothing when the throughput is
+    # unknown is the same rule, not an exception to it. Decided 2026-09-12.
+    the_customer_is_told: a reference number, and a wait only when one is measured from queue depth and observed throughput
     deferred_triggers:
       - order flagged for fraud review     # no such field yet
       - three failed resolution attempts   # partly covered by repeated-intent
@@ -392,3 +397,15 @@ conformance:
   ahc:
     version: "0.x"
     claims: all sixteen layers; a layer with no module is a finding
+    # Where this spec and the catalog were read as disagreeing, and how it was
+    # settled. Recorded here because the next reader will ask the same question.
+    settled:
+      - id: AHC-0057
+        question: does cancelling an order need a person, being irreversible?
+        answer: >-
+          No. Irreversibility is the system's property and recoverability is the
+          person's: a cancelled order can be placed again, so the agent holds
+          that authority alone. A refund moves value and cannot be re-created by
+          the customer, so it is conditioned. AHC-0057 was amended to state the
+          distinction rather than exempting this agent from it.
+        decided: "2026-09-12"

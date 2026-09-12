@@ -161,6 +161,14 @@ the pattern library (TODO G0.7), the third to the binding.
   signal, and saying so needs a statement, not a heuristic. Both catalogs are
   silent on whether an agent must notice that its answers are not landing.
 
+- **A prose statement with no id cannot be discharged.** The AOAS gives ids to
+  operations, policies, refusals, escalation rules and quality properties — and
+  none to the prose lines beside them: `the_customer_is_told`, `on_lapse`,
+  `while_waiting`, `each_rule_fires`. The reference agent verifies several of
+  them; the Assurance Map cannot say so, because there is nothing to tag. Either
+  every normative line carries an id or the map silently under-reports. Found
+  while settling the wait-estimate decision, 2026-09-12.
+
 ## What the support agent does not need
 
 It does not stream, keeps no cross-session memory and has no response cache, so

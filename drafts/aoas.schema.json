@@ -413,6 +413,21 @@
             }
           },
           "description": "Excluded, not \"not applicable\". An exclusion that names the change that would revoke it cannot quietly become permanent."
+        },
+        "settled": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["id", "question", "answer", "decided"],
+            "additionalProperties": false,
+            "properties": {
+              "id": { "type": "string" },
+              "question": { "type": "string", "minLength": 1 },
+              "answer": { "type": "string", "minLength": 1 },
+              "decided": { "type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$" }
+            }
+          },
+          "description": "Where this spec and the catalog were read as disagreeing, and how it was settled. Neither an exclusion nor a claim: the obligation holds, and this is what it was taken to mean here. Undocumented, the same question is re-argued by every reader and the answer drifts."
         }
       }
     }
