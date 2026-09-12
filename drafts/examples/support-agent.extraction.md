@@ -128,7 +128,7 @@ are TODO 3.3.
 | `issue_refund` within ₹10,000 proceeds without a person | ~~A below-threshold request executes nothing at all~~ — **conforms since 2026-09-12**, with the spec corrected: the agent refunds alone only an order that is `returned` *and* within the limit. The threshold alone let a planted note ask for a refund of a shipped order | F-014 — fixed, spec changed |
 | `issue_refund` never on a `refunded` order | ~~The world declares no guard~~ — **conforms since 1.3**: the precondition is composed into the world, which refuses a second refund under a fresh key | closed |
 | The order system accepts a caller-supplied key | ~~The key never leaves the process~~ — **conforms since 2026-09-12**: the key travels in `_meta` and the stand-in replays a write it has answered | F-017 — fixed |
-| `change_address` takes the new address | The world's action takes only the order id and changes nothing; addresses are absent from `fidelity.not_faithful_about` as well as from the entity | **new** |
+| `change_address` takes the new address | ~~The world's action takes only the order id and changes nothing~~ — **conforms since 2026-09-12**: a projected tool carries the operation's declared inputs, every order row has an address, and changing it changes the row | closed |
 | `customer.phone` is personal data | The world's customer has no phone field | **new**, minor |
 | R-STYLE and R-FRAUD are refused | No router rule or guardrail covers either | **new** |
 | Latency, availability, residency, retention declared | None is declared | Declared absent in `required.undeclared` |
