@@ -471,8 +471,8 @@ that, and it is not finished.
   accepted gap. It is also how "the agent implements all of AHC" becomes a check.
   Takes `x_binding` out of the worlds.
 - **Build Manifest** — the exact version of every input to one generation:
-  AAC, AHC, Baseline, blueprint, **pattern library**, AOAS, AWD, binding,
-  generator.
+  AAC, AHC, Baseline, blueprint, **pattern library**, **the Generation Brief**,
+  AOAS, AWD, binding, generator.
 - **One extra column while walking the capabilities.** Writing the profile means
   visiting every capability this shape owes and saying what we bound. For the
   cost of a second field per row, also record **who else could have supplied it**
@@ -657,7 +657,8 @@ Before the first generation, written down and committed:
   bundle, and sits **outside the home directory** (e.g. under `/Users/Shared`),
   so no parent `CLAUDE.md` and no project memory that describes the reference
   is loaded; the session's settings **deny reads** of the reference, AgentTwin's
-  worlds and the strategy repository; one fixed, short prompt. A remote session
+  worlds and the strategy repository; **the Generation Brief** — assembled, not
+  written, and fixed for the cycle. A remote session
   that holds only the bundle is the stronger version of the same thing. A
   generator that can read the reference, or whose instructions describe it, is
   not blind;

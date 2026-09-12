@@ -53,10 +53,39 @@ Six authored artifacts. Three derived. Nothing else.
 | **Assurance Map** | the join across obligations, capabilities, behaviours, worlds and evidence |
 | **Concern View** | everything tagged with one concern, gathered from all five sources |
 | **Pattern View** | which patterns this agent needs, and the statement that made each one necessary |
+| **Generation Brief** | everything handed to a builder, assembled from the five sources in phase order |
 | **Build Manifest** | the exact artifact versions handed to one generation or evaluation run |
 
 The moment a derived artifact is hand-edited it begins to disagree with its
 sources, and it disagrees silently. Generate them or do not have them.
+
+### The brief, and where "how to build it" lives
+
+A builder — a person or a coding agent — needs more than the statements. It
+needs to know how this family expects work to be done: that a seam with two
+realisations gets an interface and a null object rather than a branch, that an
+optional check is a list at a declared position rather than an `if`, that only
+the composition root constructs a realisation. **That guidance is real and it
+has to live somewhere, or it lives in a prompt somebody edits and nobody
+versions.**
+
+It lives in four places, and none of them is new:
+
+| Guidance | Home |
+|---|---|
+| Universal engineering practice | the **Baseline** — cited from software engineering, never restated |
+| The structure this shape uses | the **blueprint**, per archetype |
+| When to reach for a pattern, and what it cannot run safely without | the **pattern library**, on each entry |
+| Everything above, assembled for one generation | the **Generation Brief** |
+
+> **The brief is assembled, never authored.** Every sentence in it resolves to a
+> statement, a Baseline item, a blueprint entry or a pattern entry. A sentence
+> that resolves to none of those is implementation detail moving upward, which
+> §9 names as the failure mode of a regeneration programme — and it is most
+> tempting exactly when a generation has just diverged.
+
+The brief is pinned in the Build Manifest like any other input, because *which
+guidance a generation was given* is part of what produced it.
 
 ### Why six and not more
 
