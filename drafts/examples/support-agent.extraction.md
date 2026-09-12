@@ -130,7 +130,7 @@ are TODO 3.3.
 | The order system accepts a caller-supplied key | ~~The key never leaves the process~~ — **conforms since 2026-09-12**: the key travels in `_meta` and the stand-in replays a write it has answered | F-017 — fixed |
 | `change_address` takes the new address | ~~The world's action takes only the order id and changes nothing~~ — **conforms since 2026-09-12**: a projected tool carries the operation's declared inputs, every order row has an address, and changing it changes the row | closed |
 | `customer.phone` is personal data | The world's customer has no phone field | **new**, minor |
-| R-STYLE and R-FRAUD are refused | No router rule or guardrail covers either | **new** |
+| R-STYLE and R-FRAUD are refused | ~~No router rule or guardrail covers either~~ — **conforms since 2026-09-12**: both routed, anchored on the asking rather than the noun, and each refusal carries the id it enforces | closed |
 | Latency, availability, residency, retention declared | None is declared | Declared absent in `required.undeclared` |
 
 Four new items, and every one of them surfaced because a statement had to be

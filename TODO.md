@@ -244,7 +244,7 @@ statement it enforces:
 | ~~**F-025** the repeated-intent rule cannot fire~~ ✅ 2026-09-12 | AOAS `facts.repeated_intent` now declares `derived`; validator rule `undefined-fact`. The dissatisfied-customer half is a catalog gap (GAPS §7) |
 | ~~**F-026** a blocked reply keeps the result type it was~~ ✅ 2026-09-12 | AHC-0017, AHC-0094 — a blocked completion is `Refused`; what the turn did keeps its type |
 | ~~extraction nonconformance — the address never changed~~ ✅ 2026-09-12 | AOAS `change_address` — a projected tool carries the operation's declared inputs; both worlds' `unenforced` lists are empty |
-| extraction nonconformance — R-STYLE/R-FRAUD unenforced | AOAS `R-STYLE`, `R-FRAUD` |
+| ~~extraction nonconformance — R-STYLE/R-FRAUD unenforced~~ ✅ 2026-09-12 | AOAS `R-STYLE`, `R-FRAUD` — routed, with the served near-misses in the same table |
 
 Also the reference's own `TODO.md` where it serves G1: T-001 (a session opening
 is not expressible) is a missing AOAS operation, not a UI nicety.
