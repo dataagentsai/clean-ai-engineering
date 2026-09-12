@@ -891,7 +891,10 @@ Deliberately after G2; each depends on something the goals will teach.
   with the next item, which would then be one experiment rather than two.
 
 - **A third shape** — read-only advisory or fully autonomous — to see whether
-  convergence cycles fall.
+  convergence cycles fall. **Collides usefully with world discovery above**: a
+  read-only advisory agent over an existing estate is one experiment answering
+  both questions, where doing them apart is two. Not merged here, because which
+  estate decides it and that is not a decision this file should make.
 - **The cross-reference check** for the dependency invariant — when the first
   violation appears, not before (charter §3).
 - **Actors and perturbations** into the AWD format; **shadow mode** built, so a
