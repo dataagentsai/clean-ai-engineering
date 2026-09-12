@@ -117,7 +117,7 @@ written down somewhere the world description can cite.
 ### 6 · Required properties
 
 Thresholds true of this agent: latency, cost ceiling, availability, residency,
-retention. Each with a means of demonstration, per charter §6.
+retention. Each with a means of demonstration, per charter §7.
 
 *These are properties, and the assurance catalog also holds properties — the
 difference is universality, not kind. A threshold with a number in it is almost

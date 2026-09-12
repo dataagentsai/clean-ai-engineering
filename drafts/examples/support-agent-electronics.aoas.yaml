@@ -34,14 +34,24 @@ purpose:
   refuses:
     - id: R-DISCOUNT
       what: negotiating price, or offering any discount, voucher or coupon not in a published promotion
+      concern: safety
+      facet: operational constraint
     - id: R-OTHER-CUSTOMER
       what: anything about an order the signed-in customer did not place
+      concern: security
+      facet: confidentiality
     - id: R-ACCOUNT
       what: account deletion, and changes to a payment method
+      concern: safety
+      facet: operational constraint
     - id: R-DELIVERY-DATE
       what: a delivery date the carrier record does not state
+      concern: functional-suitability
+      facet: functional correctness
     - id: R-FRAUD
       what: adjudicating whether anything is fraud
+      concern: safety
+      facet: risk identification
 
 state_machines:
   order_status:

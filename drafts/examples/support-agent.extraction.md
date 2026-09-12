@@ -109,7 +109,7 @@ gate compares money. Small, but it has to be decided before the schema is.
 → **Resolved in TODO 1.2:** bounds are numbers in the AOAS schema. The world's
 loader still types them as integers until TODO 1.3.
 
-**E8 · Pinning a pre-1.0 catalog.** Charter §5 pins citations to the major
+**E8 · Pinning a pre-1.0 catalog.** Charter §6 pins citations to the major
 version, and major `0` pins nothing. The example pins AAC to `0.12`. → The
 charter needs a pre-1.0 clause.
 

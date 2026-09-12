@@ -183,7 +183,96 @@ converts a matter of judgement into a matter of vocabulary.
 
 ---
 
-## 3 · The dependency invariant
+## 3 · The two tags
+
+> **Every statement in the family carries one authored tag — its `concern` — and
+> one derived tag — its `phase`. Anything more has to earn its place the way a
+> principle does: by driving a generated view or a check.**
+
+The two exist for opposite reasons. `concern` answers *what kind of quality is
+this about*, and it cuts **across** the six artifacts — the statements about
+privacy live in all of them, and nobody can read them together without a tag.
+`phase` answers *when in the build is this needed*, and it cuts **with** the
+artifacts, which is why it is derived rather than written down.
+
+### `concern` — authored, on every statement
+
+The vocabulary is the nine quality characteristics of **ISO/IEC 25010:2023**,
+plus **`cost`** as the one agentic addition:
+
+| Slug | 25010:2023 characteristic |
+|---|---|
+| `functional-suitability` | Functional suitability |
+| `performance-efficiency` | Performance efficiency |
+| `compatibility` | Compatibility |
+| `interaction-capability` | Interaction capability |
+| `reliability` | Reliability |
+| `security` | Security |
+| `maintainability` | Maintainability |
+| `flexibility` | Flexibility |
+| `safety` | Safety |
+| `cost` | — **added here** |
+
+Cited, not invented, for the reason principle 2 gives: a home-grown quality
+taxonomy is a thing this project would have to defend, and 25010 is a thing an
+auditor already accepts. A statement **MAY** also name a narrower **facet** — a
+25010 sub-characteristic such as `confidentiality` or `analysability` — where the
+characteristic alone is too coarse to be useful. The facet is optional; the
+concern is not.
+
+**Why `cost` is the exception.** 25010 has no characteristic for what a system
+spends to produce its answer. For conventional software that is a deployment
+question; for an agent it is a per-request property that changes with the
+model, the prompt and the number of loop iterations, and it is the property
+most likely to fail silently. A taxonomy that could not express it would push
+every cost statement into `performance-efficiency · resource utilization`,
+where it would be read as a tuning note.
+
+**An NFR is a statement whose concern is not `functional-suitability`.** That is
+the whole definition, and it is why this family has no separate NFR document:
+the Concern View, filtered to the other nine, *is* the non-functional view.
+
+### `phase` — derived, never tagged
+
+The values are the technical processes of **ISO/IEC/IEEE 12207**. A statement's
+phase follows from where it sits, because the family's artifact split already
+**is** the phase split — each artifact answers a different kind of question with
+a different means of verification:
+
+| Phase | Derived from |
+|---|---|
+| **requirements** | an AOAS item |
+| **architecture** | an AHC capability's `requirement`, and its layer and position |
+| **design** | an AHC capability's `design_decisions`, and a blueprint |
+| **implementation** | a binding item |
+| **verification** | an AAC obligation whose stages are S1–S4; an AWD scenario |
+| **operation** | an AAC obligation whose stages are S5–S6 |
+
+Tagging phase per item would restate the file the statement lives in, and **a
+restatement drifts**. The last two rows are the only ones needing a rule beyond
+"which file is this in", and the rule is AAC's own `stages` axis: a check that
+runs pre-release is verification, and one that runs against live traffic is
+operation.
+
+### What the tags drive, and what happens if they drive nothing
+
+| Tag | Drives |
+|---|---|
+| `concern` | the **Concern View** — every statement about one quality, from all six artifacts on one generated page |
+| `phase` | the **Generation Brief**, assembled phase by phase: requirements, then architecture, design and verification — the order a builder works in |
+
+Each artifact's linter enforces the presence of `concern` and the spelling of
+its value. A tag with no check is a tag that is absent from a third of the
+corpus within a month, and the derived views would not say so — they would
+simply be shorter.
+
+**Structural axes stay as they are.** AHC's layers and positions, AAC's
+mechanisms and stages, both catalogs' archetypes — none of them is a phase or a
+concern, and folding them in would lose the thing each one is for.
+
+---
+
+## 4 · The dependency invariant
 
 > **Dependencies point from situational to universal, and from binding to
 > specification. Never the reverse.**
@@ -206,7 +295,7 @@ not before, per principle 6.
 
 ---
 
-## 4 · Conformance language
+## 5 · Conformance language
 
 Normative statements use **MUST**, **MUST NOT**, **SHOULD**, **SHOULD NOT** and
 **MAY**, with their ordinary meanings in specification prose.
@@ -217,7 +306,7 @@ most sentences in a specification are explanation — but it must be deliberate.
 
 ---
 
-## 5 · Versioning and citation
+## 6 · Versioning and citation
 
 - Each artifact carries its own **semantic version**.
 - **Cross-references are pinned to the major version** of the artifact cited. A
@@ -230,7 +319,7 @@ most sentences in a specification are explanation — but it must be deliberate.
 
 ---
 
-## 6 · Evidence
+## 7 · Evidence
 
 **Every MUST names how it is demonstrated** — assertion, inspection, scenario, or
 acceptance test.
@@ -241,7 +330,7 @@ with no stated means of demonstration cannot be discharged, only asserted.
 
 ---
 
-## 7 · The baseline
+## 8 · The baseline
 
 An agent is a software system, and everything software engineering knows applies to
 it. This family does not restate any of that.
@@ -261,7 +350,7 @@ bounds how much of the baseline must be demonstrated are in
 
 ---
 
-## 8 · Scope boundaries
+## 9 · Scope boundaries
 
 What each artifact deliberately does not cover. The refusals are what make a
 specification trustworthy.
@@ -277,7 +366,7 @@ specification trustworthy.
 
 ---
 
-## 9 · What is not a specification
+## 10 · What is not a specification
 
 - **Prompts.** A prompt is a generated artifact. What is *required* of one — that
   it states the refusal policy, that it carries no personal data — is an AAC or AOAS

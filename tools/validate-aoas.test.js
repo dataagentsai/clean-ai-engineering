@@ -54,6 +54,7 @@ const CASES = [
   ["a fact that is typed and never defined", "undefined-fact", (d) => delete d.facts.repeated_intent.derived],
   ["a nested policy statement reusing a policy id", "duplicate-id",
    (d) => (d.policies.approval.statements[0].id = "P-REFUND")],
+  ["a facet from the wrong concern", "facet-mismatch", (d) => (d.policies["P-OWNERSHIP"].facet = "analysability")],
   ["an escalation rule over a fact nobody keeps", "unknown-fact", (d) => (d.policies.escalation.on_condition[0].when.field = "termination_reason")],
   ["an enum of a machine that does not exist", "unknown-state-machine", (d) => (d.entities.order.fields.status.of = "order_state")],
   ["a transition to a misspelt state", "unknown-state", (d) => (sm(d).transitions[0].to = "confirmd")],
@@ -78,7 +79,7 @@ const CASES = [
   // ---- discipline
   ["an irreversible operation with no identity", "irreversible-without-identity", (d) => delete ops(d).issue_refund.identity],
   ["an operation both deferred and defined", "deferred-and-defined", (d) => d.purpose.deferred.push({ operation: "cancel_order" })],
-  ["two refusals with one id", "duplicate-id", (d) => d.purpose.refuses.push({ id: "R-DISCOUNT", what: "again" })],
+  ["two refusals with one id", "duplicate-id", (d) => d.purpose.refuses.push({ id: "R-DISCOUNT", what: "again", concern: "safety" })],
   ["a text trigger and a condition rule sharing an id", "duplicate-id", (d) => (d.policies.escalation.on_request[0].id = "loop-exhausted")],
   ["a transport named in an external contract", "names-technology", (d) => (d.external.order_system.consistency = "reached over MCP; reads can be stale")],
   ["a technology in a field name", "names-technology", (d) => (d.entities.order.fields.postgres_row = { type: "id" })],

@@ -15,7 +15,7 @@
 #     One rule needed more than that. It is marked `# EXTENDS`, and it is the
 #     evidence for the draft's open format question.
 #   - Every `must` carries `evidence`: assertion | inspection | scenario |
-#     acceptance (charter §6).
+#     acceptance (charter §7).
 #   - Anything true of every agent is cited by identifier under `conformance`,
 #     never restated here. If a statement below holds with the domain nouns
 #     removed, it is in the wrong file.
@@ -50,16 +50,28 @@ purpose:
   refuses:
     - id: R-DISCOUNT
       what: negotiating price, or offering any discount, voucher or coupon not in a published promotion
+      concern: safety
+      facet: operational constraint
     - id: R-OTHER-CUSTOMER
       what: anything about an order the signed-in customer did not place
+      concern: security
+      facet: confidentiality
     - id: R-ACCOUNT
       what: account deletion, and changes to a payment method
+      concern: safety
+      facet: operational constraint
     - id: R-DELIVERY-DATE
       what: a delivery date the carrier record does not state
+      concern: functional-suitability
+      facet: functional correctness
     - id: R-STYLE
       what: style or fit advice presented as authoritative
+      concern: functional-suitability
+      facet: functional appropriateness
     - id: R-FRAUD
       what: adjudicating whether anything is fraud
+      concern: safety
+      facet: risk identification
   # Recognised, in doc 24, and deliberately not operations in this version. The
   # agent may explain the policy; it performs nothing, and claims nothing.
   deferred:
@@ -213,6 +225,22 @@ operations:
     effect: {status: cancelled}
     identity: order_id
     authority: agent
+    # AHC-0057 asks for an approval the run cannot grant on anything
+    # irreversible, and this is irreversible. It is nonetheless the agent's,
+    # decided 2026-09-12: the authority is not the agent's own, it is the
+    # customer's, exercised on their own row. `P-OWNERSHIP` already establishes
+    # that only the owner reaches this operation, so the person whose order it is
+    # has authorised it by asking — and a gate here would queue a routine
+    # self-service action behind a human who has nothing to add.
+    #
+    # The distinction the approval gate is actually drawing is not
+    # reversibility. It is **whose** authority the effect needs: moving money out
+    # of the business is the business's decision, and cancelling your own
+    # unshipped order is yours. `issue_refund` is gated; this is not.
+    #
+    # Recorded in the binding as an answer to AHC-0057 rather than silently
+    # diverging from it, because a capability a system does not meet has to say
+    # so somewhere a reviewer looks.
     on_refusal: offer a return once the order is delivered   # P-CANCEL
 
   open_return_request:
@@ -296,16 +324,26 @@ policies:
   P-CANCEL:
     rule: cancellation while pending or confirmed; once picked, refuse and offer return-on-delivery
     via: [cancel_order]
+    concern: functional-suitability
+    facet: functional correctness
   P-RETURN:
     rule: within 30 days of delivery; final-sale items never
     via: [open_return_request]
+    concern: functional-suitability
+    facet: functional correctness
   P-ADDRESS:
     rule: while pending only
     via: [change_address]
+    concern: functional-suitability
+    facet: functional correctness
   P-REFUND:
     rule: to the original payment method; a refund above ₹10,000 needs a person
     via: [request_refund, issue_refund]
+    concern: safety
+    facet: operational constraint
   P-REFUND-STATUS:
+    concern: functional-suitability
+    facet: functional correctness
     # Answered from the order's status — the only refund state the order system
     # holds. refunded: a refund was issued, to the original payment method;
     # returned: the return arrived and the refund is being processed; anything
@@ -316,26 +354,37 @@ policies:
   # AHC-0100 requires the specification to state both; the reference answered
   # them in code and neither was written down, so a regeneration would have put
   # its commonest question — "where is my order" — through the loop.
+  # "One intent and one order" — both halves, because only the first was read.
+  # The code checked that exactly one intent matched and then took the FIRST
+  # order id in the turn, so "where is my order AB-10003 and what about AB-10004
+  # and AB-10005" was answered deterministically, about AB-10003, with nothing
+  # said about the other two (F-037). Three subjects is the same ambiguity as two
+  # intents and belongs on the same path.
   P-DIRECT:
-    rule: order status and refund status are answered from the order system deterministically, with no model call, when the turn names one intent and carries an order id; anything ambiguous or multi-intent goes to the loop
+    rule: order status and refund status are answered from the order system deterministically, with no model call, when the turn names exactly one intent and exactly one order; a turn naming several orders, several intents, or none of either goes to the loop
     via: [get_order]
+    concern: cost
   P-DIRECT-READS:
     rule: the deterministic path never performs a write — it is selected by patterns over the customer's words, and an effect must not be one rewording away
     via: [get_order]
+    concern: safety
+    facet: operational constraint
   P-OWNERSHIP:
     rule: a customer may see and act on only the orders they placed
     via: [get_order, cancel_order, open_return_request, change_address, request_refund, issue_refund]
+    concern: security
+    facet: confidentiality
 
   # Each line carries the id a test names to discharge it. They were prose with
   # no ids until 2026-09-12, and the Assurance Map could not see them: every one
   # of these is verified in the reference and none of them read as verified.
   approval:
     statements:
-      - {id: P-APPROVER, rule: "a refund is authorised by an operations reviewer, never by the customer whose refund it is"}
-      - {id: P-APPROVAL-TTL, rule: "a grant older than its validity fails closed rather than executing", valid_for: 24h}
-      - {id: P-APPROVAL-FINAL, rule: "a decision is final: a decided approval cannot be decided again"}
-      - {id: P-APPROVAL-WAIT, rule: "while a decision is pending the conversation continues, and the customer is told a request exists and nothing more"}
-      - {id: P-APPROVAL-QUEUE, rule: "the queue a reviewer reads holds the undecided, and a decided approval leaves it"}
+      - {id: P-APPROVER, rule: "a refund is authorised by an operations reviewer, never by the customer whose refund it is", concern: security, facet: authenticity}
+      - {id: P-APPROVAL-TTL, rule: "a grant older than its validity fails closed rather than executing", valid_for: 24h, concern: safety, facet: fail safe}
+      - {id: P-APPROVAL-FINAL, rule: "a decision is final: a decided approval cannot be decided again", concern: safety, facet: fail safe}
+      - {id: P-APPROVAL-WAIT, rule: "while a decision is pending the conversation continues, and the customer is told a request exists and nothing more", concern: functional-suitability, facet: functional completeness}
+      - {id: P-APPROVAL-QUEUE, rule: "the queue a reviewer reads holds the undecided, and a decided approval leaves it", concern: reliability, facet: faultlessness}
 
   escalation:
     on_request:                        # Tier 1 — decided from the turn's text alone
@@ -348,20 +397,20 @@ policies:
       - {id: second-refusal,   when: {field: refusals, at_least: 2},           priority: 4, ttl: 30m}
       - {id: turns-exceeded,   when: {field: turn_count, at_least: 10},        priority: 6, ttl: 45m}
     statements:
-      - {id: P-ESC-ONCE, rule: "each rule fires once per conversation, whatever happens to what it raised"}
-      - {id: P-ESC-CAP, rule: "past the cap the agent says something true instead of issuing another reference", at_most: 2}
-      - {id: P-ESC-TTL, rule: "a queued escalation nobody comes to lapses", ttl: 30m}
-      - {id: P-ESC-LAPSE, rule: "on lapse the conversation returns to the agent, and the customer is told nobody came"}
+      - {id: P-ESC-ONCE, rule: "each rule fires once per conversation, whatever happens to what it raised", concern: reliability, facet: faultlessness}
+      - {id: P-ESC-CAP, rule: "past the cap the agent says something true instead of issuing another reference", at_most: 2, concern: interaction-capability, facet: user assistance}
+      - {id: P-ESC-TTL, rule: "a queued escalation nobody comes to lapses", ttl: 30m, concern: reliability, facet: recoverability}
+      - {id: P-ESC-LAPSE, rule: "on lapse the conversation returns to the agent, and the customer is told nobody came", concern: reliability, facet: recoverability}
       # A wait is permitted only where it is measured — queue depth over observed
       # throughput — and forbidden otherwise. "Just a few minutes" from nowhere is
       # the promise this rule exists to stop; a number the desk's own throughput
       # produces is a different thing, and saying nothing when the throughput is
       # unknown is the same rule, not an exception to it. Decided 2026-09-12.
-      - {id: P-ESC-TOLD, rule: "the customer is told a reference number, and a wait only when one is measured from queue depth and observed throughput"}
-      - {id: P-ESC-OWNS, rule: "while a person owns the conversation the agent does not answer it, and only the desk that holds it may close it"}
-      - {id: P-ESC-TIER1, rule: "a rule never replaces a handoff the conversation already has: neither an escalation raised from the turn's own words, nor a decision a person is in the middle of making"}
-      - {id: P-ESC-QUEUE, rule: "the queue a reviewer reads holds the open escalations, oldest first, and a closed one leaves it"}
-      - {id: P-ESC-OUTCOME, rule: "closing records an outcome from a declared set, once, and the rule that raised it stays with the record"}
+      - {id: P-ESC-TOLD, rule: "the customer is told a reference number, and a wait only when one is measured from queue depth and observed throughput", concern: functional-suitability, facet: functional correctness}
+      - {id: P-ESC-OWNS, rule: "while a person owns the conversation the agent does not answer it, and only the desk that holds it may close it", concern: security, facet: integrity}
+      - {id: P-ESC-TIER1, rule: "a rule never replaces a handoff the conversation already has: neither an escalation raised from the turn's own words, nor a decision a person is in the middle of making", concern: reliability, facet: faultlessness}
+      - {id: P-ESC-QUEUE, rule: "the queue a reviewer reads holds the open escalations, oldest first, and a closed one leaves it", concern: reliability, facet: faultlessness}
+      - {id: P-ESC-OUTCOME, rule: "closing records an outcome from a declared set, once, and the rule that raised it stays with the record", concern: maintainability, facet: analysability}
     deferred_triggers:
       - order flagged for fraud review     # no such field yet
       - three failed resolution attempts   # partly covered by repeated-intent
@@ -402,11 +451,11 @@ external:
 # ---------------------------------------------------------------------------
 required:
   properties:
-    - {id: Q-COST,  must: model spend per task at most USD 0.50, evidence: assertion}
-    - {id: Q-STEPS, must: at most 12 loop steps per task, evidence: assertion}
-    - {id: Q-OUTPUT, must: at most 4096 output tokens per model call, evidence: assertion}
-    - {id: Q-TOOL-RESULT, must: a tool result enters context at most 8000 characters long, evidence: assertion}
-    - {id: Q-MODEL, must: only a model from the approved list is called, evidence: inspection}
+    - {id: Q-COST,  must: model spend per task at most USD 0.50, evidence: assertion, concern: cost}
+    - {id: Q-STEPS, must: at most 12 loop steps per task, evidence: assertion, concern: cost}
+    - {id: Q-OUTPUT, must: at most 4096 output tokens per model call, evidence: assertion, concern: performance-efficiency, facet: resource utilization}
+    - {id: Q-TOOL-RESULT, must: a tool result enters context at most 8000 characters long, evidence: assertion, concern: functional-suitability, facet: functional completeness}
+    - {id: Q-MODEL, must: only a model from the approved list is called, evidence: inspection, concern: security, facet: integrity}
   undeclared:
     # Stated as absent rather than left out. Each is a property this agent
     # plainly has an answer to in production, and nobody has written it down.

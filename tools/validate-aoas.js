@@ -34,6 +34,7 @@
  *   duplicate-id                   two statements share an identifier
  *   names-technology               the spec names a realisation — charter §2, question 3
  *   unknown-catalog-id             an exclusion cites a catalog identifier that does not exist
+ *   facet-mismatch                 a facet that is not a sub-characteristic of the concern beside it
  *
  * No dependency beyond a YAML parser and a schema validator, deliberately: the
  * format has to be checkable by tooling nobody here wrote.
@@ -272,6 +273,40 @@ function aoasIssues(doc, opts = {}) {
   for (const d of doc.purpose.deferred || []) {
     if (d.operation && operations[d.operation]) {
       add("deferred-and-defined", "purpose.deferred", `"${d.operation}" is deferred and also defined`);
+    }
+  }
+
+  // ---------------------------------------------------------------- concerns
+  // The schema checks the concern is one of the ten. It cannot check that a
+  // facet belongs to the concern beside it, and that is the mistake worth
+  // catching: both words are plausible ISO vocabulary, and the *pair* is wrong.
+  // "security / analysability" reads perfectly well and files a statement under
+  // a characteristic it has nothing to do with — on a page generated in another
+  // repository, where nobody who could notice will be looking.
+  const FACETS = {
+    "functional-suitability": ["functional completeness", "functional correctness", "functional appropriateness"],
+    "performance-efficiency": ["time behaviour", "resource utilization", "capacity"],
+    compatibility: ["co-existence", "interoperability"],
+    "interaction-capability": ["appropriateness recognizability", "learnability", "operability", "user error protection", "user engagement", "inclusivity", "user assistance", "self-descriptiveness"],
+    reliability: ["faultlessness", "availability", "fault tolerance", "recoverability"],
+    security: ["confidentiality", "integrity", "non-repudiation", "accountability", "authenticity", "resistance"],
+    maintainability: ["modularity", "reusability", "analysability", "modifiability", "testability"],
+    flexibility: ["adaptability", "scalability", "installability", "replaceability"],
+    safety: ["operational constraint", "risk identification", "fail safe", "hazard warning", "safe integration"],
+    cost: [],
+  };
+  const tagged = [
+    ...doc.purpose.refuses.map((r) => [r, `purpose.refuses.${r.id}`]),
+    ...Object.entries(doc.policies).filter(([k]) => /^P-/.test(k)).map(([k, v]) => [v, `policies.${k}`]),
+    ...["approval", "escalation"].flatMap((b) =>
+      ((doc.policies[b] || {}).statements || []).map((st) => [st, `policies.${b}.${st.id}`])),
+    ...doc.required.properties.map((q) => [q, `required.properties.${q.id}`]),
+  ];
+  for (const [item, at] of tagged) {
+    if (!item.facet) continue;
+    const allowed = FACETS[item.concern] || [];
+    if (!allowed.includes(item.facet)) {
+      add("facet-mismatch", at, `"${item.facet}" is not a sub-characteristic of ${item.concern}`);
     }
   }
 

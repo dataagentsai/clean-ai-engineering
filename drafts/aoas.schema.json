@@ -39,11 +39,13 @@
           "type": "array",
           "items": {
             "type": "object",
-            "required": ["id", "what"],
+            "required": ["id", "what", "concern"],
             "additionalProperties": false,
             "properties": {
               "id": { "type": "string", "pattern": "^R-[A-Z0-9]+(-[A-Z0-9]+)*$" },
-              "what": { "type": "string", "minLength": 1 }
+              "what": { "type": "string", "minLength": 1 },
+              "concern": { "$ref": "#/$defs/concern" },
+              "facet": { "type": "string" }
             }
           },
           "description": "Normative. What the agent must not do is testable only against an explicit list."
@@ -109,11 +111,13 @@
       "patternProperties": {
         "^P-[A-Z0-9]+(-[A-Z0-9]+)*$": {
           "type": "object",
-          "required": ["rule", "via"],
+          "required": ["rule", "via", "concern"],
           "additionalProperties": false,
           "properties": {
             "rule": { "type": "string", "minLength": 1 },
-            "via": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "type": "string" } }
+            "via": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "type": "string" } },
+            "concern": { "$ref": "#/$defs/concern" },
+            "facet": { "type": "string", "description": "Optional. A 25010:2023 sub-characteristic of the concern, where the characteristic alone is too coarse." }
           },
           "description": "A rule in words, and the operations whose conditions enforce it. A policy no operation enforces is a preference."
         },
@@ -198,12 +202,14 @@
           "type": "array",
           "items": {
             "type": "object",
-            "required": ["id", "must", "evidence"],
+            "required": ["id", "must", "evidence", "concern"],
             "additionalProperties": false,
             "properties": {
               "id": { "type": "string", "pattern": "^Q-[A-Z0-9]+(-[A-Z0-9]+)*$" },
               "must": { "type": "string", "minLength": 1 },
-              "evidence": { "$ref": "#/$defs/evidence" }
+              "evidence": { "$ref": "#/$defs/evidence" },
+              "concern": { "$ref": "#/$defs/concern" },
+              "facet": { "type": "string" }
             }
           }
         },
@@ -233,6 +239,14 @@
   },
 
   "$defs": {
+    "concern": {
+      "enum": [
+        "functional-suitability", "performance-efficiency", "compatibility",
+        "interaction-capability", "reliability", "security", "maintainability",
+        "flexibility", "safety", "cost"
+      ],
+      "description": "Which kind of quality this statement is about — the nine characteristics of ISO/IEC 25010:2023 plus `cost`, the family-wide axis defined in the Spec Charter §3. Authored on every statement, because unlike the harness catalog's layers and the assurance catalog's dimensions, nothing else here implies it. Drives the Concern View, which joins every artifact in the family on this string: an NFR is a statement whose concern is not functional suitability, which is why this family has no separate NFR document."
+    },
     "slug": { "type": "string", "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$" },
     "slug_snake": { "type": "string", "pattern": "^[a-z][a-z0-9_]*$" },
     "duration": { "type": "string", "pattern": "^[0-9]+(s|m|h|d)$" },
@@ -394,11 +408,13 @@
       "minItems": 1,
       "items": {
         "type": "object",
-        "required": ["id", "rule"],
+        "required": ["id", "rule", "concern"],
         "additionalProperties": false,
         "properties": {
           "id": { "type": "string", "pattern": "^P-[A-Z0-9]+(-[A-Z0-9]+)*$" },
           "rule": { "type": "string", "minLength": 1 },
+          "concern": { "$ref": "#/$defs/concern" },
+          "facet": { "type": "string" },
           "valid_for": { "$ref": "#/$defs/duration" },
           "ttl": { "$ref": "#/$defs/duration" },
           "at_most": { "type": "integer", "minimum": 1 }
