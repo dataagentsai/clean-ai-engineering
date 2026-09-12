@@ -297,6 +297,16 @@ policies:
     # else: there is no refund on this order. Never a date, never an amount.
     rule: refund status is answered from the order's status, deterministically, and never promises a date or an amount
     via: [get_order]
+  # Which requests this agent answers without a model, and what that path may do.
+  # AHC-0100 requires the specification to state both; the reference answered
+  # them in code and neither was written down, so a regeneration would have put
+  # its commonest question — "where is my order" — through the loop.
+  P-DIRECT:
+    rule: order status and refund status are answered from the order system deterministically, with no model call, when the turn names one intent and carries an order id; anything ambiguous or multi-intent goes to the loop
+    via: [get_order]
+  P-DIRECT-READS:
+    rule: the deterministic path never performs a write — it is selected by patterns over the customer's words, and an effect must not be one rewording away
+    via: [get_order]
   P-OWNERSHIP:
     rule: a customer may see and act on only the orders they placed
     via: [get_order, cancel_order, open_return_request, change_address, request_refund, issue_refund]
