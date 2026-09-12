@@ -288,6 +288,35 @@ memory, no cache) enters its AOAS as exclusions.
 Also here: the charter's pre-1.0 pinning clause (E8), and AHC-0042 discharging
 AAC-0109.
 
+- **Status.** ✅ **Done 2026-09-12** for the statement half; the build half
+  (freshness before an irreversible action, the structured facts record, summary
+  provenance, one error taxonomy) stays in the register for G0.8 and beyond.
+  **Every test now names a statement or declares why it cannot: untagged 126 →
+  0.** Two tests assert a *gap* and say so through a new `documents_gap` marker,
+  which lists them with their reason rather than counting them as oversights.
+  Exercised: AOAS 50/55, AAC 42/50, AHC 44/67, Baseline 6/12 — the AOAS
+  denominator grew from 33 to 55 as prose became statements.
+
+  Seven capabilities and one obligation were written, each because a test here
+  verified something no specification required:
+
+  | New | States |
+  |---|---|
+  | **AAC-0111** | a request acts only as the identity its credential proves |
+  | **AHC-0099** | that identity comes from a credential the caller cannot author |
+  | **AHC-0100** | a request the specification can answer without the model is answered without it |
+  | **AHC-0101** | spend is computed from a declared price table; an unpriced call is an error |
+  | **AHC-0102** | state is written whole, and every substrate declares whether it survives the process |
+  | **AHC-0103** | reduction never separates a call from its result |
+  | **AHC-0104** | what may run concurrently is declared by class, not decided by convenience |
+  | **AHC-0105** | a recording replays only against the request that produced it, and a miss fails the run |
+
+  In the AOAS: the approval and escalation rules became id'd statements carrying
+  their own parameters (thirteen of them), `P-DIRECT` and `P-DIRECT-READS` state
+  which requests skip the model and that the path never writes, and the
+  idempotency key against the domain identity is settled — different questions,
+  both answered, each with a test.
+
 ### G0.7 · Tell the generator the shape
 
 - **Baseline** — one profile item: every harness port is an interface, and only
