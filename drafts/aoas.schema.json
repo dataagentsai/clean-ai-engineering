@@ -268,7 +268,8 @@
         "advances": { "enum": ["days"], "description": "A counter that runs with world time, so a window can close while a conversation is still open." },
         "advances_when": { "$ref": "#/$defs/condition", "description": "When the counter runs. Absent means always. Usually the invariant that says when the field may be non-zero, pointed forwards." },
         "pii": { "type": "boolean" },
-        "untrusted": { "type": "boolean", "description": "Written by someone other than the system. Content, never instruction." }
+        "untrusted": { "type": "boolean", "description": "Written by someone other than the system. Content, never instruction." },
+        "fresh_for": { "$ref": "#/$defs/duration", "description": "How long a read of this field stays usable. Declared where something else writes the field while a conversation is open — the entity's `concurrent_writers` is the tell — and applied by the harness only where an irreversible operation's preconditions reach the field (AHC-0107). A field with no window never causes a re-read, which is the correct amount of work for a field nothing irreversible depends on." }
       },
       "if": { "properties": { "type": { "const": "enum" } } },
       "then": { "oneOf": [{ "required": ["values"] }, { "required": ["of"] }] },

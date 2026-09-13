@@ -97,7 +97,13 @@ entities:
     fields:
       id: {type: id}
       customer_id: {type: id, ref: customer.id}
-      status: {type: enum, of: order_status}
+      # The warehouse and the carrier write this while a conversation is open,
+      # which is what `concurrent_writers` below says and what makes a window
+      # meaningful here and nowhere else on this entity. Thirty seconds is the
+      # time a customer takes to answer one question: long enough that a read
+      # survives an ordinary exchange, short enough that a cancellation is never
+      # attempted on a belief formed before it.
+      status: {type: enum, of: order_status, fresh_for: 30s}
       total: {type: money}            # the refund gate compares against this, never a stated number
       address: {type: text, pii: true}   # the validator's first catch: change_address set it, and nothing declared it
       # A counter that runs with world time, and only once delivery has
