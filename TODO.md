@@ -53,8 +53,8 @@ this order:
 | | Minimum slice, if the full item waits |
 |---|---|
 | **G0.2** | `concern` on AOAS items only, so the Concern View has one source and proves it generates |
-| **G0.10** | ~~the three-layer classification and the predicted ratio~~ ✅ 2026-09-12 — 41 mechanism, 6 parameterised, 5 per-agent, a test that a new module must be placed, and the prediction recorded before a second agent exists. Still owed: the seam-by-seam pattern mapping and the library/regeneration/hybrid choice |
-| **G0.11** | ~~fix F-027~~ ✅ 2026-09-12 — all five positions reached, the composition root can configure them, and a block is typed by what it is (F-028 found on the way). Still owed: counters for the aggregates the agent is judged on. The grader and the dataset path wait for G0.8 |
+| **G0.10** | ~~the classification and the predicted ratio~~ ✅ 2026-09-12 · ~~the seam map~~ ✅ 2026-09-13 — twelve seams, nine held by three patterns (versioned rule set, protocol with a null object, projection from the specification) and the rest a value in the composition root. Nothing held by inheritance, nothing by a plugin system. Still owed: **the library/regeneration/hybrid choice**, which is the last open item in G0 |
+| **G0.11** | ~~fix F-027~~ ✅ 2026-09-12 · ~~counters~~ ✅ 2026-09-13 — seven series on the numbers this agent is judged on, labels bounded by construction, and a build check that a declared counter is incremented somewhere: a flat line reads as *this never happens* rather than *nobody is counting*. Still owed: the grader and the dataset path, which G0.8 has now unblocked |
 | **G3** | nothing — it is correctly last, and its `in-house` column is collected free inside G0.9 |
 
 **G0 comes first because it produces what G1 and G2 consume.** A god object
@@ -153,6 +153,24 @@ In order. Each item is a series of commits that keep the suite green.
   crosswalk goes into AAC's taxonomy; the linters enforce presence and vocabulary.
 - **Done when.** Every statement in all six specs has a concern, every phase is
   derivable, and the Concern View and Assurance Map are generated from the tags.
+- **Status.** ✅ Done 2026-09-13. The charter gained §3 (the two tags) and
+  everything else renumbered. `concern` is **authored** on 105 AHC capabilities
+  and on every AOAS policy, refusal and bound; **derived** for AAC through a
+  crosswalk from its eighteen dimensions, and for the AOAS's four families of
+  derived id — an irreversible operation is safety, an escalation rule is
+  oversight, a fact exists so a decision can be explained, an external contract
+  is the one place this family reaches compatibility honestly. AAC's stages
+  gained their 12207 process. Three linters check it: the crosswalk must be
+  total, a facet must belong to its concern, and a concern nothing reaches must
+  be recorded with the reason.
+
+  **The Concern View generates** — 179 statements across all ten concerns — and
+  three of its rows are the finding. *Performance efficiency*: one AOAS bound,
+  six capabilities, and **no assurance obligation at all**; nothing verifies
+  latency. *Compatibility*: three statements, all external contracts, nothing
+  built or checked. *Interaction capability*: one statement in the whole family,
+  about not handing somebody a third reference number. Each was invisible before
+  the page and obvious on it.
 
 ### G0.3 · The three build-time checks, strict types first
 
@@ -331,9 +349,15 @@ memory, no cache) enters its AOAS as exclusions.
 Also here: the charter's pre-1.0 pinning clause (E8), and AHC-0042 discharging
 AAC-0109.
 
-- **Status.** ✅ **Done 2026-09-12** for the statement half; the build half
-  (freshness before an irreversible action, the structured facts record, summary
-  provenance, one error taxonomy) stays in the register for G0.8 and beyond.
+- **Status.** ✅ **Done** — the statement half 2026-09-12, the build half
+  2026-09-13. All four:
+
+  | Feature | What landed |
+  |---|---|
+  | **Freshness** (gap 16) | AHC-0107, AAC-0113, `fresh_for` on an AOAS field. A stale belief is read again *before* an irreversible action, and the step is abandoned only where the re-read **disagrees** — the first version abandoned whenever a belief was old, and a model slower than the window made every belief old, so the action was held forever. Its own test found the livelock |
+  | **Facts record** (gap 19) | AHC-0108. Written from what the far system confirmed, never from what the model said; bounded by kind so there is no oldest entry to drop; and the escalation handoff is assembled from it rather than summarised from the transcript |
+  | **Summary provenance** (gap 18) | AHC-0109. No code: this agent drops whole exchanges rather than summarising, which is the reduction with no laundering surface. Recorded as an accepted gap and an answered decision rather than left for a reader to work out |
+  | **Error taxonomy** | AHC-0110. Five kinds on the axis of *what a caller can do*. The build-time check found seven failures I had missed by hand, and three that are control flow spelled as exceptions, now exempt with the reason |
   **Every test now names a statement or declares why it cannot: untagged 126 →
   0.** Two tests assert a *gap* and say so through a new `documents_gap` marker,
   which lists them with their reason rather than counting them as oversights.
@@ -423,9 +447,12 @@ AAC-0109.
   is the other direction and it does — a pattern used here that no statement
   forces is a decision, and the profile is where decisions go.
 
-  Still owed: the generated half of the blueprint (requirements, design
-  decisions and discharges collated from capability tags), which is a renderer
-  rather than a judgement.
+  ✅ **Complete 2026-09-13.** The generated half is `tools/blueprint.js` →
+  `blueprints/A6-owes.generated.md`: 67 capabilities across all 16 layers,
+  grouped by layer rather than by identifier, because identifier order is
+  chronology and a builder working on the context assembler wants to know what
+  L1 owes. `npm test` fails when the file on disk is not what the capabilities
+  produce.
 
 ### G0.8 · Complete AgentTwin — prove the agent works in simulation
 
@@ -513,6 +540,31 @@ that, and it is not finished.
 - **Done when.** The reference passes its scenarios through the contract alone,
   and a **simulation report is published with its failures in it** — the
   artifact that proves the agent works, and says exactly where it does not.
+- **Status.** ✅ Done 2026-09-13. **Scenario coverage 36 → 51 of 55**, and the
+  remaining four say why rather than sitting in a list: they are the binding's
+  numbers, and a scenario deliberately has no view of the binding — which is
+  what makes the same scenarios runnable against a regenerated agent on another
+  stack. A statement unreached **and unexplained** now fails the suite, and so
+  does an excuse for one since reached.
+
+  **Three defects, all found by the scenarios rather than by the tests.**
+  `after_turns` had been in the format since it existed, documented, and every
+  runner dropped it — so a reviewer told to come later came immediately and
+  `P-APPROVAL-TTL` was unreachable (F-036). The deterministic path answered a
+  three-order question about one order, truthfully, saying nothing about the
+  other two (F-037). And the style rule anchored its subject as a pronoun, so
+  *"will this fit"* was caught and *"will the medium fit"* was not — all four
+  cases in its test table used pronouns, because the rule was tested against the
+  sentences its author had in mind while writing it (F-038).
+
+  The last two were found by scenarios written from the customer's side, days
+  after the code, by somebody asking what a person would actually type. That is
+  the argument for scenarios that is hard to make in the abstract.
+
+  Still owed, and both now recorded where they belong rather than here: **shadow
+  mode**, and a perturbation that ages a belief within a turn — time passes
+  between turns and not inside one, so a property about the gap between two
+  model calls has nowhere to happen in simulation (AWD SPEC.md).
 
 ### G0.9 · The binding and the manifest
 
