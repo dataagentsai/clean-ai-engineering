@@ -53,7 +53,7 @@ this order:
 | | Minimum slice, if the full item waits |
 |---|---|
 | **G0.2** | `concern` on AOAS items only, so the Concern View has one source and proves it generates |
-| **G0.10** | ~~the classification and the predicted ratio~~ ✅ 2026-09-12 · ~~the seam map~~ ✅ 2026-09-13 — twelve seams, nine held by three patterns (versioned rule set, protocol with a null object, projection from the specification) and the rest a value in the composition root. Nothing held by inheritance, nothing by a plugin system. Still owed: **the library/regeneration/hybrid choice**, which is the last open item in G0 |
+| **G0.10** | ~~the classification and the predicted ratio~~ ✅ 2026-09-12 · ~~the seam map~~ ✅ 2026-09-13 — twelve seams, nine held by three patterns (versioned rule set, protocol with a null object, projection from the specification) and the rest a value in the composition root. Nothing held by inheritance, nothing by a plugin system. ~~the library/regeneration/hybrid choice~~ ✅ 2026-09-13 — **hybrid**, decided below |
 | **G0.11** | ~~fix F-027~~ ✅ 2026-09-12 · ~~counters~~ ✅ 2026-09-13 — seven series on the numbers this agent is judged on, labels bounded by construction, and a build check that a declared counter is incremented somewhere: a flat line reads as *this never happens* rather than *nobody is counting*. Still owed: the grader and the dataset path, which G0.8 has now unblocked |
 | **G3** | nothing — it is correctly last, and its `in-house` column is collected free inside G0.9 |
 
@@ -682,6 +682,39 @@ prediction is the point: measured afterwards it is a rationalisation.
 
 **Ordering.** After G0.7, whose blueprint this feeds and which feeds it back.
 The measurement half is G2.6.
+
+#### The choice: hybrid — a library for the mechanism, regeneration for the seams
+
+**Decided 2026-09-13.** The 47 mechanism modules become an installable library;
+the 7 parameterised and 5 per-agent ones are written per agent.
+
+The seam map is what settles it. Nine of the twelve seams are held by three
+patterns — a versioned rule set, a protocol with a null object, a projection
+from the specification — and the rest are a value handed to the composition
+root. Nothing is held by inheritance and nothing by a plugin system, which is
+the property that makes a library possible at all: a second agent supplies data
+and realisations, never a subclass, so there is no framework to be trapped
+inside.
+
+**What each of the other two would have cost.** Pure regeneration keeps the
+evidence purest — a spec gap always surfaces as a broken agent and never as a
+library bug — and means a fix to the loop has to be re-derived in every agent
+that already exists, which is how a reference implementation becomes eleven
+diverging ones. A pure library is the fastest second agent and quietly ends this
+programme: nobody generates from the specs any more, so nothing tests them, and
+within two releases the specs describe a system that has moved.
+
+**What keeps the hybrid honest, and it is the whole point.** G1 still
+regenerates *everything* blind, library included. That is not a hedge — it is
+the only thing that tests whether the specs are complete, and a hybrid that
+skipped it would be a library with a spec-shaped README. G2's hotel agent then
+installs the library and writes its own twelve seams, and the two runs measure
+different things: G1 measures the specifications, G2 measures the seams.
+
+**What would falsify it.** A hotel agent that has to edit a mechanism module.
+`policy.CLAIM_PATTERNS` is the named suspect — it reads like the other versioned
+rule sets and is the only one whose values encode a *domain's* claims rather
+than a deployment's numbers.
 
 ### G0.11 · Composable checks, and what the agent emits
 
