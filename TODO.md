@@ -117,7 +117,9 @@ work that is *missing*, with nothing to point at, which is why it is written dow
 
 ✅ **T-031** done 16 Sep: `reference-agent/compose.yaml`.
 
-1. **T-029** with **T-018**: the LiteLLM proxy, and the fingerprint decision it forces.
+✅ **T-018** done 16 Sep: model plus a declared provider, checked at startup.
+
+1. **T-029**: built 16 Sep; **one check left**, a successful call through the proxy. It needs a Groq key in `GROQ_API_KEY`, which this machine does not have.
 2. **T-002**: Keycloak for login, with the ownership rule as our delta.
 3. **T-026**: Chatwoot for the customer chat and the human side of escalation. It closes T-001 without writing UI.
 4. **T-028**: Temporal for the approval and escalation waits.
@@ -158,6 +160,7 @@ Spark AOAS, cheap, and it sharpens T-022 before cycle 4), T-039.
 | **T-020** | Trace context and run id cross the MCP hop (AHC-0006, AHC-0026) | reference-agent | small | — |
 | **T-024** | Two release gates with no test: AAC-0051, AAC-0096 | reference-agent | a day | — |
 | **T-025** | Verify the provider price table before any figure is published | reference-agent | an hour | — |
+| **T-049** | `first_real_call.py --replay` has failed since the cassette began requiring a declared context; nothing runs it | reference-agent | an hour | — |
 | **T-007** | `pass^k` reliability (AAC-0010) | reference-agent | a day | T-029 |
 | **G0.11** | Remainder: inline grader (AHC-0028), production turn becomes a dataset row (AHC-0029), policy budget and timeout (AHC-0095), context size per release (AHC-0031) | reference-agent, AHC | days | T-040 |
 
@@ -166,8 +169,7 @@ Spark AOAS, cheap, and it sharpens T-022 before cycle 4), T-039.
 | | Item | Repo | Cost | Needs |
 |---|---|---|---|---|
 | **T-026** | **Chatwoot** for the customer chat and the human side of escalation. Needs a port AHC does not have | reference-agent, AHC | days | T-002 |
-| **T-029** | **LiteLLM proxy** in front of every model call, via `provider_base_url`, with its budgets and rate limits | reference-agent | a day | T-018 |
-| **T-018** | The fingerprint cannot tell a gateway from a provider. **Decide before T-029 lands** | reference-agent, AHC schema | small | — |
+| **T-029** | **LiteLLM proxy** in front of every model call. **Built 16 Sep**; one successful call through it is left | reference-agent | an hour | a Groq key |
 | **T-028** | **Temporal** for the approval and escalation waits | reference-agent | days | — |
 | **T-030** | **Presidio** for PII in place of our patterns. The positions stay ours | reference-agent | a day | — |
 | **T-027** | **VCR.py** in place of `cassette/`, keeping the replay seam | reference-agent | a day | — |
@@ -289,7 +291,7 @@ assembles what was already decided in four places: T-016's register;
 
 | Concern | Layer | Adopt | In which stack | State |
 |---|---|---|---|---|
-| Model call, budgets, rate limits | L2, L8, L13 | **LiteLLM proxy** | Open Stack | T-029 |
+| Model call, budgets, rate limits | L2, L8, L13 | **LiteLLM proxy** | Open Stack | T-029: built 16 Sep, one live call left |
 | Model call, end to end | L2 | **Anthropic SDK**: caching, token counting, Batch, context editing, memory tool, compaction, structured outputs | Claude family | T-004, T-043 |
 | Tool protocol | L3 | **MCP** | all | ✅ in use |
 | Control loop | L4 | **LangGraph** · **Claude Agent SDK** | LangGraph · Claude Agent SDK | T-036 · T-037 |
@@ -1148,85 +1150,60 @@ already thought through for a retail support agent.
 
 ### T-029 · A LiteLLM proxy in front of every model call
 
-**Status** Not started. Decided 2026-09-16. **Cycle 1, Open Stack.** Needs T-018. The proxy already runs from `compose.yaml`, with retries off.
-
-**What.** The proxy runs from the compose file. The agent reaches it through
-`provider_base_url`, with no new dependency and no code change, because the
-client already takes a `base_url`. Groq sits behind it for free runs, and any
-other provider can be added.
-
-**What must not change.** `ResilientLLM` stays in process, because it is the seam
-scenarios inject provider faults through (F-029). The proxy's own retries are
-configured so there are not two retry layers stacked on one call; T-016 has the
-measurement. Cost stays priced by `UnknownPrice`-safe code, never by a lookup
-that returns 0.0 for an unknown model.
-
-**Done when.** A scenario run and a live run both go through the proxy, the
-fingerprint behaves as T-018 decided, and `model` in the stack profile is
+**Status** **Built 2026-09-16** (`reference-agent` `05ddbf9`). **One check left:** a
+successful call through the proxy. There is no Groq key on this machine, so
+every call so far was refused by the provider behind the gateway. Put one in
+`GROQ_API_KEY`, `docker compose up -d`, and run `scripts/live_runs.py` with
+`.env.example`'s settings; then `model` in `stacks/open-stack.yaml` becomes
 `current`.
 
-### T-018 · The fingerprint cannot tell a gateway from a provider
+**What was asked.** The proxy runs from compose, the agent reaches it through
+`provider_base_url`, `ResilientLLM` stays in process (F-029), there are not two
+retry layers, and cost stays priced by our own `UnknownPrice`-safe code.
 
-**Status** Not started. Raised 2026-09-16. **Small, and a decision rather than a
-task.**
+**What was built.**
 
-**What is wrong.** `RunConfig.fingerprint` hashes everything that changes
-behaviour and excludes what does not — `mcp_base_url`, and now `otlp_endpoint`.
-It **includes** `provider_base_url`, with a stated reason:
+- **The agent holds its own gateway key, never the provider's.** compose's
+  `litellm-keys` creates it, or updates it to match: the three approved models,
+  30 requests a minute, $5 per 30 days. `GROQ_API_KEY` is read by the proxy
+  only. `.env.example` points the agent at `http://localhost:4000/v1`.
+- **The split AHC-0004 asks for is written into the profile.** In process:
+  retries, backoff, the breaker, the allowlist, cost per task. Gateway: the
+  credential and the per-caller limits, which must hold for callers this code
+  does not control.
+- **The fingerprint does not move** for the gateway, as T-018 decided, and the
+  declared provider is verified against the proxy's `/model/info` at startup.
 
-> `provider_base_url` is included only because pointing at a different provider
-> *is* a different system.
+**What the probes found**, each now a test:
 
-That reason is right and the implementation cannot honour it, because one field
-carries two different facts:
+- **Router cooldowns are a second circuit breaker, and a worse one.** One refused
+  call put the deployment on cooldown, and the next came back as 429 *no
+  deployments available*: a bad key reached the agent as a rate limit to wait
+  out. `disable_cooldowns` is on, and the test fails when it is turned off
+  (checked by turning it off).
+- **An exhausted budget is HTTP 429 too.** The agent would have waited and
+  retried a bound that resets in weeks.
+- **An older misclassification underneath:** every provider 4xx except 429 was
+  `ModelUnavailable`, so a revoked key was retried three times and opened the
+  breaker. `ModelRefused` (REFUSED) and `ModelBudgetExhausted` (EXHAUSTED) now
+  carry the kinds `Fault` already had. Both subclass `ModelUnavailable`, so the
+  loop's degradation path is unchanged, and `ResilientLLM` neither retries nor
+  counts them. The mapping is `llm.failure_from`, tested by table, and the
+  three gateway answers are tested against the composed proxy with short-lived
+  keys.
 
-    Groq, called directly          a different provider      fingerprint SHOULD move
-    Groq, reached via a gateway    the same model, same weights, one more hop
-                                                              fingerprint should NOT move
+### T-049 · The first live call's replay has been broken, silently
 
-Put a gateway in front — LiteLLM's proxy, Databricks Mosaic AI Gateway, Azure AI
-Foundry, Vertex's OpenAI-compatible endpoint — and every run after it is
-uncomparable with every run before it, for a change that altered nothing the
-agent does. This is exactly the argument `mcp_base_url` is already excluded
-under: a world reached over a different URL is the same world.
+**Status** Found 2026-09-16 while wiring T-018. Repo: `reference-agent`.
 
-**Why it matters now rather than later.** The gateway seam is already open and
-costs nothing to walk through. `GroqClient` takes `base_url`, four of the five
-plausible cloud gateways are OpenAI-compatible, and moving to one is an
-environment variable. The first person to do that will silently invalidate the
-fingerprint history, and the fingerprint history is the thing that makes "it
-passed last week" checkable — which is the entire reason `config` exists.
-
-**The decision, not the code.** What identifies "the same system" for a model?
-The candidates, and none is obviously right:
-
-*The model id alone.* Clean, and wrong the moment two providers serve the same
-open-weights model with different quantisation — which is the ordinary case for
-`openai/gpt-oss-120b`.
-
-*Model id plus a declared provider name*, with the URL excluded. The provider
-becomes a stated fact rather than an inferred one, which is the shape the rest of
-this file already prefers: `resolution` is declared, not derived from whether a
-URL looks like localhost.
-
-*Both, with the URL kept and a second "route" fingerprint beside it.* Honest, and
-two numbers where one is wanted.
-
-**Where it lands.** `config/__init__.py`, and `harness-profile.yaml` if provider
-becomes a declared field. Any change to what the fingerprint covers is a break in
-comparability with every run recorded before it, so whichever is chosen, the
-change itself should be dated in the file — the way `evals/baseline.json` records
-`taken` and the golden set records why it grew.
-
-**And the gateway question this came out of, recorded so it is not re-derived.**
-There is no AI gateway here today; the agent calls the provider directly. The
-seam is `provider_base_url` and it needs no work. A LiteLLM **proxy** — as
-opposed to the SDK — subsumes retries, backoff, cooldown and throttling into the
-gateway, which deletes `resilience/` without adopting a library in-process, and
-survives a later move to Databricks or Azure because that is then one gateway
-replacing another rather than a library being un-picked. If a gateway is coming,
-it is the better shape than T-016's LiteLLM-SDK row, and the two should be
-decided together rather than in sequence.
+`python scripts/first_real_call.py --replay` fails with `TrustBoundaryCrossed`:
+*this recording was made under {model, temperature, tools} and the replay did not
+say what it is running under*. The cassette began requiring a declared context
+(AAC-0096) and this script was never updated, because nothing runs it:
+`tests/test_scripts.py` leaves out the scripts that need a network, and the
+replay mode is the one that does not. **Done when** the replay passes the
+context it runs under and `test_scripts.py` runs `--replay`, so it cannot break
+quietly again.
 
 ### T-028 · Adopt Temporal for the approval and escalation waits
 
@@ -2875,6 +2852,83 @@ created by the init script, so its role stays unprivileged too.
 every product bound in the stack profile runs from a named compose service in a
 named profile, every compose service is a bound product or names the product it
 supports, and Saleor is listed as owed by T-017. The Chatwoot miss would fail it.
+
+### T-018 · The fingerprint cannot tell a gateway from a provider
+
+**Status** **Done 2026-09-16** (`reference-agent` `d28dd24`). **Decided by the user: model
+plus a declared provider.**
+
+**What landed.** `Settings.provider` (default `groq`) is hashed and
+`provider_base_url` is not, for the reason `mcp_base_url` already was not. The
+break in comparability is dated in the fingerprint's docstring; no committed
+baseline carried a fingerprint, which is why it was taken now. A declaration
+can lie, so `llm.connect_model` is the one way a composition root gets a real
+client: it asks the endpoint who serves the model (a gateway's `/model/info`,
+else a known provider host) and `RunConfig.check_served_by` raises
+`ProviderMismatch` on a contradiction, or reports unverified when the endpoint
+cannot say. Spans carry the declared provider instead of a hardcoded `groq`.
+Checked against the composed proxy, which reports `groq`; declaring `together`
+against it fails at startup.
+
+**The question as it was raised:**
+
+**What is wrong.** `RunConfig.fingerprint` hashes everything that changes
+behaviour and excludes what does not — `mcp_base_url`, and now `otlp_endpoint`.
+It **includes** `provider_base_url`, with a stated reason:
+
+> `provider_base_url` is included only because pointing at a different provider
+> *is* a different system.
+
+That reason is right and the implementation cannot honour it, because one field
+carries two different facts:
+
+    Groq, called directly          a different provider      fingerprint SHOULD move
+    Groq, reached via a gateway    the same model, same weights, one more hop
+                                                              fingerprint should NOT move
+
+Put a gateway in front — LiteLLM's proxy, Databricks Mosaic AI Gateway, Azure AI
+Foundry, Vertex's OpenAI-compatible endpoint — and every run after it is
+uncomparable with every run before it, for a change that altered nothing the
+agent does. This is exactly the argument `mcp_base_url` is already excluded
+under: a world reached over a different URL is the same world.
+
+**Why it matters now rather than later.** The gateway seam is already open and
+costs nothing to walk through. `GroqClient` takes `base_url`, four of the five
+plausible cloud gateways are OpenAI-compatible, and moving to one is an
+environment variable. The first person to do that will silently invalidate the
+fingerprint history, and the fingerprint history is the thing that makes "it
+passed last week" checkable — which is the entire reason `config` exists.
+
+**The decision, not the code.** What identifies "the same system" for a model?
+The candidates, and none is obviously right:
+
+*The model id alone.* Clean, and wrong the moment two providers serve the same
+open-weights model with different quantisation — which is the ordinary case for
+`openai/gpt-oss-120b`.
+
+*Model id plus a declared provider name*, with the URL excluded. The provider
+becomes a stated fact rather than an inferred one, which is the shape the rest of
+this file already prefers: `resolution` is declared, not derived from whether a
+URL looks like localhost.
+
+*Both, with the URL kept and a second "route" fingerprint beside it.* Honest, and
+two numbers where one is wanted.
+
+**Where it lands.** `config/__init__.py`, and `harness-profile.yaml` if provider
+becomes a declared field. Any change to what the fingerprint covers is a break in
+comparability with every run recorded before it, so whichever is chosen, the
+change itself should be dated in the file — the way `evals/baseline.json` records
+`taken` and the golden set records why it grew.
+
+**And the gateway question this came out of, recorded so it is not re-derived.**
+There is no AI gateway here today; the agent calls the provider directly. The
+seam is `provider_base_url` and it needs no work. A LiteLLM **proxy** — as
+opposed to the SDK — subsumes retries, backoff, cooldown and throttling into the
+gateway, which deletes `resilience/` without adopting a library in-process, and
+survives a later move to Databricks or Azure because that is then one gateway
+replacing another rather than a library being un-picked. If a gateway is coming,
+it is the better shape than T-016's LiteLLM-SDK row, and the two should be
+decided together rather than in sequence.
 
 ### T-009 · Seven capabilities are believed met and named by no test
 
