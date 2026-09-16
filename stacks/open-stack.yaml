@@ -24,7 +24,7 @@ decisions: {}
 thresholds: {}
 
 bindings:
-  model:        { approach: gateway,     adapter: litellm-proxy,            x_status: target,  x_item: T-029, x_current: openai-compatible-client, x_note: "built 16 Sep with per-caller keys, no retries or cooldowns in the proxy; current after one successful call through it" }
+  model:        { approach: gateway,     adapter: litellm-proxy,            x_status: current, x_item: T-029, x_note: "agent holds its own gateway key; no retries or cooldowns in the proxy; all 34 scenarios run live through it 17 Sep" }
   tool_runtime: { approach: open-source, adapter: mcp-client,               x_status: current }
   state:        { approach: open-source, adapter: postgres,                 x_status: current }
   workflow:     { approach: open-source, adapter: temporal,                 x_status: target,  x_item: T-028 }
