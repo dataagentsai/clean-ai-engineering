@@ -29,7 +29,7 @@ bindings:
   state:        { approach: open-source, adapter: postgres,                 x_status: current }
   workflow:     { approach: open-source, adapter: temporal,                 x_status: target,  x_item: T-028 }
   approval:     { approach: open-source, adapter: temporal-signals,         x_status: target,  x_item: T-028, x_current: postgres-approval-queue }
-  identity:     { approach: open-source, adapter: keycloak,                 x_status: target,  x_item: T-002, x_current: signed-token-at-the-edge }
+  identity:     { approach: open-source, adapter: keycloak,                 x_status: current, x_item: T-002, x_note: "realm in reference-agent/deploy/keycloak; login UI arrives with the channel (T-026); token exchange is T-002 C" }
   telemetry:    { approach: open-source, adapter: otel-to-langfuse,         x_status: current, x_note: "exporter adopted 2026-09-16" }
   policy:       { approach: in-house,    adapter: positioned-rule-lists,    x_status: current, x_why: "no guardrail library models position; PII moves to Presidio (T-030)" }
   recorder:     { approach: open-source, adapter: vcrpy,                    x_status: target,  x_item: T-027, x_current: json-cassettes }

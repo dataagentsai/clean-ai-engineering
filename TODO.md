@@ -626,6 +626,9 @@ leaves `src`; the far end verifies by **token exchange** (RFC 8693) instead of
 trusting an asserted `customer_id`; no login page until T-026. The four decisions
 are at the top of `docs/DESIGN-auth.md`.
 
+**Progress:** ✅ A (`e77a5fc`) and ✅ B (`reference-agent` realm commit) done 16 Sep;
+C is next. The Open Stack's `identity` binding is now `current`.
+
 **The work, in three commits:** (A) RS256 and JWKS only, `customer_id`, `aud` and
 `jti` claims, the local test issuer, the HTTP edge and the reviewer desk; (B) the
 Keycloak realm as an import file: roles that become `scp`, the admin-only
