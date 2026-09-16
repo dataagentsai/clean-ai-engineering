@@ -25,6 +25,7 @@
  *   unknown-state                  a transition or terminal names a state not in the machine
  *   unknown-operation              a transition, policy or system names a missing operation
  *   unknown-input                  an identity or effect names an input the operation lacks
+ *   unscoped-collection            a read of many rows (`output: entity[]`) is not scoped to the caller
  *   terminal-exit                  a transition leaves a terminal state
  *   effect-without-transition      an operation sets a state no transition allows it to
  *   transition-without-effect      a transition credits an operation that does not make it
@@ -167,6 +168,20 @@ function aoasIssues(doc, opts = {}) {
     checkConditions(op.owed_when, `${at}.owed_when`, ctx);
     if (op.authority && op.authority.agent_when) checkConditions(op.authority.agent_when, `${at}.authority.agent_when`, ctx);
 
+    if (op.output !== undefined) {
+      const many = op.output.endsWith("[]");
+      const ent = many ? op.output.slice(0, -2) : op.output;
+      if (!entities[ent]) add("unknown-entity", `${at}.output`, `"${ent}" is not a declared entity`);
+      // A read of many rows takes no key, so the only thing between it and every
+      // customer's rows is a precondition over the session. Without one it is
+      // F-016 again, as a listing (T-001).
+      const scoped = (op.preconditions || []).some((c) => c && "equals_session" in c);
+      if (many && op.side_effect !== "read") {
+        add("unscoped-collection", at, "only a read may return many rows; a write acts on one named row");
+      } else if (many && !scoped) {
+        add("unscoped-collection", at, "reads many rows and no precondition compares them with the session");
+      }
+    }
     if (op.side_effect === "irreversible" && op.identity === undefined) {
       add("irreversible-without-identity", at, "irreversible, and never says what makes a repeat the same request");
     }

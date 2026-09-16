@@ -40,6 +40,9 @@ const CASES = [
 
   // ---- names
   ["an operation on an undeclared entity", "unknown-entity", (d) => (ops(d).get_order.entity = "parcel")],
+  ["an operation returning an undeclared entity", "unknown-entity", (d) => (ops(d).list_orders.output = "parcel[]")],
+  ["a listing nobody scoped to the caller", "unscoped-collection", (d) => (ops(d).list_orders.preconditions = [])],
+  ["a write that returns many rows", "unscoped-collection", (d) => (ops(d).list_orders.side_effect = "reversible")],
   ["a system owning an undeclared entity", "unknown-entity", (d) => d.external.order_system.owns.push("shipment")],
   ["a precondition over a misspelt field", "unknown-field", (d) => (ops(d).cancel_order.preconditions[1].field = "state")],
   ["an entity keyed on a field it lacks", "unknown-field", (d) => (d.entities.order.key = "order_id")],

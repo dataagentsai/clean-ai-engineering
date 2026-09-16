@@ -366,7 +366,7 @@
           "description": "What repeating it costs. Irreversible means repeating charges someone twice."
         },
         "input": { "type": "array", "uniqueItems": true, "items": { "type": "string" } },
-        "output": { "type": "string" },
+        "output": { "type": "string", "pattern": "^[a-z][a-z0-9_]*(\\[\\])?$", "description": "The entity returned. `entity[]` is a read of many rows: it takes no key, and must be scoped to the caller by a precondition over the session." },
         "amount_from": { "type": "string", "description": "Where a money amount comes from. Never the conversation." },
         "preconditions": { "$ref": "#/$defs/condition_list" },
         "effect": {

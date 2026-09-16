@@ -221,6 +221,19 @@ operations:
     preconditions: [*owned]
     authority: agent
 
+  # EXTENDS — a read of many rows. `output: order[]` takes no key, so the
+  # precondition over the session is the whole of its scope; the validator
+  # refuses one without it (unscoped-collection). Added for P-OPEN (T-001): a
+  # customer opening the chat is shown their orders to pick from, not asked for a
+  # number nobody has to hand.
+  list_orders:
+    entity: order
+    side_effect: read
+    input: []
+    output: order[]
+    preconditions: [*owned]
+    authority: agent
+
   cancel_order:
     entity: order
     side_effect: irreversible
@@ -375,9 +388,18 @@ policies:
     via: [get_order]
     concern: safety
     facet: operational constraint
+  # T-001. A chat that opens empty makes the customer supply an order number they
+  # rarely have, and the first turns of every real conversation go on finding
+  # the order. Opening is the cheapest turn there is: a read of their own rows
+  # and of work already in flight, and a string. Generating it with a model pays
+  # for every abandoned open, which is most of them.
+  P-OPEN:
+    rule: when a signed-in customer opens a conversation, they are shown their own orders and any work of theirs already in flight, with no model call
+    via: [list_orders]
+    concern: cost
   P-OWNERSHIP:
     rule: a customer may see and act on only the orders they placed
-    via: [get_order, cancel_order, open_return_request, change_address, request_refund, issue_refund]
+    via: [get_order, list_orders, cancel_order, open_return_request, change_address, request_refund, issue_refund]
     concern: security
     facet: confidentiality
 
@@ -434,7 +456,7 @@ policies:
 external:
   order_system:
     owns: [order, customer]
-    operations: [get_order, cancel_order, open_return_request, change_address, issue_refund]
+    operations: [get_order, list_orders, cancel_order, open_return_request, change_address, issue_refund]
     refusal_is_a_result: >
       A write whose precondition fails returns {allowed: false, reason} with the
       current record. It is not an error, and it is not a success.
