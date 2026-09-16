@@ -124,7 +124,8 @@ work that is *missing*, with nothing to point at, which is why it is written dow
 5. **T-017**: Saleor as the real store, and a person in front of the agent.
 6. **T-035**: the four gates as one command. Every cycle's step 6.
 7. **T-034** and **T-044**: the Generation Brief and a one-step AgentTwin setup. Every cycle's steps 4 and 5.
-8. **T-033**: fill the LangGraph stack profile, then **cycle 2 (T-036)**.
+8. **T-048**: ports as a standard, tiers 1 and 2 and the three typed ports, with its criteria written before cycle 2 starts.
+9. **T-033**: fill the LangGraph stack profile, then **cycle 2 (T-036)**.
 
 **Independent, any time:** T-020, T-024, T-025, T-030, T-027, T-046, T-013 (the
 Spark AOAS, cheap, and it sharpens T-022 before cycle 4), T-039.
@@ -141,6 +142,7 @@ Spark AOAS, cheap, and it sharpens T-022 before cycle 4), T-039.
 | **T-034** | The Generation Brief: specs plus a stack profile, which Claude Code generates from | clean-ai-engineering | days | T-033 |
 | **T-035** | The four gates as one command: an implementation in, a verdict and a routed failure list out | reference-agent, agenttwin | a day or two | — |
 | **T-044** | Set up AgentTwin for a new agent in one step: a world scaffold from the AOAS, a scenario template, the three callables | agenttwin | days | T-039 |
+| **T-048** | AHC's ports as a standard: reference existing standards, a conformance suite per port, typed signatures for approval, cost_ledger and policy. Cycles 2 and 3 decide tier 3 | AHC, reference-agent, agenttwin | weeks | T-035 |
 
 ### Cycle 1 · Support agent · clothing · A6 · Open Stack: finish it, production grade
 
@@ -178,7 +180,7 @@ Spark AOAS, cheap, and it sharpens T-022 before cycle 4), T-039.
 
 | | Item | Repo | Cost | Needs |
 |---|---|---|---|---|
-| **T-036** | Fill `stacks/langgraph.yaml`, generate, set up AgentTwin, pass the gates, route the failures | `reference-agent-langgraph` | weeks | T-033, T-034, T-035, T-044 |
+| **T-036** | Fill `stacks/langgraph.yaml`, generate, set up AgentTwin, pass the gates, route the failures | `reference-agent-langgraph` | weeks | T-033, T-034, T-035, T-044, T-048 |
 
 ### Cycle 3 · Support agent · Claude Agent SDK: the stack changes, nothing else
 
@@ -461,6 +463,68 @@ and T-040.
 
 **Done when.** Cycle 4's hotel world and scenarios (G2.2) start from it rather
 than from a copy of the clothing world.
+
+### T-048 · AHC's ports as a standard, decided by cycles 2 and 3
+
+**Status** Not started. Decided 2026-09-16 (the user agreed). **Machinery, before
+cycle 2.** Repos: `ai-harness-catalog`, `reference-agent`, `agenttwin`.
+
+**The question.** Should AHC's 17 ports become an interface standard, the way
+OpenTelemetry and OpenFeature are, so that agents on LangGraph and the Claude
+Agent SDK plug into the same port definitions instead of only naming adapters
+in a stack file?
+
+**What is true today.** Every port already names its operations (`approval`:
+`request`, `await`, `stop_signal`), which is half an interface with no types.
+The reference agent has 12 Python Protocols and **they do not match the ports**:
+the `state` port says `put/get/claim/expire/reserve`, the code has
+`CheckpointStore` and `IdempotencyLedger`; the `approval` port says
+`request/await/stop_signal`, the code has `ApprovalStore`. With one
+implementation, the ports stayed descriptions.
+
+**Why not typed signatures for all 17.** Whoever owns the loop decides who calls a
+port. In our loop our code calls it, and a Protocol works. Under LangGraph or the
+Claude Agent SDK the framework calls it through its own extension point
+(`BaseCheckpointSaver`, `interrupt()`, `can_use_tool`, `PreToolUse`), and no one
+Python signature sits inside all three. An SDK every framework must call is a
+framework, which AHC exists not to be. OpenTelemetry, OpenFeature and MCP each
+standardised **one** concern, with a wire protocol or a spec plus shared
+conformance tests, not a class in one language.
+
+**Three tiers.**
+
+1. **Point at existing standards (6 ports, days).** The port says *realised by X*
+   and keeps only AHC's invariants on top: telemetry → OTel GenAI conventions;
+   tool_runtime → MCP; config → OpenFeature; identity → OIDC and RFC 8693 token
+   exchange (its `exchange` operation); model → the OpenAI-compatible HTTP API
+   through the gateway; trigger → CloudEvents.
+2. **A conformance suite for all 17 (weeks).** Each port's invariants become tests
+   any adapter must pass, through AgentTwin and the four gates (T-035).
+   OpenFeature's shape: a spec and shared conformance tests. Two adapters are the
+   same port because both pass *an approval survives a restart*, not because
+   both implement one class. **This tier is what makes AHC a standard.**
+3. **Typed signatures only where no standard exists and the concern is the
+   agent's own (days per port).** Start with **approval, cost_ledger and policy**:
+   a Python Protocol plus JSON Schema for what crosses the port (an approval
+   request, a policy decision, a cost record), so another language can follow.
+
+**The experiment, with its criteria written before it runs.**
+
+- *Before cycle 2:* align the reference agent's Protocols for the three ports to
+  the port operations, and write their conformance tests from the invariants.
+- *Cycle 2 (T-036) and cycle 3 (T-037):* write adapters for the three ports on
+  each stack.
+- **Tier 3 is worth it** if the same conformance tests pass unchanged on all three
+  stacks, each adapter stays at or under about 150 lines, and no signature
+  changed to fit a framework.
+- **It is not** if signatures changed per framework or the adapters fight the loop
+  owner. Ports then stop at tier 2, and that is a result, not a failure.
+
+**Done when.** Tier 1 is in every affected port file; the three ports have
+conformance suites that pass on the Open Stack; cycles 2 and 3 have recorded
+adapter size and signature changes per port; and tier 3 is decided in writing,
+either extended to the other agent-specific ports (admission, recorder, state's
+claim and expire, eval_task) or stopped at tier 2.
 
 ---
 
@@ -934,6 +998,24 @@ recognises.
 
 **Status** Not started. Raised 2026-09-16. **Depends on P1 (T-001, T-002).**
 
+**Decided 2026-09-16 (the user): adopt Saleor, and this is the grounding item.**
+The user's requirement is a real e-commerce app behind the agent so that it is
+grounded. Adopt rather than build, because a store we write carries the same
+assumptions as the world file and grounds nothing: grounding means a store whose
+rules somebody else wrote. The work, in order:
+
+1. Saleor in `reference-agent/compose.yaml` under a `store` profile (API, worker,
+   dashboard), and its row moves from `NOT_YET` to `ADOPTED` in `tests/test_compose.py`.
+2. A real MCP tool server on the official SDK's `MCPServer`, the same as the
+   projection: the agent's existing tools as calls to Saleor's GraphQL API, with
+   the same scope and side-effect metadata. Only `mcp_base_url` changes.
+3. A seed that loads the clothing catalogue, customers and orders from
+   `worlds/clothing.yaml` into Saleor, so both stores start from one t₀.
+4. The same scenarios against the projected world and against Saleor. Each
+   difference is a spec gap, routed like any other failure.
+5. Decide the `ecom` schema in `sql/001_schemas.sql`: no code reads or writes it.
+   Drop it, or keep it only as the world's ontology.
+
 **What is missing.** Anyone has ever talked to this agent. Every run to date is
 scripted or simulated: 34 scenarios with a scripted model, a golden set derived
 from declared conditions, a world projected from YAML. All of it proves the agent
@@ -1390,6 +1472,11 @@ ceiling live once LangGraph owns the loop. `PRODUCTION-STACK.md` L4: *if you
 cannot say, it has adopted you.* This cycle's step 7 also produces the
 `framework` column of G3.1.
 
+**And T-048's first test.** Write LangGraph adapters for the approval, cost_ledger
+and policy ports (interrupts, a callback, a node or wrapped tool), and run the
+port conformance suite against them unchanged. Record adapter size and every
+signature change.
+
 ---
 
 ## Cycle 3 · Support agent · Claude Agent SDK
@@ -1397,6 +1484,10 @@ cannot say, it has adopted you.* This cycle's step 7 also produces the
 ### T-037 · Cycle 3: the support agent on the Claude Agent SDK
 
 **Status** Not started. Needs cycle 2. Repo: `reference-agent-claude-sdk`, not yet created.
+
+**T-048's second test**, the same way: approval through permission callbacks,
+policy through `PreToolUse` hooks, cost from the SDK's reported usage. After this
+cycle T-048's tier 3 is decided.
 
 Only the stack changes. The SDK brings a loop, built-in tools, context
 management, hooks, permissions and sessions, so more ports are supplied than in
