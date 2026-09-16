@@ -1,0 +1,44 @@
+# Open Stack: the base profile for agents on open-source components and our own loop.
+#
+# `x_status: current` is what the support agent runs on today, read from
+# reference-agent/harness-profile.yaml. `x_status: target` is decided and not yet
+# built; the item that builds it is named. Only `bindings:` and `harness:` may
+# name a product. See README.md.
+apiVersion: harness-profile/v1
+
+subject:
+  name: open-stack
+  description: >-
+    Open-source components with the control loop kept in-house as the delta:
+    the step budget, oscillation check and cost ceiling live in the only position
+    that can see a trajectory. Everything around the loop is adopted.
+  archetypes: [A6]   # the shapes built on this stack so far; each agent declares its own
+
+catalog:
+  ahc: "0.3.0"
+
+harness:
+  loop: { owner: in-house, adapter: bounded-react-loop, x_status: current, x_why: "decided 2026-09-16: the loop is the kept delta" }
+
+decisions: {}
+thresholds: {}
+
+bindings:
+  model:        { approach: gateway,     adapter: litellm-proxy,            x_status: target,  x_item: T-029, x_current: openai-compatible-client }
+  tool_runtime: { approach: open-source, adapter: mcp-client,               x_status: current }
+  state:        { approach: open-source, adapter: postgres,                 x_status: current }
+  workflow:     { approach: open-source, adapter: temporal,                 x_status: target,  x_item: T-028 }
+  approval:     { approach: open-source, adapter: temporal-signals,         x_status: target,  x_item: T-028, x_current: postgres-approval-queue }
+  identity:     { approach: open-source, adapter: keycloak,                 x_status: target,  x_item: T-002, x_current: signed-token-at-the-edge }
+  telemetry:    { approach: open-source, adapter: otel-to-langfuse,         x_status: current, x_note: "exporter adopted 2026-09-16" }
+  policy:       { approach: in-house,    adapter: positioned-rule-lists,    x_status: current, x_why: "no guardrail library models position; PII moves to Presidio (T-030)" }
+  recorder:     { approach: open-source, adapter: vcrpy,                    x_status: target,  x_item: T-027, x_current: json-cassettes }
+  eval_task:    { approach: open-source, adapter: agenttwin,                x_status: current, x_note: "simulated user and graders adopted in T-039, T-040" }
+  cost_ledger:  { approach: in-house,    adapter: per-task-meter,           x_status: current, x_why: "cost per successful task needs to know what finished means" }
+  config:       { approach: open-source, adapter: typed-settings,           x_status: current }
+  secrets:      { approach: in-house,    adapter: environment-settings,     x_status: current }
+  trigger:      { approach: in-house,    adapter: delivery-log,             x_status: current }
+
+accepted_gaps: []
+
+x_runs_from: compose file, T-031

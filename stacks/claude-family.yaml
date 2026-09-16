@@ -1,0 +1,24 @@
+# Claude family: placeholder for later. Scoped by T-043.
+#
+# A slot reserved for binding to Anthropic's own family beyond the Agent SDK.
+# What it covers (the native Claude API features, hosted Managed Agents, or both)
+# is T-043's first decision, so nothing is claimed here yet, not even who owns
+# the loop. See README.md.
+apiVersion: harness-profile/v1
+
+subject:
+  name: claude-family
+  description: Anthropic's first-party family, beyond the Agent SDK. Placeholder for later.
+  archetypes: [A6]
+
+catalog:
+  ahc: "0.3.0"
+
+decisions: {}
+thresholds: {}
+
+bindings: {}
+
+accepted_gaps: []
+
+x_status: placeholder, later

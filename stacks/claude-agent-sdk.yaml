@@ -1,0 +1,34 @@
+# Claude Agent SDK: placeholder. Filled by T-037.
+#
+# Names the stack and who owns the loop, nothing else. The SDK brings a loop,
+# built-in tools, context management, hooks, permissions and sessions, so several
+# ports may be supplied by it. T-037 records which, and what it hides.
+# See README.md.
+apiVersion: harness-profile/v1
+
+subject:
+  name: claude-agent-sdk
+  description: The Claude Agent SDK owns the control loop. Placeholder.
+  archetypes: [A6]   # the first agent planned on it is the support agent
+
+catalog:
+  ahc: "0.3.0"
+
+harness:
+  loop: { owner: framework, adapter: claude-agent-sdk }
+
+decisions: {}
+thresholds: {}
+
+bindings:
+  model:        { approach: framework, adapter: undecided }
+  tool_runtime: { approach: framework, adapter: undecided }
+  state:        { approach: framework, adapter: undecided }
+  approval:     { approach: framework, adapter: undecided }
+  telemetry:    { approach: framework, adapter: undecided }
+
+accepted_gaps: []
+
+x_status: placeholder
+
+x_repository: reference-agent-claude-sdk (not yet created)

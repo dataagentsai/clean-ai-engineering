@@ -1,0 +1,34 @@
+# LangGraph: placeholder. Filled by T-036.
+#
+# Names the stack and who owns the loop, nothing else. Every port says
+# `undecided` until T-036 chooses it. Where LangGraph supplies a port
+# (checkpointer for state, interrupts for approval), T-036 records it here
+# rather than rebuilding it. See README.md.
+apiVersion: harness-profile/v1
+
+subject:
+  name: langgraph
+  description: LangGraph owns the control loop. Placeholder.
+  archetypes: [A6]   # the first agent planned on it is the support agent
+
+catalog:
+  ahc: "0.3.0"
+
+harness:
+  loop: { owner: framework, adapter: langgraph }
+
+decisions: {}
+thresholds: {}
+
+bindings:
+  model:        { approach: gateway,   adapter: undecided }
+  tool_runtime: { approach: framework, adapter: undecided }
+  state:        { approach: framework, adapter: undecided }
+  approval:     { approach: framework, adapter: undecided }
+  telemetry:    { approach: framework, adapter: undecided }
+
+accepted_gaps: []
+
+x_status: placeholder
+
+x_repository: reference-agent-langgraph (not yet created)

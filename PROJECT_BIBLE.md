@@ -41,8 +41,14 @@ non-goals are what stop the work drifting.
 **Explicit non-goals.** Not scalable — this body of work is demonstrated by a
 solo reference implementation, and designing for scale adds machinery that hides
 the layers it exists to show. Not complete — a catalog is never finished, and an
-identified, owned, dated gap is a better artifact than an undiscovered one. Not
-production-ready. **Not a framework.**
+identified, owned, dated gap is a better artifact than an undiscovered one.
+**Not a framework.**
+
+**Production grade is a goal, not a non-goal** (changed 2026-09-16; this line
+used to read *"Not production-ready"*). Every spec and every binding is made
+production grade by building agents of different shapes from them, adopting the
+open source that best fits each concern and building only the delta. The cycle
+that does it is in [TODO.md](TODO.md).
 
 ---
 
