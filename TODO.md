@@ -115,15 +115,16 @@ work that is *missing*, with nothing to point at, which is why it is written dow
 
 ## Next, in order
 
-1. **T-031**: one compose file for the adopted stack. Nothing adopted can run without it.
-2. **T-029** with **T-018**: the LiteLLM proxy, and the fingerprint decision it forces.
-3. **T-002**: Keycloak for login, with the ownership rule as our delta.
-4. **T-026**: Chatwoot for the customer chat and the human side of escalation. It closes T-001 without writing UI.
-5. **T-028**: Temporal for the approval and escalation waits.
-6. **T-017**: Saleor as the real store, and a person in front of the agent.
-7. **T-035**: the four gates as one command. Every cycle's step 6.
-8. **T-034** and **T-044**: the Generation Brief and a one-step AgentTwin setup. Every cycle's steps 4 and 5.
-9. **T-033**: fill the LangGraph stack profile, then **cycle 2 (T-036)**.
+✅ **T-031** done 16 Sep: `reference-agent/compose.yaml`.
+
+1. **T-029** with **T-018**: the LiteLLM proxy, and the fingerprint decision it forces.
+2. **T-002**: Keycloak for login, with the ownership rule as our delta.
+3. **T-026**: Chatwoot for the customer chat and the human side of escalation. It closes T-001 without writing UI.
+4. **T-028**: Temporal for the approval and escalation waits.
+5. **T-017**: Saleor as the real store, and a person in front of the agent.
+6. **T-035**: the four gates as one command. Every cycle's step 6.
+7. **T-034** and **T-044**: the Generation Brief and a one-step AgentTwin setup. Every cycle's steps 4 and 5.
+8. **T-033**: fill the LangGraph stack profile, then **cycle 2 (T-036)**.
 
 **Independent, any time:** T-020, T-024, T-025, T-030, T-027, T-046, T-013 (the
 Spark AOAS, cheap, and it sharpens T-022 before cycle 4), T-039.
@@ -140,7 +141,6 @@ Spark AOAS, cheap, and it sharpens T-022 before cycle 4), T-039.
 | **T-034** | The Generation Brief: specs plus a stack profile, which Claude Code generates from | clean-ai-engineering | days | T-033 |
 | **T-035** | The four gates as one command: an implementation in, a verdict and a routed failure list out | reference-agent, agenttwin | a day or two | — |
 | **T-044** | Set up AgentTwin for a new agent in one step: a world scaffold from the AOAS, a scenario template, the three callables | agenttwin | days | T-039 |
-| **T-031** | One compose file: Postgres, Keycloak, Temporal, Langfuse, the LiteLLM proxy, Chatwoot; Saleor added by T-017 | reference-agent | a day | — |
 
 ### Cycle 1 · Support agent · clothing · A6 · Open Stack: finish it, production grade
 
@@ -148,11 +148,11 @@ Spark AOAS, cheap, and it sharpens T-022 before cycle 4), T-039.
 
 | | Item | Repo | Cost | Needs |
 |---|---|---|---|---|
-| **T-002** | Login and row ownership: **adopt Keycloak**, build the ownership rule | reference-agent | days | T-031 |
+| **T-002** | Login and row ownership: **adopt Keycloak**, build the ownership rule | reference-agent | days | — |
 | **T-001** | Nothing happens when the chat opens. **Closed by T-026** rather than by writing UI | reference-agent | a day | T-026 |
 | **T-006** | A customer cannot find their own past conversations | reference-agent | days | T-002 |
 | **T-003** + **T-005** | Effects idempotent at the far end, and the key carried there | reference-agent, agenttwin | days | — |
-| **T-017** | **Adopt Saleor** as the real store, and put a person in front of the agent | reference-agent | days | T-002, T-026, T-031 |
+| **T-017** | **Adopt Saleor** as the real store, and put a person in front of the agent | reference-agent | days | T-002, T-026 |
 | **T-020** | Trace context and run id cross the MCP hop (AHC-0006, AHC-0026) | reference-agent | small | — |
 | **T-024** | Two release gates with no test: AAC-0051, AAC-0096 | reference-agent | a day | — |
 | **T-025** | Verify the provider price table before any figure is published | reference-agent | an hour | — |
@@ -163,14 +163,14 @@ Spark AOAS, cheap, and it sharpens T-022 before cycle 4), T-039.
 
 | | Item | Repo | Cost | Needs |
 |---|---|---|---|---|
-| **T-026** | **Chatwoot** for the customer chat and the human side of escalation. Needs a port AHC does not have | reference-agent, AHC | days | T-002, T-031 |
-| **T-029** | **LiteLLM proxy** in front of every model call, via `provider_base_url`, with its budgets and rate limits | reference-agent | a day | T-031 |
+| **T-026** | **Chatwoot** for the customer chat and the human side of escalation. Needs a port AHC does not have | reference-agent, AHC | days | T-002 |
+| **T-029** | **LiteLLM proxy** in front of every model call, via `provider_base_url`, with its budgets and rate limits | reference-agent | a day | T-018 |
 | **T-018** | The fingerprint cannot tell a gateway from a provider. **Decide before T-029 lands** | reference-agent, AHC schema | small | — |
-| **T-028** | **Temporal** for the approval and escalation waits | reference-agent | days | T-031 |
+| **T-028** | **Temporal** for the approval and escalation waits | reference-agent | days | — |
 | **T-030** | **Presidio** for PII in place of our patterns. The positions stay ours | reference-agent | a day | — |
 | **T-027** | **VCR.py** in place of `cassette/`, keeping the replay seam | reference-agent | a day | — |
 | **T-046** | **promptfoo** for prompt-level checks, beside AgentTwin | reference-agent | a day | — |
-| **T-047** | **OpenFeature** for release flags; choose Unleash or Flagsmith behind it | reference-agent | days | T-031 |
+| **T-047** | **OpenFeature** for release flags; choose Unleash or Flagsmith behind it | reference-agent | days | — |
 | **T-032** | Make `PRODUCTION-STACK.md` and `PREFERRED-STACK.md` agree with the register. They contradict each other today | reference-agent | hours | — |
 | **T-016** | The adopt/decline audit. The register below is its output | reference-agent | ongoing | — |
 
@@ -306,7 +306,7 @@ assembles what was already decided in four places: T-016's register;
 | Release flags | L15 | **OpenFeature** | Open Stack | T-047 |
 | Login | L16 | **Keycloak** | Open Stack | T-002 |
 | A real store behind the tools | world | **Saleor** | Open Stack | T-017 |
-| Somewhere to run it all | deploy | **Docker Compose** | Open Stack | T-031 |
+| Somewhere to run it all | deploy | **Docker Compose**, one file with profiles | Open Stack | ✅ adopted 16 Sep (T-031) |
 
 #### Evaluate: an open choice, closed with a written reason
 
@@ -461,19 +461,6 @@ and T-040.
 
 **Done when.** Cycle 4's hotel world and scenarios (G2.2) start from it rather
 than from a copy of the clothing world.
-
-### T-031 · One compose file for the adopted stack
-
-**Status** Not started. **The first thing to build**, because every adoption needs
-somewhere to run. T-016 kept reaching the same conclusion: *"until there is
-somewhere to run a proxy"*. Repo: `reference-agent`.
-
-**What.** Postgres, Keycloak, Temporal, Langfuse, the LiteLLM proxy and Chatwoot,
-started by one command, with the agent configured by environment variables to use
-them. Saleor joins with T-017, and the flag service with T-047.
-
-**Done when.** A fresh clone runs the suite against the composed stack, and
-`stacks/open-stack.yaml`'s `x_runs_from` points at the file.
 
 ---
 
@@ -1079,7 +1066,7 @@ already thought through for a retail support agent.
 
 ### T-029 · A LiteLLM proxy in front of every model call
 
-**Status** Not started. Decided 2026-09-16. **Cycle 1, Open Stack.** Needs T-031, T-018.
+**Status** Not started. Decided 2026-09-16. **Cycle 1, Open Stack.** Needs T-018. The proxy already runs from `compose.yaml`, with retries off.
 
 **What.** The proxy runs from the compose file. The agent reaches it through
 `provider_base_url`, with no new dependency and no code change, because the
@@ -1162,7 +1149,7 @@ decided together rather than in sequence.
 ### T-028 · Adopt Temporal for the approval and escalation waits
 
 **Status** Not started. Decided 2026-09-16 under *adopt, build only the delta*.
-**Cycle 1, Open Stack.** Repo: `reference-agent`. Needs T-031.
+**Cycle 1, Open Stack.** Repo: `reference-agent`. Temporal runs from `compose.yaml`, profile `durable`.
 
 **What.** The approval and escalation waits become Temporal workflows: raise,
 wait for a signal, act, expire. T-003 lists what this subsumes: `trigger`
@@ -1218,7 +1205,7 @@ cases, run in CI, reported through AAC's adapter.
 
 ### T-047 · Adopt OpenFeature for release flags
 
-**Status** Not started. Decided 2026-09-16. **Cycle 1, Open Stack.** Needs T-031.
+**Status** Not started. Decided 2026-09-16. **Cycle 1, Open Stack.** The flag service joins `compose.yaml` here.
 
 `PRODUCTION-STACK.md` L15 names **OpenFeature** with **Unleash** or **Flagsmith**
 behind it; which of the two is this item's first decision (see *Evaluate*).
@@ -2745,6 +2732,58 @@ different things: G1 measures the specifications, G2 measures the seams.
 `policy.CLAIM_PATTERNS` is the named suspect — it reads like the other versioned
 rule sets and is the only one whose values encode a *domain's* claims rather
 than a deployment's numbers.
+
+### T-031 · One compose file for the adopted stack
+
+**Status** **Done 2026-09-16.** `reference-agent/compose.yaml`, with
+`deploy/postgres/00-databases.sh`, `deploy/litellm/config.yaml`, `.env.example`
+and `tests/test_compose.py`. `stacks/open-stack.yaml`'s `x_runs_from` names it.
+
+**What was asked.** Postgres, Keycloak, Temporal, Langfuse, the LiteLLM proxy and
+Chatwoot, started by one command, with the agent configured by environment
+variables to use them. Done when a fresh clone runs the suite against the
+composed stack.
+
+**Decided while doing it (the user, 16 Sep): profiles, and Postgres in compose.**
+The whole stack does not fit on the machine it is built on. The laptop has 8 GB
+and Docker gets 3.8 GB of it, so the done-when became *the suite runs against the
+default set, and each profile starts here on its own*. A machine with the memory
+passes every profile to the same file. The README's "native, not Docker" line is
+gone; a native Postgres still works on 5432 and compose's is on 5433.
+
+| Profile | Services | Measured | Checked by |
+|---|---|---|---|
+| default | Postgres (pgvector), LiteLLM proxy, Keycloak | ~1.2 GB | **947 tests pass** with `AGENT_DATABASE_URL` at it, the 18 database tests running, not skipped; the proxy lists the three approved models; Keycloak serves `realms/master` from its own database |
+| `obs` | Langfuse web and worker, ClickHouse, MinIO, Redis | +~2.1 GB | a span sent through `tel.export_to` with `.env.example`'s endpoint and header lands in the `support-agent` project |
+| `durable` | Temporal dev server, SQLite on a volume | +65 MB | a namespace created before a restart exists after it: T-028's done-when rests on that |
+| `channel` | Chatwoot web, Sidekiq, a one-shot migrate, Redis | +~0.8 GB | 100 tables built by the unprivileged role; `/api` reports queue and data services ok |
+
+**One Postgres, one role per service.** The agent's schemas are created *as*
+`agent`, never as the superuser, so the grant boundary `sql/001_schemas.sql`
+argues for is the one a composed run has. Chatwoot's untrusted extensions are
+created by the init script, so its role stays unprivileged too.
+
+**What the boot runs found, recorded because each would have bitten later:**
+
+- **A failed init looks healthy forever.** The first boot's init script was not
+  executable. The container crashed, the restart found a non-empty data
+  directory and skipped init, and `pg_isready` called a database with no roles
+  and no schemas healthy. The health check is now a query on an agent table as
+  `agent`, and a test asserts the script is executable.
+- **Langfuse v4 has no read API for traces.** `GET /api/public/traces` answers
+  *not available in events_only mode*. Writes over OTLP work; anything that reads
+  traces back (T-040's graders, a trace-based assertion) reads ClickHouse's
+  `events_full` or v4's new API, not the one most examples show.
+- **The proxy's retries are off.** `num_retries: 0`, so `ResilientLLM` stays the
+  one retry layer (F-029) until T-029 decides otherwise.
+- **MinIO no longer publishes images.** Chainguard's free image is `latest` only,
+  so it is the one unpinned image. Langfuse's upstream compose makes the same
+  choice.
+
+**The three-places rule is now a test.** `tests/test_compose.py` is table-driven:
+every product bound in the stack profile runs from a named compose service in a
+named profile, every compose service is a bound product or names the product it
+supports, and Saleor is listed as owed by T-017. The Chatwoot miss would fail it.
 
 ### T-009 · Seven capabilities are believed met and named by no test
 

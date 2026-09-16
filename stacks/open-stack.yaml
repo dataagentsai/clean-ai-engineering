@@ -46,4 +46,4 @@ accepted_gaps: []
 x_channel: { approach: open-source, adapter: chatwoot-agent-bot, x_status: target, x_item: T-026, x_covers: [customer chat, human handoff for escalation] }
 x_store:   { approach: open-source, adapter: saleor, x_status: target, x_item: T-017, x_note: "behind the MCP tool server; the world's resolution becomes real" }
 
-x_runs_from: compose file, T-031
+x_runs_from: reference-agent/compose.yaml
