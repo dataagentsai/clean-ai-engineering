@@ -119,10 +119,12 @@ work that is *missing*, with nothing to point at, which is why it is written dow
 
 ✅ **T-018** done 16 Sep: model plus a declared provider, checked at startup.
 
+✅ **T-026** done 17 Sep: customers log in through a portal that keeps their login server-side, chat through Chatwoot, and are handed to a person on escalation; AHC has a `channel` port.
+
 ✅ **T-002** done 16 Sep: verify-only sessions from the Keycloak realm, and an order system that checks the token and the approval itself.
 
 1. **T-029**: built 16 Sep; **one check left**, a successful call through the proxy. It needs a Groq key in `GROQ_API_KEY`, which this machine does not have.
-2. **T-026**: Chatwoot for the customer chat and the human side of escalation. It closes T-001 without writing UI.
+2. **T-001**: what the customer sees when the chat opens, their orders and anything in flight, with no model call. **Not closed by T-026**: Chatwoot supplies the surface, and the bot can now answer the widget opening.
 3. **T-028**: Temporal for the approval and escalation waits.
 4. **T-017**: Saleor as the real store, and a person in front of the agent.
 5. **T-035**: the four gates as one command. Every cycle's step 6.
@@ -153,10 +155,10 @@ Spark AOAS, cheap, and it sharpens T-022 before cycle 4), T-039.
 
 | | Item | Repo | Cost | Needs |
 |---|---|---|---|---|
-| **T-001** | Nothing happens when the chat opens. **Closed by T-026** rather than by writing UI | reference-agent | a day | T-026 |
+| **T-001** | Nothing happens when the chat opens: no orders to pick from, nothing in flight shown, and it must cost no model call. T-026 gave it a surface, not the content | reference-agent | a day | — |
 | **T-006** | A customer cannot find their own past conversations | reference-agent | days | — |
 | **T-003** + **T-005** | Effects idempotent at the far end, and the key carried there | reference-agent, agenttwin | days | — |
-| **T-017** | **Adopt Saleor** as the real store, and put a person in front of the agent | reference-agent | days | T-026 |
+| **T-017** | **Adopt Saleor** as the real store, and put a person in front of the agent | reference-agent | days | — |
 | **T-020** | Trace context and run id cross the MCP hop (AHC-0006, AHC-0026) | reference-agent | small | — |
 | **T-024** | Two release gates with no test: AAC-0051, AAC-0096 | reference-agent | a day | — |
 | **T-025** | Verify the provider price table before any figure is published | reference-agent | an hour | — |
@@ -168,7 +170,6 @@ Spark AOAS, cheap, and it sharpens T-022 before cycle 4), T-039.
 
 | | Item | Repo | Cost | Needs |
 |---|---|---|---|---|
-| **T-026** | **Chatwoot** for the customer chat and the human side of escalation. Needs a port AHC does not have | reference-agent, AHC | days | — |
 | **T-029** | **LiteLLM proxy** in front of every model call. **Built 16 Sep**; one successful call through it is left | reference-agent | an hour | a Groq key |
 | **T-028** | **Temporal** for the approval and escalation waits | reference-agent | days | — |
 | **T-030** | **Presidio** for PII in place of our patterns. The positions stay ours | reference-agent | a day | — |
@@ -306,7 +307,7 @@ assembles what was already decided in four places: T-016's register;
 | Prompt-level checks | L12 | **promptfoo** | all | T-046 |
 | Property-based tests | L12 | **Hypothesis** | all | ✅ adopted 14 Sep |
 | Reliability measure | L12 | **`pass^k`**, and τ-bench's `verify` actor strategy (the idea) | all | T-007 |
-| Customer chat, human handoff | L6, L14 | **Chatwoot** Agent Bot API | Open Stack | T-026 |
+| Customer chat, human handoff | L6, L14 | **Chatwoot** Agent Bot API | Open Stack | ✅ adopted 17 Sep (T-026) |
 | Release flags | L15 | **OpenFeature** | Open Stack | T-047 |
 | Login | L16 | **Keycloak** | Open Stack | ✅ adopted 16 Sep (T-002) |
 | A real store behind the tools | world | **Saleor** | Open Stack | T-017 |
@@ -619,7 +620,7 @@ complete harness profile. Then it is frozen.
 
 ### T-001 · Nothing happens when the chat opens
 
-**Status** Not started. Raised 2026-09-05.
+**Status** Not started. Raised 2026-09-05. **Re-scoped 17 Sep:** the TODO said T-026 would close this without writing UI, and it does not. Chatwoot supplies the chat surface; what the customer is shown on opening, their own orders and work in flight at no model cost, is still missing. The route is now a bot reply to Chatwoot's widget-opened event rather than a `GET /session` on the old page.
 
 **What is missing.** The customer clicks *Talk to our AI agent*, a box opens, and
 it is empty. There is no greeting, no list of their orders, nothing about work
@@ -674,46 +675,6 @@ orders"* is the most deterministic question there is.
 There is no way to express *"the customer opened the chat and saw this"*, so the
 opening state a real conversation starts from cannot be simulated. Both sides
 have the same gap.
-
-### T-026 · Adopt Chatwoot for the customer chat and the human side of escalation
-
-**Status** In progress 2026-09-16. **Cycle 1.** Needs nothing: T-002 is done.
-
-**Decided 2026-09-16 (the user): a server-side session behind the widget.** A
-Chatwoot webhook says *who* the contact is and carries no customer token, and
-T-002 C needs one to exchange. So a small backend logs the customer in with
-Keycloak (code + PKCE) and keeps their refresh token, encrypted, keyed by login;
-the page embeds the Chatwoot widget with an HMAC-verified identifier (the
-login's `sub`, `hmac_mandatory` on the inbox). On a signed bot webhook for a
-verified contact, the agent turns that stored session into a fresh token and
-exchanges it as in T-002 C. The agent never acts without a live customer session,
-and logout revokes it. Rejected: our own page with Chatwoot only as the desk (we
-keep writing chat UI), and Keycloak impersonation (the agent could become anyone,
-undoing T-002 C).
-
-**Checked in Chatwoot v4.17.1 before deciding:** widget identity validation is
-`identifier_hash` = HMAC-SHA256 of the identifier with the inbox's token, recorded
-as `hmac_verified` and carried in bot webhooks; bot webhooks are signed
-(`X-Chatwoot-Signature` over timestamp and body, with a delivery id).
-
-**The work, in commits:** (A) stored sessions, encrypted, and a stored session to
-a fresh customer identity; the realm's `support-portal` client. (B) The portal:
-login, callback, logout that revokes, and the page embedding the widget. (C) The
-webhook receiver: signature, timestamp, delivery dedupe, `hmac_verified`, the turn
-under the stored session, the bot's reply, and handoff to a person on escalation
-with the facts as a private note. (D) Chatwoot configured by an idempotent setup
-in compose, and a live end-to-end test. (E) AHC's missing `channel` port.
-
-The argument is in T-016's *three rows whose verdict is already decided*. In
-short: its Agent Bot API is this agent's escalation model already built, and it
-closes T-001 and the customer half of T-017 without writing UI. **It does not
-solve approvals**, and it needs a signed `customer_id` from T-002.
-
-**A spec gap it has already found.** AHC declares no port for a customer channel
-or a human handoff desk. The ports are `admission`, `approval`, `trigger` and the
-rest, and none is where Chatwoot goes, so `stacks/open-stack.yaml` records it under
-`x_channel` for now. Adding the port, in AHC and in the profile schema's linted
-port list, is part of this item: a step-7 finding before the cycle has even run.
 
 ### T-006 · A customer's own conversations cannot be found
 
@@ -2984,6 +2945,83 @@ world seeds one customer, and the actor is always that customer. **A defect that
 takes two customers to see cannot be seen by a suite that has never had two.**
 A second seeded customer and one hostile actor would have caught F-016 on the day
 the tool boundary was written.
+
+### T-026 · Adopt Chatwoot for the customer chat and the human side of escalation
+
+**Status** **Done 2026-09-17.** `reference-agent` `0e27f78` (A), `88cf970` (B),
+`ca806d3` (C), `9f24be4` (D), `4320fef` (E); `ai-harness-catalog` `1d5f830` (the
+port). The Open Stack's `channel` binding is `current`.
+
+**What landed.**
+
+- **(A) Stored logins.** Refresh tokens Fernet-encrypted in `agent_state.sessions`;
+  `identity.sessions.Resume` turns one into a live customer session, deletes an
+  ended one, refuses a token that refreshes into another login, and makes a burst
+  of messages one refresh. The identity module split to stay under its ratchet.
+- **(B) The portal** at `/portal`: login with PKCE, callback, logout that ends
+  the session at the realm and drops the agent's cache, and a page embedding the
+  widget with the login's `sub` and its HMAC. No token reaches the page. Tested
+  offline by table and live through the realm's own login form.
+- **(C) The webhook receiver** at `/chatwoot`: signature and a five-minute replay
+  window; only incoming public messages in a conversation the bot holds;
+  HMAC-verified contact; a live login, or a request to sign in. The turn runs after
+  the 202; Chatwoot's message id is the delivery id; escalation replies, writes the
+  facts as a private note and hands off. Tested against a payload captured from
+  Chatwoot.
+- **(D) Chatwoot configured by `deploy/chatwoot/setup.rb`**, converging on a second
+  run, and a live test with nothing faked: login, an answer about AB-10003 in
+  Chatwoot, a handoff with its note, and "sign in again" after logout. Three
+  passes in a row.
+- **(E) AHC's `channel` port,** with the invariants this item had to build.
+
+**Found on the way.** The bot's own replies and Chatwoot's automated messages fire
+`message_created`; Chatwoot refuses webhooks to private addresses unless
+`SAFE_FETCH_ALLOW_PRIVATE_NETWORK` is set (local stack only); the bot's token cannot
+read a conversation back, so the desk admin has a fixed token; a conversation left
+open belongs to a person and the bot never hears it, which is also what the desk
+sees when the agent is down ("marked open due to an error with the agent bot").
+
+**Carried forward.** T-001 is not closed by this (re-scoped above). `run_server`
+keeps logins in memory; a deployment wires `PostgresSessionStore` with
+`AGENT_SESSION_KEY`. Two processes refreshing one login at once can race at the
+realm; the lock is per process.
+
+
+**Decided 2026-09-16 (the user): a server-side session behind the widget.** A
+Chatwoot webhook says *who* the contact is and carries no customer token, and
+T-002 C needs one to exchange. So a small backend logs the customer in with
+Keycloak (code + PKCE) and keeps their refresh token, encrypted, keyed by login;
+the page embeds the Chatwoot widget with an HMAC-verified identifier (the
+login's `sub`, `hmac_mandatory` on the inbox). On a signed bot webhook for a
+verified contact, the agent turns that stored session into a fresh token and
+exchanges it as in T-002 C. The agent never acts without a live customer session,
+and logout revokes it. Rejected: our own page with Chatwoot only as the desk (we
+keep writing chat UI), and Keycloak impersonation (the agent could become anyone,
+undoing T-002 C).
+
+**Checked in Chatwoot v4.17.1 before deciding:** widget identity validation is
+`identifier_hash` = HMAC-SHA256 of the identifier with the inbox's token, recorded
+as `hmac_verified` and carried in bot webhooks; bot webhooks are signed
+(`X-Chatwoot-Signature` over timestamp and body, with a delivery id).
+
+**The work, in commits:** (A) stored sessions, encrypted, and a stored session to
+a fresh customer identity; the realm's `support-portal` client. (B) The portal:
+login, callback, logout that revokes, and the page embedding the widget. (C) The
+webhook receiver: signature, timestamp, delivery dedupe, `hmac_verified`, the turn
+under the stored session, the bot's reply, and handoff to a person on escalation
+with the facts as a private note. (D) Chatwoot configured by an idempotent setup
+in compose, and a live end-to-end test. (E) AHC's missing `channel` port.
+
+The argument is in T-016's *three rows whose verdict is already decided*. In
+short: its Agent Bot API is this agent's escalation model already built, and it
+closes the customer half of T-017 without writing UI. **It does not solve
+approvals**. (It was also said to close T-001; it does not, see T-001.)
+
+**A spec gap it has already found.** AHC declares no port for a customer channel
+or a human handoff desk. The ports are `admission`, `approval`, `trigger` and the
+rest, and none is where Chatwoot goes, so `stacks/open-stack.yaml` records it under
+`x_channel` for now. Adding the port, in AHC and in the profile schema's linted
+port list, is part of this item: a step-7 finding before the cycle has even run.
 
 ### T-009 · Seven capabilities are believed met and named by no test
 

@@ -29,7 +29,7 @@ bindings:
   state:        { approach: open-source, adapter: postgres,                 x_status: current }
   workflow:     { approach: open-source, adapter: temporal,                 x_status: target,  x_item: T-028 }
   approval:     { approach: open-source, adapter: temporal-signals,         x_status: target,  x_item: T-028, x_current: postgres-approval-queue }
-  identity:     { approach: open-source, adapter: keycloak,                 x_status: current, x_item: T-002, x_note: "realm in reference-agent/deploy/keycloak; login UI arrives with the channel (T-026); token exchange is T-002 C" }
+  identity:     { approach: open-source, adapter: keycloak,                 x_status: current, x_item: T-002, x_note: "realm in reference-agent/deploy/keycloak; customers log in through the portal (T-026); the order system verifies an exchanged token (T-002)" }
   telemetry:    { approach: open-source, adapter: otel-to-langfuse,         x_status: current, x_note: "exporter adopted 2026-09-16" }
   policy:       { approach: in-house,    adapter: positioned-rule-lists,    x_status: current, x_why: "no guardrail library models position; PII moves to Presidio (T-030)" }
   recorder:     { approach: open-source, adapter: vcrpy,                    x_status: target,  x_item: T-027, x_current: json-cassettes }
@@ -38,12 +38,12 @@ bindings:
   config:       { approach: open-source, adapter: typed-settings,           x_status: current, x_target: openfeature, x_item: T-047 }
   secrets:      { approach: in-house,    adapter: environment-settings,     x_status: current }
   trigger:      { approach: in-house,    adapter: delivery-log,             x_status: current }
+  channel:      { approach: open-source, adapter: chatwoot-agent-bot,       x_status: current, x_item: T-026, x_note: "port added to AHC 17 Sep; portal keeps the login server-side, webhook acts only for a live one" }
 
 accepted_gaps: []
 
-# Adopted, with no AHC port to bind them to yet. The missing channel port is a
-# catalog gap recorded in T-026; these move under `bindings:` when it exists.
-x_channel: { approach: open-source, adapter: chatwoot-agent-bot, x_status: target, x_item: T-026, x_covers: [customer chat, human handoff for escalation] }
+# Adopted, with no AHC port to bind to yet: the store is reached over MCP and is
+# the world, not a harness seam.
 x_store:   { approach: open-source, adapter: saleor, x_status: target, x_item: T-017, x_note: "behind the MCP tool server; the world's resolution becomes real" }
 
 x_runs_from: reference-agent/compose.yaml
