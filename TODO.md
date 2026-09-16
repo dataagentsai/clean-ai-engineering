@@ -619,7 +619,20 @@ complete harness profile. Then it is frozen.
 
 ### T-002 · Nothing issues or maintains logins, and the permission model is the wrong shape
 
-**Status** Not started. Raised 2026-09-05. **Carries the fix for F-016 (critical).**
+**Status** In progress 2026-09-16. **F-016's ownership rule is built** (design
+steps 1 and 2, `tests/test_ownership.py`). **Decided 2026-09-16 (the user):** a
+dedicated `customer_id` claim; tests sign with a local RS256 issuer and HS256
+leaves `src`; the far end verifies by **token exchange** (RFC 8693) instead of
+trusting an asserted `customer_id`; no login page until T-026. The four decisions
+are at the top of `docs/DESIGN-auth.md`.
+
+**The work, in three commits:** (A) RS256 and JWKS only, `customer_id`, `aud` and
+`jti` claims, the local test issuer, the HTTP edge and the reviewer desk; (B) the
+Keycloak realm as an import file: roles that become `scp`, the admin-only
+`customer_id` attribute, test users, clients, tested against compose; (C) token
+exchange, the exchanged token sent to the order system, and the check a real
+store runs. **Open in C:** how the far end verifies the refund elevation, which the
+agent grants itself today.
 
 → **Designed in full: [`docs/DESIGN-auth.md`](../reference-agent/docs/DESIGN-auth.md).** The summary
 below is a pointer; the design is the document.
