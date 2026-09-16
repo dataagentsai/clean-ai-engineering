@@ -52,7 +52,7 @@ Placeholders exist for all four. See [`stacks/README.md`](stacks/README.md).
 | [Open Stack](stacks/open-stack.yaml) | our loop, kept as the delta; everything around it adopted | current, with adoption targets recorded |
 | [LangGraph](stacks/langgraph.yaml) | LangGraph | placeholder: cycle 2 |
 | [Claude Agent SDK](stacks/claude-agent-sdk.yaml) | Claude Agent SDK | placeholder: cycle 3 |
-| [Claude family](stacks/claude-family.yaml) | to be decided | placeholder, later: T-043 |
+| [Claude family](stacks/claude-family.yaml) | **our loop**; the Anthropic SDK end to end | later: cycle 7, T-043 · T-004 |
 
 ### The roster
 
@@ -64,7 +64,7 @@ are not building (OpenAI Agents SDK, none), the agent is bound to one we are.
 
 | # | Agent | Domain | Archetypes (proposed) | Page's stack | Cycle |
 |---|---|---|---|---|---|
-| R | **Support agent** (clothing) | ecommerce support | A6 | — | **1** Open Stack · **2** LangGraph · **3** Claude Agent SDK |
+| R | **Support agent** (clothing) | ecommerce support | A6 | — | **1** Open Stack · **2** LangGraph · **3** Claude Agent SDK · **7** Claude family |
 | H | **Hotel support agent** | hospitality support | A6 | — | **4** Open Stack, a new domain only |
 | 2 | **Spark cost analyst** | data engineering | A6 · A8, read-only, one long task | Claude Agent SDK | **5**, a new shape |
 | 3 | **Invoice reconciliation** | finance ops | A5 · A9, waits for days | LangGraph | **6**, a new shape |
@@ -83,8 +83,8 @@ are not building (OpenAI Agents SDK, none), the agent is bound to one we are.
 | 15 | Diagnostic CLI | developer platform | A6 | plain loop | — |
 | 16 | Conversational data UI | data / Unity Catalog | A4 · A8 · A3 | — | — |
 
-Cycles after 6 are picked at step 1, by the shape furthest from any already
-covered. The archetypes that no cycle yet touches, **A1, A2, A3, A4, A7, A10**,
+New shapes after cycle 6 are picked at step 1, by the shape furthest from any
+already covered. Cycle 7 changes only the stack. The archetypes that no cycle yet touches, **A1, A2, A3, A4, A7, A10**,
 are the case for which agent comes next.
 
 ### What production grade means, per artifact
@@ -118,13 +118,15 @@ work that is *missing*, with nothing to point at, which is why it is written dow
 1. **T-031**: one compose file for the adopted stack. Nothing adopted can run without it.
 2. **T-029** with **T-018**: the LiteLLM proxy, and the fingerprint decision it forces.
 3. **T-002**: Keycloak for login, with the ownership rule as our delta.
-4. **T-028**: Temporal for the approval and escalation waits.
-5. **T-035**: the four gates as one command. Every cycle's step 6.
-6. **T-034** and **T-044**: the Generation Brief and a one-step AgentTwin setup. Every cycle's steps 4 and 5.
-7. **T-033**: fill the LangGraph stack profile, then **cycle 2 (T-036)**.
+4. **T-026**: Chatwoot for the customer chat and the human side of escalation. It closes T-001 without writing UI.
+5. **T-028**: Temporal for the approval and escalation waits.
+6. **T-017**: Saleor as the real store, and a person in front of the agent.
+7. **T-035**: the four gates as one command. Every cycle's step 6.
+8. **T-034** and **T-044**: the Generation Brief and a one-step AgentTwin setup. Every cycle's steps 4 and 5.
+9. **T-033**: fill the LangGraph stack profile, then **cycle 2 (T-036)**.
 
-**Independent, any time:** T-020, T-024, T-025, T-013 (the Spark AOAS, cheap, and
-it sharpens T-022 before cycle 4), T-039.
+**Independent, any time:** T-020, T-024, T-025, T-030, T-027, T-046, T-013 (the
+Spark AOAS, cheap, and it sharpens T-022 before cycle 4), T-039.
 
 ---
 
@@ -138,7 +140,7 @@ it sharpens T-022 before cycle 4), T-039.
 | **T-034** | The Generation Brief: specs plus a stack profile, which Claude Code generates from | clean-ai-engineering | days | T-033 |
 | **T-035** | The four gates as one command: an implementation in, a verdict and a routed failure list out | reference-agent, agenttwin | a day or two | — |
 | **T-044** | Set up AgentTwin for a new agent in one step: a world scaffold from the AOAS, a scenario template, the three callables | agenttwin | days | T-039 |
-| **T-031** | One compose file: Postgres, Keycloak, Temporal, Langfuse, the LiteLLM proxy | reference-agent | a day | — |
+| **T-031** | One compose file: Postgres, Keycloak, Temporal, Langfuse, the LiteLLM proxy, Chatwoot; Saleor added by T-017 | reference-agent | a day | — |
 
 ### Cycle 1 · Support agent · clothing · A6 · Open Stack: finish it, production grade
 
@@ -147,11 +149,10 @@ it sharpens T-022 before cycle 4), T-039.
 | | Item | Repo | Cost | Needs |
 |---|---|---|---|---|
 | **T-002** | Login and row ownership: **adopt Keycloak**, build the ownership rule | reference-agent | days | T-031 |
-| **T-001** | Nothing happens when the chat opens | reference-agent | a day | T-002 |
-| **T-026** | Adopt Chatwoot for the customer chat and the human side of escalation | reference-agent | days | T-002, T-031 |
+| **T-001** | Nothing happens when the chat opens. **Closed by T-026** rather than by writing UI | reference-agent | a day | T-026 |
 | **T-006** | A customer cannot find their own past conversations | reference-agent | days | T-002 |
 | **T-003** + **T-005** | Effects idempotent at the far end, and the key carried there | reference-agent, agenttwin | days | — |
-| **T-017** | A real store (Saleor), and a person in front of it | reference-agent | days | T-002, T-001, T-031 |
+| **T-017** | **Adopt Saleor** as the real store, and put a person in front of the agent | reference-agent | days | T-002, T-026, T-031 |
 | **T-020** | Trace context and run id cross the MCP hop (AHC-0006, AHC-0026) | reference-agent | small | — |
 | **T-024** | Two release gates with no test: AAC-0051, AAC-0096 | reference-agent | a day | — |
 | **T-025** | Verify the provider price table before any figure is published | reference-agent | an hour | — |
@@ -162,11 +163,14 @@ it sharpens T-022 before cycle 4), T-039.
 
 | | Item | Repo | Cost | Needs |
 |---|---|---|---|---|
-| **T-029** | **LiteLLM proxy** in front of every model call, via `provider_base_url` | reference-agent | a day | T-031 |
+| **T-026** | **Chatwoot** for the customer chat and the human side of escalation. Needs a port AHC does not have | reference-agent, AHC | days | T-002, T-031 |
+| **T-029** | **LiteLLM proxy** in front of every model call, via `provider_base_url`, with its budgets and rate limits | reference-agent | a day | T-031 |
 | **T-018** | The fingerprint cannot tell a gateway from a provider. **Decide before T-029 lands** | reference-agent, AHC schema | small | — |
 | **T-028** | **Temporal** for the approval and escalation waits | reference-agent | days | T-031 |
 | **T-030** | **Presidio** for PII in place of our patterns. The positions stay ours | reference-agent | a day | — |
 | **T-027** | **VCR.py** in place of `cassette/`, keeping the replay seam | reference-agent | a day | — |
+| **T-046** | **promptfoo** for prompt-level checks, beside AgentTwin | reference-agent | a day | — |
+| **T-047** | **OpenFeature** for release flags; choose Unleash or Flagsmith behind it | reference-agent | days | T-031 |
 | **T-032** | Make `PRODUCTION-STACK.md` and `PREFERRED-STACK.md` agree with the register. They contradict each other today | reference-agent | hours | — |
 | **T-016** | The adopt/decline audit. The register below is its output | reference-agent | ongoing | — |
 
@@ -208,11 +212,12 @@ it sharpens T-022 before cycle 4), T-039.
 |---|---|---|---|---|
 | **T-045** | AOAS, world, generation on LangGraph (proven in cycle 2), AgentTwin, the gates | new repo | weeks | cycle 2 |
 
-### Stacks, later
+### Cycle 7 · Support agent · Claude family: the stack changes, later
 
 | | Item | Repo | Cost | Needs |
 |---|---|---|---|---|
-| **T-043** | Scope the **Claude family** stack: what it covers beyond the Agent SDK, and who owns the loop | clean-ai-engineering | hours | cycle 3 |
+| **T-043** | Fill `stacks/claude-family.yaml`: **the Anthropic SDK end to end, our loop**; the rest inherited from the Open Stack. Then the cycle | `reference-agent-claude-family` | weeks | cycle 3 |
+| **T-004** | The Anthropic adapter at L2. Revived: it *is* this stack's model port | reference-agent | days | T-043 |
 
 ### Specs: kept robust between cycles
 
@@ -258,6 +263,8 @@ it sharpens T-022 before cycle 4), T-039.
 | **A new domain changes the AOAS and the world. A new stack changes a stack profile.** AHC and AAC change only when a cycle finds a gap | 2026-09-16 |
 | **One axis per cycle where possible**, so a failure can be attributed | 2026-09-16 |
 | **A stack is a base harness profile in `stacks/`**, and an agent's profile `extends` it. Four stacks: Open Stack, LangGraph, Claude Agent SDK, Claude family (later) | 2026-09-16 |
+| **Claude family is the Anthropic SDK end to end, with our loop.** Whatever the SDK does not supply is inherited from the Open Stack | 2026-09-16 |
+| **The adoption register has four verdicts: adopt, evaluate, leave, build.** Every concern has exactly one | 2026-09-16 |
 | **Each agent on each stack is its own repository**, citing scenarios by relative path. Never a `harness:` flag | 2026-09-16 |
 | **The Open Stack keeps its own loop as the delta.** Step budget, oscillation check, cost ceiling. Everything around the loop is adopted | 2026-09-16 |
 | **AgentTwin adopts the simulated user, graders and replay.** It builds only the world, the perturbations and the world-diff oracle | 2026-09-16 |
@@ -267,34 +274,95 @@ it sharpens T-022 before cycle 4), T-039.
 | **Rules stay in the project's own predicate language**, not CEL or OPA, because AgentTwin's oracle reads that vocabulary | 2026-09-06 |
 | **Spec first, per change** | G0 |
 
-### Open source: adopt, evaluate, decline
+### Open source: adopt, evaluate, leave, build
 
-Argued in T-016, T-018 and T-007, and in `reference-agent/docs/PRODUCTION-STACK.md`,
-whose rule applies here too: *nothing gets hand-built without a row.*
+**One register with four verdicts**, and every concern gets exactly one. It
+assembles what was already decided in four places: T-016's register;
+`reference-agent/docs/PRODUCTION-STACK.md` (every one of AHC's sixteen layers);
+`PREFERRED-STACK.md`; and `LearnAgenticHarnessFrameworks/08-what-you-build.md`
+(the eight things to build, and the list of what not to build). The rule is
+`PRODUCTION-STACK.md`'s: *nothing gets hand-built without a row under Build.*
 
-| | Verdict |
+#### Adopt
+
+| Concern | Layer | Adopt | In which stack | State |
+|---|---|---|---|---|
+| Model call, budgets, rate limits | L2, L8, L13 | **LiteLLM proxy** | Open Stack | T-029 |
+| Model call, end to end | L2 | **Anthropic SDK**: caching, token counting, Batch, context editing, memory tool, compaction, structured outputs | Claude family | T-004, T-043 |
+| Tool protocol | L3 | **MCP** | all | ✅ in use |
+| Control loop | L4 | **LangGraph** · **Claude Agent SDK** | LangGraph · Claude Agent SDK | T-036 · T-037 |
+| Checkpoints and interrupts | L5, L14 | **LangGraph's checkpointer and interrupts** | LangGraph | T-036 |
+| State | L5 | **Postgres** | Open Stack, Claude family | ✅ in use |
+| HTTP edge | L6 | **Starlette / FastAPI** | Open Stack | ✅ in use |
+| PII | L7 | **Presidio** | Open Stack | T-030 |
+| Record and replay | L9 | **VCR.py / pytest-recording** | Open Stack | T-027 |
+| Durable waits | L10, L14 | **Temporal** | Open Stack | T-028 |
+| Traces | L11 | **OpenTelemetry → Langfuse** | all | ✅ adopted 16 Sep |
+| Simulated user | L12 | **LangWatch Scenario** | AgentTwin | T-039 |
+| Prompt-level checks | L12 | **promptfoo** | all | T-046 |
+| Property-based tests | L12 | **Hypothesis** | all | ✅ adopted 14 Sep |
+| Reliability measure | L12 | **`pass^k`**, and τ-bench's `verify` actor strategy (the idea) | all | T-007 |
+| Customer chat, human handoff | L6, L14 | **Chatwoot** Agent Bot API | Open Stack | T-026 |
+| Release flags | L15 | **OpenFeature** | Open Stack | T-047 |
+| Login | L16 | **Keycloak** | Open Stack | T-002 |
+| A real store behind the tools | world | **Saleor** | Open Stack | T-017 |
+| Somewhere to run it all | deploy | **Docker Compose** | Open Stack | T-031 |
+
+#### Evaluate: an open choice, closed with a written reason
+
+| Choice | Between | Closed by |
+|---|---|---|
+| Graders | **DeepEval** or **Inspect** | T-040 |
+| Flag service behind OpenFeature | **Unleash** or **Flagsmith** | T-047 |
+| Policy engine | **OPA** or **Cedar**, against our own predicate language. `08` calls a policy language you invented the overbuilt case; the 6 September decision holds while rules are tables, and **re-opens the day a rule needs a condition** | the first conditional rule |
+| Model tier routing | LiteLLM's routing, or none | deferred: four orders of magnitude of budget headroom |
+
+#### Leave: declined, not needed yet, or not chosen
+
+| | Why |
 |---|---|
-| LiteLLM **SDK** | **not now** — 65 lines, not 636; `resilience/` is the fault-injection seam (F-029) |
-| LiteLLM **proxy** | **adopt**, as **T-029**, run from T-031's compose file, reached via `provider_base_url`. Decide T-018 first |
-| OTLP processor → Langfuse | ✅ **adopted 16 Sep**: `tel.export_to`, beside the in-memory exporter |
-| Chatwoot Agent Bot API | **adopt**, as **T-026**. Needs T-002; does **not** solve approvals |
-| Anthropic context editing + memory tool | **in the Claude family stack** (T-043). The Open Stack reaches models through the LiteLLM proxy |
-| VCR.py / pytest-recording | **adopt**, as **T-027**. Replaces `cassette/`, keeping the replay seam |
-| `pass^k`, and τ-bench's `verify` actor strategy | **adopt the idea** — T-007 |
-| Temporal | **adopt**, as **T-028**, for the approval and escalation waits. The chat turn stays in our loop |
-| LangGraph interrupts and checkpointer | **used in the LangGraph stack** (T-036), not in the Open Stack |
-| The loop | **keep in the Open Stack**, as the delta: step budget, oscillation check, cost ceiling. Adopted in the LangGraph and Claude Agent SDK stacks |
-| Guardrails AI / NeMo / Llama Guard | **decline** — none models *position* |
-| NLU for intent | **decline** — two opinions already; a third has no owner |
-| Model tier routing | **defer** — 4 orders of magnitude of budget headroom; seam is `LLMClient` |
-| The Compactor | **decline** — provenance laundering |
-| τ-bench's 165 tasks | **decline** — prose policy; read their retail doc instead |
-| Hypothesis | ✅ **adopted 14 Sep** |
-| Cosmic Ray | ✅ **used once to calibrate, not kept** |
-| Keycloak | **adopt**, as **T-002**, for login. The ownership rule is the delta |
-| Presidio | **adopt**, as **T-030**, for PII. The positions stay ours |
-| LangWatch Scenario | **adopt**, as **T-039**, for AgentTwin's simulated user |
-| DeepEval or Inspect | **adopt one**, as **T-040**, for graders. Which one is T-040's first decision |
+| LiteLLM **SDK** | 65 lines saved, not 636, and it would bypass `ResilientLLM`, the fault-injection seam (F-029) |
+| tenacity / backoff | the same reason as the LiteLLM SDK |
+| Guardrails AI / NeMo / Llama Guard | none models *position*; Presidio covers PII |
+| NLU for intent | two opinions about intent already; a third has no owner |
+| The Compactor | provenance laundering (AHC-0109) |
+| τ-bench's 165 tasks | prose policy; read their retail policy document instead |
+| Cosmic Ray | used once to calibrate, not kept |
+| Chainlit / assistant-ui | superseded by Chatwoot |
+| Langfuse prompt management, Humanloop, PromptLayer | prompts stay in Git, stamped into traces: `08`'s *prompt DSL* row |
+| Restate, DBOS, Inngest, Camunda / Zeebe | Temporal was chosen |
+| Phoenix, LangSmith, Helicone, Braintrust, Ragas | Langfuse for traces; T-040 for graders |
+| Zitadel, Authentik, Ory | Keycloak was chosen (T-002); any of them gives asymmetric signing and JWKS |
+| OpenRouter, Portkey | the LiteLLM proxy was chosen (T-029) |
+| betamax | VCR.py was chosen (T-027) |
+| Medusa, Vendure | Saleor was chosen (T-017); the agent reaches the store over MCP, so any would do |
+| Pydantic AI, Mastra, CrewAI as loop owners | the stacks are the Open Stack (our loop), LangGraph, the Claude Agent SDK and Claude family (our loop) |
+| OpenAI Agents SDK | the roster recommends it for agents 1 and 7; not a planned stack, so those agents bind to one that is |
+| Redis | nothing ephemeral that Postgres does not already hold |
+| Kong, APISIX, Envoy, Traefik at the edge | the LiteLLM proxy is the only gateway, and a gateway that retries on timeout manufactures duplicates (T-003) |
+| Helm, ArgoCD | when there is a cluster; the compose file first |
+| OpenFGA, SpiceDB, Casbin | until households, partners or delegation arrive; ownership is a field comparison (T-002) |
+| A vector database | no retrieval today. **pgvector first**, when a cycle reaches A3 |
+| A sandbox runtime | nothing executes an artifact today. **gVisor or Firecracker**, when a cycle reaches an A8 agent that runs what it writes |
+
+#### Build: the delta, and only this
+
+`08`'s eight items, plus what `PRODUCTION-STACK.md` names as *still yours* at each layer.
+
+| | What is ours | Why nobody supplies it | State |
+|---|---|---|---|
+| **B1** | The run contract: `RunId`, the typed `TurnResult`, terminations | only we know what one unit of work is | ✅ |
+| **B2** | Tool contracts: side-effect classes, the scoped surface, result bounding | our tools are our domain | ✅ |
+| **B3** | The context policy: fencing of untrusted content, what is trimmed | the fence is the injection defence | ✅ |
+| **B4** | Policy positions, claim grounding against the world, the **ownership rule** | only the world knows AB-10003 has shipped | ✅ positions · T-002 ownership |
+| **B5** | Scenarios, the golden set, AgentTwin's world, perturbations and world-diff oracle | the runners grade outputs; none owns our data | ✅ · T-039, T-040 adopt around it |
+| **B6** | The budget governor, and **the Open Stack's loop**: step budget, oscillation check, cost ceiling | the only position that sees a trajectory | ✅ kept, 16 Sep |
+| **B7** | What needs a human, and what a stale approval means | a workflow engine waits; it does not decide | ✅ · the wait moves to T-028 |
+| **B8** | Adapters to the world: the MCP tool server, identity threaded through | it is the estate | ✅ projected world · T-017 real store |
+| — | The span contract: *complete against what?* | every trace store accepts whatever it is sent | ✅ |
+| — | The run fingerprint: what a version of this agent is | a flag system flips a value; it does not know the baseline moved | ✅ · T-018 |
+| — | Cost per *successful* task | every tool measures per call | ✅ |
+| — | Stack profiles, the Generation Brief, the four gates as one command | the cycle's own machinery | T-033, T-034, T-035 |
 
 ---
 
@@ -400,8 +468,9 @@ than from a copy of the clothing world.
 somewhere to run. T-016 kept reaching the same conclusion: *"until there is
 somewhere to run a proxy"*. Repo: `reference-agent`.
 
-**What.** Postgres, Keycloak, Temporal, Langfuse and the LiteLLM proxy, started by
-one command, with the agent configured by environment variables to use them.
+**What.** Postgres, Keycloak, Temporal, Langfuse, the LiteLLM proxy and Chatwoot,
+started by one command, with the agent configured by environment variables to use
+them. Saleor joins with T-017, and the flag service with T-047.
 
 **Done when.** A fresh clone runs the suite against the composed stack, and
 `stacks/open-stack.yaml`'s `x_runs_from` points at the file.
@@ -637,6 +706,12 @@ The argument is in T-016's *three rows whose verdict is already decided*. In
 short: its Agent Bot API is this agent's escalation model already built, and it
 closes T-001 and the customer half of T-017 without writing UI. **It does not
 solve approvals**, and it needs a signed `customer_id` from T-002.
+
+**A spec gap it has already found.** AHC declares no port for a customer channel
+or a human handoff desk. The ports are `admission`, `approval`, `trigger` and the
+rest, and none is where Chatwoot goes, so `stacks/open-stack.yaml` records it under
+`x_channel` for now. Adding the port, in AHC and in the profile schema's linted
+port list, is part of this item: a step-7 finding before the cycle has even run.
 
 ### T-006 · A customer's own conversations cannot be found
 
@@ -1128,6 +1203,32 @@ test counts as realisations, and a scenario may replay through them. Moving to
 VCR must keep that seam, for the same reason `ResilientLLM` had to stay when
 LiteLLM was measured (F-029).
 
+### T-046 · Adopt promptfoo for prompt-level checks
+
+**Status** Not started. Decided 2026-09-16. **Cycle 1, Open Stack.** Repo: `reference-agent`.
+
+`PREFERRED-STACK.md` L12: *AgentTwin, plus promptfoo for prompt-level checks.* The
+two do different jobs. AgentTwin puts the agent in a world and diffs it, while
+promptfoo asserts on what one prompt produces, cheaply and on every change. AAC
+already ships a promptfoo adapter, so its results land in the coverage report
+with no new code.
+
+**Done when.** The system prompt and the reply-screen prompts have promptfoo
+cases, run in CI, reported through AAC's adapter.
+
+### T-047 · Adopt OpenFeature for release flags
+
+**Status** Not started. Decided 2026-09-16. **Cycle 1, Open Stack.** Needs T-031.
+
+`PRODUCTION-STACK.md` L15 names **OpenFeature** with **Unleash** or **Flagsmith**
+behind it; which of the two is this item's first decision (see *Evaluate*).
+
+**The delta that stays ours**, in that document's words: *what constitutes a
+version of this agent*, meaning prompt, model, rules and world together. A flag
+system flips a value and does not know the flip invalidated the baseline, so
+every flag read is stamped into the run fingerprint's record, and a flag that
+changes behaviour is covered by the fingerprint (T-018).
+
 ### T-032 · The two stack documents contradict each other and the register
 
 **Status** Not started. Repo: `reference-agent`.
@@ -1467,17 +1568,83 @@ Detail at step 1, from `LearnAgenticHarnessFrameworks/11-worked-examples.md` §3
 
 ---
 
-## Stacks, later
+## Cycle 7 · Support agent · Claude family (later)
 
-### T-043 · Scope the Claude family stack
+### T-043 · Cycle 7: the support agent on the Claude family stack
 
-**Status** Placeholder, later. Needs cycle 3. Repo: `clean-ai-engineering`.
+**Status** Later. Defined 2026-09-16. Needs cycle 3. Repo: `reference-agent-claude-family`, not yet created.
 
-`stacks/claude-family.yaml` reserves the slot and claims nothing. First decision:
-what it covers beyond the Agent SDK (the native Claude API features such as prompt
-caching, token counting, context editing and the memory tool; hosted Managed
-Agents; or both), and therefore who owns the loop: `framework` or `hosted`.
+**What the stack is**, in the user's words: *the Anthropic SDK, start to end,
+everything, with our loop.* So `harness.loop` is ours (`in-house`), exactly as in
+the Open Stack, and every port the Anthropic SDK can fill is filled by it:
+- the model call, with prompt caching, token counting and structured outputs;
+- context editing, server-side compaction and the memory tool, which move the
+  long-conversation problem above the harness;
+- the Batch API for offline evaluation runs;
+- tool use, over MCP.
 
+What the SDK does not supply (login, durable waits, traces, the store) the stack
+**inherits from the Open Stack** through `extends`.
+
+**Only the stack changes**, so it is a cycle like 2 and 3. T-004 holds the
+argument: the L2 and L4 decisions are independent, and conflating them is how a
+team adopts a whole harness to get prompt caching. **What to watch:** the Open
+Stack reaches models through the LiteLLM proxy, and this stack deliberately does
+not, because the proxy's OpenAI-shaped request has no field for `cache_control`.
+The fingerprint decision (T-018) has to hold across both.
+
+### T-004 · An Anthropic adapter at L2 — the loop stays ours
+
+**Status** **Revived 2026-09-16 as the Claude family stack** (T-043): the Anthropic SDK
+end to end, with our loop. Raised 2026-09-05; dropped and revived the same day,
+when *Claude family* was defined as exactly this item.
+
+**What this is not.** Not adopting the Claude Agent SDK, and not giving up the
+hand-written loop. Those are L4 decisions. This is L2: which client the adapter
+wraps. `anthropic` brings **no loop** — you call `client.messages.create()`
+inside whatever loop you already have, which is the ordinary case rather than a
+workaround.
+
+**Why it is one module.** The import contract already says *only `llm` may import
+a provider SDK*, enforced by import-linter on every run. So the blast radius of
+this change is `llm/__init__.py` and nothing else — the contract was written for
+precisely this.
+
+**Three open items it closes at once**, which is what makes it worth doing:
+
+*The context budget is measured in characters.* Left over from F-008 and recorded
+as "deferred and handled are different words." `client.messages.count_tokens()`
+makes it tokens, which is what every budget in the system actually meant.
+
+*Offline evals pay full price.* The Batch API is half, asynchronous, and an eval
+suite is exactly the latency-insensitive workload it exists for.
+
+*Prompt caching is unreachable.* R-004 noted the stable-prefix ordering is
+**already in place**, so `cache_control` on the system block would work on the
+first attempt. An OpenAI-shaped request has no field to carry it, so this is not
+a matter of effort — the shim structurally cannot.
+
+**And two things it would make newly possible**, both of which land on layers we
+already own:
+
+*Mid-conversation system messages.* An operator instruction appended to
+`messages` that does not invalidate the cached prefix, and is the
+injection-safe operator channel. That is L7's `PRE_MODEL` position — one of the
+three declared and empty ones (R-008).
+
+*Server-side compaction and context editing.* The long-conversation problem
+answered above the harness rather than inside it, where `context` currently
+trims by hand.
+
+**What it does not change.** The loop, the router, the tool boundary, the policy
+positions, the oracles, the world. All of L4 stays exactly as written, which is
+the point: **the L2 and L4 decisions are independent**, and conflating them is
+how a team adopts an entire harness in order to obtain prompt caching.
+
+**Cost note.** This repository's standing constraint is free hosted open-weight
+providers. An Anthropic adapter would sit *alongside* the Groq one rather than
+replacing it — `LLMClient` is already a protocol with three implementations, so a
+fourth costs nothing and the resolution seam decides which runs.
 ---
 
 ## Specs: kept robust between cycles
@@ -1706,7 +1873,7 @@ Deliberately after G2; each depends on something the goals will teach.
 
 ## Dropped 2026-09-16
 
-The blind regeneration experiment, and the items that existed only to make its result readable. Generating agents from the specs was kept: it is step 4 of every cycle. T-004 went with the decision to put a LiteLLM proxy in front of the model; Anthropic's native features belong to the Claude family stack (T-043).
+The blind regeneration experiment, and the items that existed only to make its result readable. Generating agents from the specs was kept: it is step 4 of every cycle. T-004 was dropped here and revived the same day as the Claude family stack.
 
 ### G1 · Regenerate the support agent into a separate folder, from the specs alone
 
@@ -1916,57 +2083,6 @@ recognises the shape from public patterns, gives a false positive. Run it on the
 specs alone, in a clean context, and treat a suspiciously exact answer as
 evidence of contamination rather than of sufficiency — the same caution T-008
 carries about the AOAS citing this repo among its sources.
-
-### T-004 · An Anthropic adapter at L2 — the loop stays ours
-
-**Status** Not started. Raised 2026-09-05.
-
-**What this is not.** Not adopting the Claude Agent SDK, and not giving up the
-hand-written loop. Those are L4 decisions. This is L2: which client the adapter
-wraps. `anthropic` brings **no loop** — you call `client.messages.create()`
-inside whatever loop you already have, which is the ordinary case rather than a
-workaround.
-
-**Why it is one module.** The import contract already says *only `llm` may import
-a provider SDK*, enforced by import-linter on every run. So the blast radius of
-this change is `llm/__init__.py` and nothing else — the contract was written for
-precisely this.
-
-**Three open items it closes at once**, which is what makes it worth doing:
-
-*The context budget is measured in characters.* Left over from F-008 and recorded
-as "deferred and handled are different words." `client.messages.count_tokens()`
-makes it tokens, which is what every budget in the system actually meant.
-
-*Offline evals pay full price.* The Batch API is half, asynchronous, and an eval
-suite is exactly the latency-insensitive workload it exists for.
-
-*Prompt caching is unreachable.* R-004 noted the stable-prefix ordering is
-**already in place**, so `cache_control` on the system block would work on the
-first attempt. An OpenAI-shaped request has no field to carry it, so this is not
-a matter of effort — the shim structurally cannot.
-
-**And two things it would make newly possible**, both of which land on layers we
-already own:
-
-*Mid-conversation system messages.* An operator instruction appended to
-`messages` that does not invalidate the cached prefix, and is the
-injection-safe operator channel. That is L7's `PRE_MODEL` position — one of the
-three declared and empty ones (R-008).
-
-*Server-side compaction and context editing.* The long-conversation problem
-answered above the harness rather than inside it, where `context` currently
-trims by hand.
-
-**What it does not change.** The loop, the router, the tool boundary, the policy
-positions, the oracles, the world. All of L4 stays exactly as written, which is
-the point: **the L2 and L4 decisions are independent**, and conflating them is
-how a team adopts an entire harness in order to obtain prompt caching.
-
-**Cost note.** This repository's standing constraint is free hosted open-weight
-providers. An Anthropic adapter would sit *alongside* the Groq one rather than
-replacing it — `LLMClient` is already a protocol with three implementations, so a
-fourth costs nothing and the resolution seam decides which runs.
 
 ---
 

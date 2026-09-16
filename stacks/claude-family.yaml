@@ -1,24 +1,39 @@
-# Claude family: placeholder for later. Scoped by T-043.
+# Claude family: the Anthropic SDK end to end, with our loop. Later: cycle 7, T-043.
 #
-# A slot reserved for binding to Anthropic's own family beyond the Agent SDK.
-# What it covers (the native Claude API features, hosted Managed Agents, or both)
-# is T-043's first decision, so nothing is claimed here yet, not even who owns
-# the loop. See README.md.
+# Defined 2026-09-16: "the Anthropic SDK, start to end, everything; loop ours".
+# Every port the SDK can fill is filled by it. Everything it does not supply is
+# inherited from the Open Stack through `extends`. Ports are named here; their
+# adapters are chosen in T-043 and T-004. See README.md.
 apiVersion: harness-profile/v1
+
+extends: open-stack.yaml
 
 subject:
   name: claude-family
-  description: Anthropic's first-party family, beyond the Agent SDK. Placeholder for later.
+  description: >-
+    The Anthropic SDK for every concern it covers: the model call with prompt
+    caching, token counting and structured outputs; context editing, compaction
+    and the memory tool; the Batch API for offline evaluation; tool use over MCP.
+    The control loop stays ours, as in the Open Stack.
   archetypes: [A6]
 
 catalog:
   ahc: "0.3.0"
 
+harness:
+  loop: { owner: in-house, adapter: bounded-react-loop, x_why: "loop ours, by definition of this stack" }
+
 decisions: {}
 thresholds: {}
 
-bindings: {}
+bindings:
+  model:        { approach: platform, adapter: anthropic-sdk, x_features: [prompt-caching, count-tokens, structured-outputs, context-editing, compaction, memory-tool], x_item: T-004 }
+  tool_runtime: { approach: platform, adapter: anthropic-tool-use-over-mcp, x_item: T-043 }
+  eval_task:    { approach: platform, adapter: anthropic-batch-api, x_note: "offline runs at half price; AgentTwin still drives the scenarios", x_item: T-043 }
+  cost_ledger:  { approach: in-house, adapter: per-task-meter, x_note: "priced from the API's own usage fields" }
+  # identity, workflow, approval, telemetry, state, recorder, config, secrets, trigger: inherited from open-stack.yaml
 
 accepted_gaps: []
 
-x_status: placeholder, later
+x_status: later
+x_repository: reference-agent-claude-family (not yet created)

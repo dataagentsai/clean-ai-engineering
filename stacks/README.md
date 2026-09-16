@@ -40,7 +40,7 @@ repository.
 | [`open-stack.yaml`](open-stack.yaml) | **our loop**: the kept delta | the support agent runs on it; the adopted products are recorded as targets | T-028 – T-031 |
 | [`langgraph.yaml`](langgraph.yaml) | LangGraph (`framework`) | placeholder | T-036 |
 | [`claude-agent-sdk.yaml`](claude-agent-sdk.yaml) | Claude Agent SDK (`framework`) | placeholder | T-037 |
-| [`claude-family.yaml`](claude-family.yaml) | to be decided | placeholder, **later** | T-043 |
+| [`claude-family.yaml`](claude-family.yaml) | **our loop**; the Anthropic SDK end to end, the rest inherited from the Open Stack | **later**: cycle 7 | T-043, T-004 |
 
 A placeholder names the stack and who owns the loop, and nothing else. Its ports
 say `undecided` until the item that owns the binding chooses them, the same rule

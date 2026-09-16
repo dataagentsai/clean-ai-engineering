@@ -33,12 +33,17 @@ bindings:
   telemetry:    { approach: open-source, adapter: otel-to-langfuse,         x_status: current, x_note: "exporter adopted 2026-09-16" }
   policy:       { approach: in-house,    adapter: positioned-rule-lists,    x_status: current, x_why: "no guardrail library models position; PII moves to Presidio (T-030)" }
   recorder:     { approach: open-source, adapter: vcrpy,                    x_status: target,  x_item: T-027, x_current: json-cassettes }
-  eval_task:    { approach: open-source, adapter: agenttwin,                x_status: current, x_note: "simulated user and graders adopted in T-039, T-040" }
+  eval_task:    { approach: open-source, adapter: agenttwin,                x_status: current, x_note: "simulated user and graders adopted in T-039, T-040; promptfoo for prompt-level checks in T-046" }
   cost_ledger:  { approach: in-house,    adapter: per-task-meter,           x_status: current, x_why: "cost per successful task needs to know what finished means" }
-  config:       { approach: open-source, adapter: typed-settings,           x_status: current }
+  config:       { approach: open-source, adapter: typed-settings,           x_status: current, x_target: openfeature, x_item: T-047 }
   secrets:      { approach: in-house,    adapter: environment-settings,     x_status: current }
   trigger:      { approach: in-house,    adapter: delivery-log,             x_status: current }
 
 accepted_gaps: []
+
+# Adopted, with no AHC port to bind them to yet. The missing channel port is a
+# catalog gap recorded in T-026; these move under `bindings:` when it exists.
+x_channel: { approach: open-source, adapter: chatwoot-agent-bot, x_status: target, x_item: T-026, x_covers: [customer chat, human handoff for escalation] }
+x_store:   { approach: open-source, adapter: saleor, x_status: target, x_item: T-017, x_note: "behind the MCP tool server; the world's resolution becomes real" }
 
 x_runs_from: compose file, T-031
