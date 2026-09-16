@@ -119,15 +119,16 @@ work that is *missing*, with nothing to point at, which is why it is written dow
 
 ✅ **T-018** done 16 Sep: model plus a declared provider, checked at startup.
 
+✅ **T-002** done 16 Sep: verify-only sessions from the Keycloak realm, and an order system that checks the token and the approval itself.
+
 1. **T-029**: built 16 Sep; **one check left**, a successful call through the proxy. It needs a Groq key in `GROQ_API_KEY`, which this machine does not have.
-2. **T-002**: Keycloak for login, with the ownership rule as our delta.
-3. **T-026**: Chatwoot for the customer chat and the human side of escalation. It closes T-001 without writing UI.
-4. **T-028**: Temporal for the approval and escalation waits.
-5. **T-017**: Saleor as the real store, and a person in front of the agent.
-6. **T-035**: the four gates as one command. Every cycle's step 6.
-7. **T-034** and **T-044**: the Generation Brief and a one-step AgentTwin setup. Every cycle's steps 4 and 5.
-8. **T-048**: ports as a standard, tiers 1 and 2 and the three typed ports, with its criteria written before cycle 2 starts.
-9. **T-033**: fill the LangGraph stack profile, then **cycle 2 (T-036)**.
+2. **T-026**: Chatwoot for the customer chat and the human side of escalation. It closes T-001 without writing UI.
+3. **T-028**: Temporal for the approval and escalation waits.
+4. **T-017**: Saleor as the real store, and a person in front of the agent.
+5. **T-035**: the four gates as one command. Every cycle's step 6.
+6. **T-034** and **T-044**: the Generation Brief and a one-step AgentTwin setup. Every cycle's steps 4 and 5.
+7. **T-048**: ports as a standard, tiers 1 and 2 and the three typed ports, with its criteria written before cycle 2 starts.
+8. **T-033**: fill the LangGraph stack profile, then **cycle 2 (T-036)**.
 
 **Independent, any time:** T-020, T-024, T-025, T-030, T-027, T-046, T-013 (the
 Spark AOAS, cheap, and it sharpens T-022 before cycle 4), T-039.
@@ -152,11 +153,10 @@ Spark AOAS, cheap, and it sharpens T-022 before cycle 4), T-039.
 
 | | Item | Repo | Cost | Needs |
 |---|---|---|---|---|
-| **T-002** | Login and row ownership: **adopt Keycloak**, build the ownership rule | reference-agent | days | — |
 | **T-001** | Nothing happens when the chat opens. **Closed by T-026** rather than by writing UI | reference-agent | a day | T-026 |
-| **T-006** | A customer cannot find their own past conversations | reference-agent | days | T-002 |
+| **T-006** | A customer cannot find their own past conversations | reference-agent | days | — |
 | **T-003** + **T-005** | Effects idempotent at the far end, and the key carried there | reference-agent, agenttwin | days | — |
-| **T-017** | **Adopt Saleor** as the real store, and put a person in front of the agent | reference-agent | days | T-002, T-026 |
+| **T-017** | **Adopt Saleor** as the real store, and put a person in front of the agent | reference-agent | days | T-026 |
 | **T-020** | Trace context and run id cross the MCP hop (AHC-0006, AHC-0026) | reference-agent | small | — |
 | **T-024** | Two release gates with no test: AAC-0051, AAC-0096 | reference-agent | a day | — |
 | **T-025** | Verify the provider price table before any figure is published | reference-agent | an hour | — |
@@ -168,7 +168,7 @@ Spark AOAS, cheap, and it sharpens T-022 before cycle 4), T-039.
 
 | | Item | Repo | Cost | Needs |
 |---|---|---|---|---|
-| **T-026** | **Chatwoot** for the customer chat and the human side of escalation. Needs a port AHC does not have | reference-agent, AHC | days | T-002 |
+| **T-026** | **Chatwoot** for the customer chat and the human side of escalation. Needs a port AHC does not have | reference-agent, AHC | days | — |
 | **T-029** | **LiteLLM proxy** in front of every model call. **Built 16 Sep**; one successful call through it is left | reference-agent | an hour | a Groq key |
 | **T-028** | **Temporal** for the approval and escalation waits | reference-agent | days | — |
 | **T-030** | **Presidio** for PII in place of our patterns. The positions stay ours | reference-agent | a day | — |
@@ -308,7 +308,7 @@ assembles what was already decided in four places: T-016's register;
 | Reliability measure | L12 | **`pass^k`**, and τ-bench's `verify` actor strategy (the idea) | all | T-007 |
 | Customer chat, human handoff | L6, L14 | **Chatwoot** Agent Bot API | Open Stack | T-026 |
 | Release flags | L15 | **OpenFeature** | Open Stack | T-047 |
-| Login | L16 | **Keycloak** | Open Stack | T-002 |
+| Login | L16 | **Keycloak** | Open Stack | ✅ adopted 16 Sep (T-002) |
 | A real store behind the tools | world | **Saleor** | Open Stack | T-017 |
 | Somewhere to run it all | deploy | **Docker Compose**, one file with profiles | Open Stack | ✅ adopted 16 Sep (T-031) |
 
@@ -358,7 +358,7 @@ assembles what was already decided in four places: T-016's register;
 | **B1** | The run contract: `RunId`, the typed `TurnResult`, terminations | only we know what one unit of work is | ✅ |
 | **B2** | Tool contracts: side-effect classes, the scoped surface, result bounding | our tools are our domain | ✅ |
 | **B3** | The context policy: fencing of untrusted content, what is trimmed | the fence is the injection defence | ✅ |
-| **B4** | Policy positions, claim grounding against the world, the **ownership rule** | only the world knows AB-10003 has shipped | ✅ positions · T-002 ownership |
+| **B4** | Policy positions, claim grounding against the world, the **ownership rule** | only the world knows AB-10003 has shipped | ✅ positions · ✅ ownership, checked at the far end too (T-002) |
 | **B5** | Scenarios, the golden set, AgentTwin's world, perturbations and world-diff oracle | the runners grade outputs; none owns our data | ✅ · T-039, T-040 adopt around it |
 | **B6** | The budget governor, and **the Open Stack's loop**: step budget, oscillation check, cost ceiling | the only position that sees a trajectory | ✅ kept, 16 Sep |
 | **B7** | What needs a human, and what a stale approval means | a workflow engine waits; it does not decide | ✅ · the wait moves to T-028 |
@@ -617,98 +617,6 @@ replayed as a test case without a translation step.
 finding closed or accepted, the Assurance Map showing no untagged test, and a
 complete harness profile. Then it is frozen.
 
-### T-002 · Nothing issues or maintains logins, and the permission model is the wrong shape
-
-**Status** In progress 2026-09-16. **F-016's ownership rule is built** (design
-steps 1 and 2, `tests/test_ownership.py`). **Decided 2026-09-16 (the user):** a
-dedicated `customer_id` claim; tests sign with a local RS256 issuer and HS256
-leaves `src`; the far end verifies by **token exchange** (RFC 8693) instead of
-trusting an asserted `customer_id`; no login page until T-026. The four decisions
-are at the top of `docs/DESIGN-auth.md`.
-
-**Progress:** ✅ A (`e77a5fc`) and ✅ B (`reference-agent` realm commit) done 16 Sep;
-C is next. The Open Stack's `identity` binding is now `current`.
-
-**The work, in three commits:** (A) RS256 and JWKS only, `customer_id`, `aud` and
-`jti` claims, the local test issuer, the HTTP edge and the reviewer desk; (B) the
-Keycloak realm as an import file: roles that become `scp`, the admin-only
-`customer_id` attribute, test users, clients, tested against compose; (C) token
-exchange, the exchanged token sent to the order system, and the check a real
-store runs. **Open in C:** how the far end verifies the refund elevation, which the
-agent grants itself today.
-
-→ **Designed in full: [`docs/DESIGN-auth.md`](../reference-agent/docs/DESIGN-auth.md).** The summary
-below is a pointer; the design is the document.
-
-**What exists today.** `ident.mint()` signs a token in a script. There is no user
-store, no login, no password, no expiry policy anyone administers, no way to
-revoke, and no way to grant one customer something another does not have —
-`CUSTOMER_SCOPES` is a frozenset constant in the source.
-
-**Three separate problems, and they need different answers.**
-
-#### 1 · The signature is symmetric — and that is the wrong shape for a token
-
-`ALGORITHM = "HS256"`. One shared secret both signs and verifies, so **anything
-able to check a token is also able to forge one**. The agent process holds it, so
-a read of that process's memory or environment yields the ability to mint a
-session for any customer.
-
-Production wants asymmetric: the issuer signs with a private key it never shares,
-and the agent verifies with a public key it fetches. A compromised agent can then
-still read tokens and cannot write them. This is a small change — `verify()`
-swaps a shared secret for a JWKS lookup — and it arrives free with any real
-identity provider.
-
-#### 2 · Nothing issues the token
-
-There is no login. Whichever provider is chosen replaces `mint()` entirely, and
-the agent keeps only `verify()`.
-
-#### 3 · The permission model cannot express the rule that actually matters
-
-This is the important one, and F-016 is its consequence.
-
-`orders:write` says *this caller may write orders*. The rule the business needs is
-*this caller may write **their own** orders*. The first is a permission about a
-**verb**; the second is about a **row**, and a scope list has no way to say it.
-
-Fixing that is **not** a job for an authorization service. The tool boundary
-already holds both the caller's identity and the row it is about to act on, so
-ownership is a comparison. The world file even declares the relationship —
-`customer_id: {ref: customer.id}` — and nothing reads it at call time, exactly as
-the ontology went unread until R-012 made the generator consume it.
-
-A policy engine earns its place when the rules stop being *"it is yours"*:
-household accounts, a partner acting for a customer, an agent acting for a
-partner. Reaching for one now would add a network hop to answer a field
-comparison.
-
-**Open source, and what each is for.**
-
-*Issuing tokens and running a login* — **Keycloak** (the incumbent; heavyweight,
-Java, its own database, an admin UI that already does everything), **Zitadel**
-(Go, multi-tenant by design, modern), **Authentik** (Python, friendlier admin),
-**Ory Hydra** with **Kratos** (API-first, no UI, most composable and the most
-assembly required). Any of them gives asymmetric signing and JWKS, so problem 1
-resolves as a side effect of solving problem 2.
-
-*Fine-grained authorization, later* — **OpenFGA** or **SpiceDB** for
-relationship rules in the Zanzibar style, **Cedar** or **OPA** for policy as
-code, **Casbin** if it should stay in-process. None of these is needed to fix
-F-016.
-
-**Where it lands.** `identity` (verify against JWKS rather than a secret), the
-tool boundary (the ownership check), and the world file, which may want to say
-*which* field carries ownership rather than having the agent assume `customer_id`.
-
-**AgentTwin needs it too, and this is why the defect survived.** Every test,
-scenario and golden case uses one customer. `C-1042` is in the fixtures, the
-world seeds one customer, and the actor is always that customer. **A defect that
-takes two customers to see cannot be seen by a suite that has never had two.**
-A second seeded customer and one hostile actor would have caught F-016 on the day
-the tool boundary was written.
-
 ### T-001 · Nothing happens when the chat opens
 
 **Status** Not started. Raised 2026-09-05.
@@ -769,7 +677,7 @@ have the same gap.
 
 ### T-026 · Adopt Chatwoot for the customer chat and the human side of escalation
 
-**Status** Not started. Decided in T-016's register. **Cycle 1.** Needs T-002.
+**Status** Not started. Decided in T-016's register. **Cycle 1.** T-002 is done: the signed `customer_id` exists, and the customer's login lands here, since T-002 built no login page. How a Chatwoot contact becomes a Keycloak session is this item's first decision.
 
 The argument is in T-016's *three rows whose verdict is already decided*. In
 short: its Agent Bot API is this agent's escalation model already built, and it
@@ -784,7 +692,7 @@ port list, is part of this item: a step-7 finding before the cycle has even run.
 
 ### T-006 · A customer's own conversations cannot be found
 
-**Status** Not started. Raised 2026-09-15. **Needs T-002 first.**
+**Status** Not started. Raised 2026-09-15. T-002 is done: a session now names its login (`sub`) and customer, which is what finding a customer's conversations keys on.
 
 **What is missing.** A returning customer cannot be given back anything. Close
 the browser and `conversationId` — a `let` in the page, not `localStorage` — is
@@ -1014,7 +922,7 @@ recognises.
 
 ### T-017 · A real store, and a human in front of it
 
-**Status** Not started. Raised 2026-09-16. **Depends on P1 (T-001, T-002).**
+**Status** Not started. Raised 2026-09-16. **Depends on P1 (T-001; T-002 done).** The real store's tool server runs `order_system.authoriser`, and the agent's composition root wires `identity.TokenExchange` with the `support-agent` client; the simulated shop does neither.
 
 **Decided 2026-09-16 (the user): adopt Saleor, and this is the grounding item.**
 The user's requirement is a real e-commerce app behind the agent so that it is
@@ -1225,6 +1133,8 @@ quietly again.
 
 **Status** Not started. Decided 2026-09-16 under *adopt, build only the delta*.
 **Cycle 1, Open Stack.** Repo: `reference-agent`. Temporal runs from `compose.yaml`, profile `durable`.
+
+**Carried from T-002.** The order system now loads the approval named in a refund call and checks it (`src/order_system`). That check is only as independent as the approvals store, and today the agent writes that store and grants small refunds by its own policy. Moving approvals here must also take them out of the agent's write access, and the far end's lookup must follow them.
 
 **What.** The approval and escalation waits become Temporal workflows: raise,
 wait for a signal, act, expire. T-003 lists what this subsumes: `trigger`
@@ -2945,6 +2855,110 @@ survives a later move to Databricks or Azure because that is then one gateway
 replacing another rather than a library being un-picked. If a gateway is coming,
 it is the better shape than T-016's LiteLLM-SDK row, and the two should be
 decided together rather than in sequence.
+
+### T-002 · Nothing issues or maintains logins, and the permission model is the wrong shape
+
+**Status** **Done 2026-09-16.** `reference-agent` `e77a5fc` (A), `a639e8a` (B),
+`3b93f2d` (C); `agenttwin` `8e210e2` (the `authorise` hook). Decided with the user:
+a dedicated `customer_id` claim; a local RS256 issuer for tests; token exchange so
+the far end verifies; the far end checks the approval record for a refund; no
+login page until T-026.
+
+**What landed.**
+
+- **(A) The agent verifies and cannot sign.** RS256 against a JWKS only, with the
+  algorithm allow-listed before any key is read; `aud` and `jti` required;
+  `customer_id` its own claim, never `sub`. `verify` returns a `Principal`; the
+  chat edge refuses one with no customer (403), and the desk records the
+  reviewer's login. Tests sign with `evals/issuer.py`.
+- **(B) The realm** (`deploy/keycloak`): composite roles become `scp`,
+  `customer_id` is admin-only, three users, three clients, tested live. **Found:**
+  the first import issued tokens with no `sub`, because a realm that lists its own
+  client scopes gets no default `basic` scope.
+- **(C) The far end decides.** The agent exchanges the session for an
+  `order-system` token and sends it, and the approval id on a refund.
+  `src/order_system` verifies the token, ignores the asserted customer, and lets a
+  refund land only on a granted, unexpired approval for this customer, operation,
+  idempotency key and argument values, approved by someone else. Nine near misses
+  refused, checked against the world's effects; a mutation that trusts the
+  asserted customer is caught.
+
+**Carried forward, not closed.** The approvals store is the agent's own, so the
+far end's approval check is as independent as that store (**T-028**). The real
+store wires the check and the exchange (**T-017**). The customer's login arrives
+with the channel (**T-026**).
+
+→ **Designed in full: [`docs/DESIGN-auth.md`](../reference-agent/docs/DESIGN-auth.md).** The summary
+below is a pointer; the design is the document.
+
+**What exists today.** `ident.mint()` signs a token in a script. There is no user
+store, no login, no password, no expiry policy anyone administers, no way to
+revoke, and no way to grant one customer something another does not have —
+`CUSTOMER_SCOPES` is a frozenset constant in the source.
+
+**Three separate problems, and they need different answers.**
+
+#### 1 · The signature is symmetric — and that is the wrong shape for a token
+
+`ALGORITHM = "HS256"`. One shared secret both signs and verifies, so **anything
+able to check a token is also able to forge one**. The agent process holds it, so
+a read of that process's memory or environment yields the ability to mint a
+session for any customer.
+
+Production wants asymmetric: the issuer signs with a private key it never shares,
+and the agent verifies with a public key it fetches. A compromised agent can then
+still read tokens and cannot write them. This is a small change — `verify()`
+swaps a shared secret for a JWKS lookup — and it arrives free with any real
+identity provider.
+
+#### 2 · Nothing issues the token
+
+There is no login. Whichever provider is chosen replaces `mint()` entirely, and
+the agent keeps only `verify()`.
+
+#### 3 · The permission model cannot express the rule that actually matters
+
+This is the important one, and F-016 is its consequence.
+
+`orders:write` says *this caller may write orders*. The rule the business needs is
+*this caller may write **their own** orders*. The first is a permission about a
+**verb**; the second is about a **row**, and a scope list has no way to say it.
+
+Fixing that is **not** a job for an authorization service. The tool boundary
+already holds both the caller's identity and the row it is about to act on, so
+ownership is a comparison. The world file even declares the relationship —
+`customer_id: {ref: customer.id}` — and nothing reads it at call time, exactly as
+the ontology went unread until R-012 made the generator consume it.
+
+A policy engine earns its place when the rules stop being *"it is yours"*:
+household accounts, a partner acting for a customer, an agent acting for a
+partner. Reaching for one now would add a network hop to answer a field
+comparison.
+
+**Open source, and what each is for.**
+
+*Issuing tokens and running a login* — **Keycloak** (the incumbent; heavyweight,
+Java, its own database, an admin UI that already does everything), **Zitadel**
+(Go, multi-tenant by design, modern), **Authentik** (Python, friendlier admin),
+**Ory Hydra** with **Kratos** (API-first, no UI, most composable and the most
+assembly required). Any of them gives asymmetric signing and JWKS, so problem 1
+resolves as a side effect of solving problem 2.
+
+*Fine-grained authorization, later* — **OpenFGA** or **SpiceDB** for
+relationship rules in the Zanzibar style, **Cedar** or **OPA** for policy as
+code, **Casbin** if it should stay in-process. None of these is needed to fix
+F-016.
+
+**Where it lands.** `identity` (verify against JWKS rather than a secret), the
+tool boundary (the ownership check), and the world file, which may want to say
+*which* field carries ownership rather than having the agent assume `customer_id`.
+
+**AgentTwin needs it too, and this is why the defect survived.** Every test,
+scenario and golden case uses one customer. `C-1042` is in the fixtures, the
+world seeds one customer, and the actor is always that customer. **A defect that
+takes two customers to see cannot be seen by a suite that has never had two.**
+A second seeded customer and one hostile actor would have caught F-016 on the day
+the tool boundary was written.
 
 ### T-009 · Seven capabilities are believed met and named by no test
 
