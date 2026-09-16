@@ -11,12 +11,26 @@ a family of six becomes a folder of thirty.
 |---|---|
 | Schema | ✅ [aoas.schema.json](aoas.schema.json) |
 | Validator | ✅ [tools/validate-aoas.js](../tools/validate-aoas.js) — 23 rules, one table-driven case each at least (`npm test`) |
-| Two worked examples | 1 of 2 |
+| Two worked examples | ✅ 2 of 2 |
 
 **Worked example 1:** the reference support agent —
 [examples/support-agent.aoas.yaml](examples/support-agent.aoas.yaml), with
 [the record of extracting it](examples/support-agent.extraction.md). Read the
 record first; the findings are the output.
+
+**Worked example 2:** a hotel's guest support agent —
+[examples/support-agent-hotel.aoas.yaml](examples/support-agent-hotel.aoas.yaml),
+with [its extraction record](examples/support-agent-hotel.extraction.md). A
+different domain, the same shape, and written **from the format rather than from
+an implementation** — the first example lists two of the reference agent's own
+paths under `sources`, and this one lists none. Nine of thirteen sections carried
+unchanged; four things resisted, and each loses something machine-readable to a
+workaround.
+
+Promotion is now a decision rather than a condition. The third example worth
+having is a *different shape* — an agent with no writes, no turns and no
+approvals — because both existing examples are A6 plus A5 and the format has
+never been asked to degrade gracefully.
 
 ---
 

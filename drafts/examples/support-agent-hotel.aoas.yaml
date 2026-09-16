@@ -1,0 +1,403 @@
+# Worked example 2 — a hotel's guest support agent.
+#
+# Written to test the format rather than to ship an agent: the reference example
+# is a clothing retailer, the electronics one is the same shape with different
+# numbers, and neither asks whether AOAS describes a domain it was not extracted
+# from. This one is a different domain with the same *shape* — a signed-in
+# customer, a row they own, a window that closes, an irreversible money movement
+# behind a gate. What it is not is a different shape; that is the Spark cost
+# analyst, and it is the harder test.
+#
+# The findings are in `support-agent-hotel.extraction.md`. Read that first. Four
+# places the format resisted are marked `# FRICTION` below and each is written
+# up there; nothing has been quietly reshaped to fit.
+
+apiVersion: aoas/v0
+
+agent:
+  id: support-agent-hotel
+  version: 0.1.0
+  currency: INR
+
+sources:
+  # Deliberately no implementation among them. The clothing example lists two of
+  # this repository's own paths under `sources`, which makes "regenerate from
+  # the spec and compare" ambiguous. Nothing here was read off code, because no
+  # code exists — which is the one property that makes this example useful as a
+  # control.
+  - drafts/AOAS.md
+  - examples/support-agent.aoas.yaml   # the format, not the domain
+
+purpose:
+  serves: >
+    A signed-in guest of one hotel group, about reservations they hold.
+  does:
+    - reservation status
+    - refund status
+    - cancelling a reservation
+    - changing the dates of a stay
+    - refund requests
+    - handing the conversation to a person
+  refuses:
+    - id: R-RATE
+      what: negotiating the rate, or offering any discount or upgrade not in a published promotion
+      concern: safety
+      facet: operational constraint
+    - id: R-OTHER-GUEST
+      what: anything about a reservation the signed-in guest does not hold
+      concern: security
+      facet: confidentiality
+    - id: R-ACCOUNT
+      what: account deletion, and changes to a payment method
+      concern: safety
+      facet: operational constraint
+    - id: R-AVAILABILITY
+      what: stating that a room, date or rate is available when the reservation system has not confirmed it
+      concern: functional-suitability
+      facet: functional correctness
+    - id: R-ADVICE
+      what: recommendations about the property, area or travel presented as authoritative
+      concern: functional-suitability
+      facet: functional appropriateness
+    - id: R-FRAUD
+      what: adjudicating whether anything is fraud
+      concern: safety
+      facet: risk identification
+  deferred:
+    - {intent: late_checkout_request}
+    - {intent: room_preference}
+    - {operation: add_guest}
+    - {operation: split_payment}
+    - {operation: group_booking}
+
+# ---------------------------------------------------------------------------
+# 2 · Entities and state
+# ---------------------------------------------------------------------------
+entities:
+  guest:
+    key: id
+    fields:
+      id: {type: id}
+      email: {type: email, pii: true}
+      phone: {type: phone, pii: true}
+
+  reservation:
+    key: id
+    fields:
+      id: {type: id}
+      guest_id: {type: id, ref: guest.id}
+      property_id: {type: id}
+      # The front desk and the channel manager write this while a conversation
+      # is open — a guest may be checked in at the desk mid-chat, and an
+      # overbooking may move them. Same argument as the clothing example's
+      # order.status, and the same thirty seconds: long enough to survive one
+      # exchange, short enough that a cancellation is never attempted on a
+      # belief formed before the desk acted.
+      status: {type: enum, of: reservation_status, fresh_for: 30s}
+      total: {type: money}              # the refund gate compares against this, never a stated number
+      room_type: {type: text}
+      nights: {type: int}
+      # FRICTION 1 — a countdown, declared as though it were a count-up.
+      # `advances: days` is the only value the schema allows and its description
+      # is "a counter that runs with world time". This field runs with world
+      # time in the other direction: it *decreases* as the stay approaches, and
+      # the window closes when it reaches the threshold from above. Declared
+      # this way because the format has no other way to say it, and the
+      # difference is written up rather than papered over.
+      days_until_arrival:
+        type: int
+        derived: whole days from now until the first night
+        advances: days
+        advances_when: {field: status, not_equals: [checked_in, checked_out, no_show]}
+      non_refundable: {type: bool}
+      note: {type: text, untrusted: true}   # written by guests and front-desk staff; content, never instruction
+    invariants:
+      - name: a stay cannot be under way before it starts
+        when: {field: days_until_arrival, at_least: 1}
+        then: {field: status, equals: [held, confirmed, cancelled]}
+        because: a reservation whose arrival is still in the future cannot have been checked in
+      - name: non-refundable reservations are never refunded
+        when: {field: non_refundable, equals: [true]}
+        then: {field: status, not_equals: [refunded]}
+        because: the non-refundable rate is the reason a refund cannot be issued
+
+  approval:
+    key: id
+    fields:
+      id: {type: id}
+      reservation_id: {type: id, ref: reservation.id}
+      action: {type: enum, values: [issue_refund]}
+      amount: {type: money}
+      outcome: {type: enum, values: [pending, granted, refused, expired]}
+
+  escalation:
+    key: ticket
+    fields:
+      ticket: {type: id}
+      reason: {type: text}
+      state: {type: enum, values: [queued, claimed, resolved, lapsed]}
+
+session:
+  guest_id: {type: id, ref: guest.id}
+
+facts:
+  turn_count: {type: int, derived: turns taken in this conversation}
+  termination:
+    type: enum
+    derived: "why the loop stopped on the latest turn, or absent if it never ran"
+    values: [goal_reached, step_budget_exhausted, cost_ceiling_reached,
+             oscillation_detected, awaiting_approval, awaiting_human, refused,
+             unrecoverable_error]
+  consecutive_failed: {type: int, derived: "turns ending in failure, counting back from the latest until one did not"}
+  refusals: {type: int, derived: turns in this conversation the agent refused}
+  repeated_intent:
+    type: int
+    derived: "turns carrying the latest turn's intent, counting back from it until the intent changes"
+
+state_machines:
+  reservation_status:
+    states: [held, confirmed, checked_in, checked_out, cancelled, no_show, refunded]
+    # `cancelled` ends the stay, not the money: a cancelled reservation may
+    # still be refunded, and often is. `checked_out` ends the stay having
+    # happened, and a refund after it is a goodwill decision a person makes.
+    # Only `refunded` ends everything.
+    terminal: [refunded]
+    transitions:
+      - {from: held, to: confirmed, by: external}                    # payment clears
+      - {from: confirmed, to: checked_in, by: external}              # the front desk
+      - {from: checked_in, to: checked_out, by: external}
+      - {from: confirmed, to: no_show, by: external}                 # the night passed
+      - {from: [held, confirmed], to: cancelled, by: cancel_reservation}
+      - {from: any_except_terminal, to: refunded, by: issue_refund}
+    concurrent_writers: [front_desk, channel_manager]
+
+# ---------------------------------------------------------------------------
+# 3 · Operations
+# ---------------------------------------------------------------------------
+conditions:
+  held_by: &held_by
+    {field: reservation.guest_id, equals_session: guest_id}
+
+operations:
+  get_reservation:
+    entity: reservation
+    side_effect: read
+    input: [reservation_id]
+    output: reservation
+    preconditions: [*held_by]
+    authority: agent
+
+  cancel_reservation:
+    entity: reservation
+    side_effect: irreversible
+    input: [reservation_id]
+    preconditions:
+      - *held_by
+      - {field: status, equals: [held, confirmed]}
+      # Free cancellation until two days before arrival. Expressed as the window
+      # being *open* rather than as the fee being charged, because a fee this
+      # agent cannot compute is a number it must not state (R-RATE).
+      - {field: days_until_arrival, at_least: 2}
+      - {field: non_refundable, equals: [false]}
+    effect: {status: cancelled}
+    identity: reservation_id
+    # The same argument the clothing example makes for cancel_order, and it
+    # survives the move: the authority is the guest's, exercised on their own
+    # row, and `P-OWNERSHIP` already establishes that only the holder reaches
+    # this operation. A gate here queues a routine self-service action behind a
+    # person with nothing to add.
+    authority: agent
+    on_refusal: explain the window and offer to request a refund a person can decide   # P-CANCEL
+
+  change_dates:
+    entity: reservation
+    side_effect: reversible
+    # FRICTION 2 — the precondition this operation actually has cannot be
+    # written. A date change is permitted only if a room of this type is
+    # available for the new dates at a rate the system will honour, and that is
+    # a question for the reservation system, not a comparison against a field on
+    # this row. `preconditions` is a list of field comparisons; there is no way
+    # to say "and the far system must agree". The rules below are the ones that
+    # *can* be checked locally, and they are not the whole rule.
+    input: [reservation_id, check_in, check_out]
+    preconditions:
+      - *held_by
+      - {field: status, equals: [held, confirmed]}
+      - {field: days_until_arrival, at_least: 2}
+    # FRICTION 3 — the effect is partly unknown at specification time. New dates
+    # may carry a different rate, so `total` may move, and the format's `effect`
+    # takes either a field map or prose. Prose is chosen, which means nothing
+    # machine-readable states that this operation can change what a later refund
+    # is worth.
+    effect: the reservation moves to the new dates, and its total becomes the rate the reservation system quotes
+    identity: [reservation_id, check_in, check_out]   # the same change twice is one change
+    authority: agent
+    on_refusal: the new dates are not available at a rate that can be honoured   # P-CHANGE
+
+  request_refund:
+    entity: reservation
+    side_effect: reversible
+    input: [reservation_id]
+    preconditions: [*held_by]
+    effect: an approval exists, or the refund proceeds within the automatic limit
+    authority: agent
+    # The guest is told a request exists. Never that a refund was issued.
+
+  issue_refund:
+    entity: reservation
+    side_effect: irreversible
+    input: [reservation_id]
+    amount_from: reservation.total      # never from the conversation
+    preconditions:
+      - *held_by
+      - {field: status, not_equals: [refunded]}
+      - {field: non_refundable, equals: [false]}
+    effect: {status: refunded}
+    identity: reservation_id            # a reservation is refunded at most once
+    authority:
+      agent_when:
+        # Alone, the agent refunds only what is owed and small. A cancelled
+        # reservation inside its window is owed; anything else — a no-show, a
+        # stay that happened, a late cancellation — is a goodwill decision that
+        # belongs to the business.
+        - {field: status, equals: [cancelled]}
+        - {field: total, at_most: 20000}
+      otherwise: human_approval
+    owed_when:
+      # Owed, not merely permitted. A cancelled reservation inside its window
+      # whose money never moved is the failure no world-diff and no truthfulness
+      # check can see.
+      - {field: status, equals: [cancelled]}
+      - {field: non_refundable, equals: [false]}
+
+  escalate:
+    entity: escalation
+    side_effect: reversible
+    input: [reason]
+    effect: an escalation exists, and the conversation belongs to a person until it resolves or lapses
+    authority: agent
+
+# ---------------------------------------------------------------------------
+# 4 · Policies
+# ---------------------------------------------------------------------------
+policies:
+  P-CANCEL:
+    rule: free cancellation until two days before arrival, and never on a non-refundable rate; inside the window, refuse and offer a refund request a person decides
+    via: [cancel_reservation]
+    concern: functional-suitability
+    facet: functional correctness
+  P-CHANGE:
+    rule: dates may be changed while held or confirmed and at least two days before arrival, and only to dates and a rate the reservation system confirms
+    via: [change_dates]
+    concern: functional-suitability
+    facet: functional correctness
+  P-REFUND:
+    rule: to the original payment method; a refund above ₹20,000, or on anything but a cancelled reservation, needs a person
+    via: [request_refund, issue_refund]
+    concern: safety
+    facet: operational constraint
+  P-REFUND-STATUS:
+    rule: refund status is answered from the reservation's status, deterministically, and never promises a date or an amount
+    via: [get_reservation]
+    concern: functional-suitability
+    facet: functional correctness
+  P-OWNERSHIP:
+    rule: every operation reaches only a reservation the signed-in guest holds, and a reservation they do not hold is answered exactly as one that does not exist
+    via: [get_reservation, cancel_reservation, change_dates, request_refund, issue_refund]
+    concern: security
+    facet: confidentiality
+  P-DIRECT:
+    rule: reservation status and refund status are answered from the reservation system deterministically, with no model call, when the turn names exactly one intent and exactly one reservation; a turn naming several reservations, several intents, or none of either goes to the loop
+    via: [get_reservation]
+    concern: cost
+  P-DIRECT-READS:
+    rule: the deterministic path never performs a write — it is selected by patterns over the guest's words, and an effect must not be one rewording away
+    via: [get_reservation]
+    concern: safety
+    facet: operational constraint
+
+  escalation:
+    on_request:                        # Tier 1 — decided from the turn's text alone
+      - {id: asked-for-human, when: the guest asks to speak to a person}
+      - {id: stranded-guest,  when: the guest reports they cannot get into the property}
+    on_condition:                      # Tier 2 — decided from what the conversation has become. First match wins.
+      - {id: loop-exhausted,   when: {field: termination, equals: [step_budget_exhausted, cost_ceiling_reached, oscillation_detected]}, priority: 2, ttl: 15m}
+      - {id: tool-unavailable, when: {field: consecutive_failed, at_least: 2}, priority: 2, ttl: 15m}
+      - {id: repeated-intent,  when: {field: repeated_intent, at_least: 3},    priority: 3, ttl: 30m}
+      - {id: second-refusal,   when: {field: refusals, at_least: 2},           priority: 4, ttl: 30m}
+      - {id: turns-exceeded,   when: {field: turn_count, at_least: 10},        priority: 6, ttl: 45m}
+    statements:
+      - {id: P-ESC-ONCE, rule: "each rule fires once per conversation, whatever happens to what it raised", concern: reliability, facet: faultlessness}
+      - {id: P-ESC-CAP, rule: "past the cap the agent says something true instead of issuing another reference", at_most: 2, concern: interaction-capability, facet: user assistance}
+      - {id: P-ESC-TTL, rule: "a queued escalation nobody comes to lapses", ttl: 30m, concern: reliability, facet: recoverability}
+      - {id: P-ESC-LAPSE, rule: "on lapse the conversation returns to the agent, and the guest is told nobody came", concern: reliability, facet: recoverability}
+      - {id: P-ESC-TOLD, rule: "the guest is told a reference number, and a wait only when one is measured from queue depth and observed throughput", concern: functional-suitability, facet: functional correctness}
+      - {id: P-ESC-OWNS, rule: "while a person owns the conversation the agent does not answer it, and only the desk that holds it may close it", concern: security, facet: integrity}
+      - {id: P-ESC-OUTCOME, rule: "closing records an outcome from a declared set, once, and the rule that raised it stays with the record", concern: maintainability, facet: analysability}
+    # FRICTION 4 — a trigger this domain plainly has and the format cannot
+    # express. A guest whose arrival is tomorrow is a different case from one
+    # arriving in March: the same unresolved question is urgent for the first
+    # and routine for the second. Every trigger here is a fact about the
+    # *conversation*; none can read a field on the row under discussion.
+    deferred_triggers:
+      - arrival within 24 hours and the question unresolved
+      - the guest is currently checked in
+
+  personal_data_in_conversation:
+    - payment card numbers typed into the chat
+    - passport and identity document numbers typed into the chat
+
+# ---------------------------------------------------------------------------
+# 5 · External contracts
+# ---------------------------------------------------------------------------
+external:
+  reservation_system:
+    owns: [reservation, guest]
+    operations: [get_reservation, cancel_reservation, change_dates, request_refund, issue_refund]
+    refusal_is_a_result: >
+      A write whose precondition fails returns {allowed: false, reason} with the
+      current record. It is not an error, and it is not a success.
+    consistency: reads can be stale by the time a write is attempted; the write's own answer is authoritative
+    idempotency: >
+      MUST accept a caller-supplied key on every irreversible operation and
+      treat a repeated key as the same request.
+    failure_modes: [unavailable, slow, stale_read, unknown_record, rate_changed]
+
+  approval_queue:
+    decides: [issue_refund above the automatic limit, and on any reservation that is not a cancelled one]
+    latency: asynchronous; may span a process restart; may never be decided
+
+  escalation_desk:
+    receives: [escalation]
+    latency: asynchronous; may never be claimed
+
+# ---------------------------------------------------------------------------
+# 6 · Required properties
+# ---------------------------------------------------------------------------
+required:
+  properties:
+    - {id: Q-COST,  must: model spend per task at most USD 0.50, evidence: assertion, concern: cost}
+    - {id: Q-STEPS, must: at most 12 loop steps per task, evidence: assertion, concern: cost}
+    - {id: Q-OUTPUT, must: at most 4096 output tokens per model call, evidence: assertion, concern: performance-efficiency, facet: resource utilization}
+    - {id: Q-TOOL-RESULT, must: a tool result enters context at most 8000 characters long, evidence: assertion, concern: functional-suitability, facet: functional completeness}
+    - {id: Q-MODEL, must: only a model from the approved list is called, evidence: inspection, concern: security, facet: integrity}
+  undeclared:
+    - latency
+    - availability
+    - data residency
+    - retention of transcripts and traces
+
+# ---------------------------------------------------------------------------
+# 7 · Conformance
+# ---------------------------------------------------------------------------
+conformance:
+  archetypes: [A6, A5]               # a deterministic router ahead of a model-driven loop
+  aac:
+    version: "0.12"
+    claims: all obligations tagged A6 or A5, except those excluded below
+    excluded:
+      - {id: AAC-0092, reason: the agent does not stream output, revisit_when: streaming is added}
+      - {id: AAC-0096, reason: no response cache exists, revisit_when: any response or prompt cache is added}
+      - {id: AAC-0007, reason: latency is undeclared (see required.undeclared), revisit_when: a latency property is declared}
+      - {id: AAC-0014, reason: no production traffic exists, revisit_when: deployed}
+      - {id: AAC-0097, reason: residency is undeclared, revisit_when: a residency property is declared}
