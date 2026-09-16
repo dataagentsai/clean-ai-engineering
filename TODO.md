@@ -677,7 +677,32 @@ have the same gap.
 
 ### T-026 · Adopt Chatwoot for the customer chat and the human side of escalation
 
-**Status** Not started. Decided in T-016's register. **Cycle 1.** T-002 is done: the signed `customer_id` exists, and the customer's login lands here, since T-002 built no login page. How a Chatwoot contact becomes a Keycloak session is this item's first decision.
+**Status** In progress 2026-09-16. **Cycle 1.** Needs nothing: T-002 is done.
+
+**Decided 2026-09-16 (the user): a server-side session behind the widget.** A
+Chatwoot webhook says *who* the contact is and carries no customer token, and
+T-002 C needs one to exchange. So a small backend logs the customer in with
+Keycloak (code + PKCE) and keeps their refresh token, encrypted, keyed by login;
+the page embeds the Chatwoot widget with an HMAC-verified identifier (the
+login's `sub`, `hmac_mandatory` on the inbox). On a signed bot webhook for a
+verified contact, the agent turns that stored session into a fresh token and
+exchanges it as in T-002 C. The agent never acts without a live customer session,
+and logout revokes it. Rejected: our own page with Chatwoot only as the desk (we
+keep writing chat UI), and Keycloak impersonation (the agent could become anyone,
+undoing T-002 C).
+
+**Checked in Chatwoot v4.17.1 before deciding:** widget identity validation is
+`identifier_hash` = HMAC-SHA256 of the identifier with the inbox's token, recorded
+as `hmac_verified` and carried in bot webhooks; bot webhooks are signed
+(`X-Chatwoot-Signature` over timestamp and body, with a delivery id).
+
+**The work, in commits:** (A) stored sessions, encrypted, and a stored session to
+a fresh customer identity; the realm's `support-portal` client. (B) The portal:
+login, callback, logout that revokes, and the page embedding the widget. (C) The
+webhook receiver: signature, timestamp, delivery dedupe, `hmac_verified`, the turn
+under the stored session, the bot's reply, and handoff to a person on escalation
+with the facts as a private note. (D) Chatwoot configured by an idempotent setup
+in compose, and a live end-to-end test. (E) AHC's missing `channel` port.
 
 The argument is in T-016's *three rows whose verdict is already decided*. In
 short: its Agent Bot API is this agent's escalation model already built, and it
