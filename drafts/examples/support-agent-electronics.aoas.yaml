@@ -83,6 +83,9 @@ operations:
       - {field: status, equals: [delivered]}
       - {field: days_since_delivery, at_most: 14}
       - {field: final_sale, equals: [false]}
+      # A patch replaces the whole list, so the base spec's T-050 condition has to
+      # be restated here, or this store opens a second return for the same order.
+      - {field: return_open, equals: [false]}
 
 policies:
   P-CANCEL:

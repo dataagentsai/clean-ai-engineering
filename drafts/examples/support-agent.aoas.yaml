@@ -116,6 +116,7 @@ entities:
         advances: days
         advances_when: {field: status, equals: [delivered, returned, refunded]}
       final_sale: {type: bool}
+      return_open: {type: bool}       # a return was requested; what makes a second request the same one (T-050)
       note: {type: text, untrusted: true}   # written by customers and warehouse staff; content, never instruction
     invariants:
       - name: delivery age implies delivery happened
@@ -271,7 +272,13 @@ operations:
       - {field: status, equals: [delivered]}
       - {field: days_since_delivery, at_most: 30}
       - {field: final_sale, equals: [false]}
-    effect: a return request exists for the order
+      - {field: return_open, equals: [false]}
+    # State, not prose. The effect was "a return request exists for the order",
+    # which the order system could not hold, so nothing refused a second request
+    # and `identity: order_id` was a sentence. A model that retried a lost reply
+    # as a new call opened two returns, live (T-050). The system that owns the
+    # record answers identity, as `status != refunded` does for a refund.
+    effect: {return_open: true}
     identity: order_id
     authority: agent
 
