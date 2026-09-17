@@ -39,8 +39,8 @@ store, and its reliability is measured.
 
 | Layer | What it proves | Items |
 |---|---|---|
-| **1a · Runs on adopted products** | only the delta is built | ✅ T-031 · ✅ T-029 · ✅ T-002 · ✅ T-026 · **T-028** · T-030 · T-027 · T-046 · T-047 · T-032 · T-016 |
-| **1b · Does the right thing** | correct, not only wired | ✅ T-001 · ✅ T-018 · ✅ T-050 (with F-041, critical) · ✅ T-005 · ◐ T-003, its durable half moves to T-028 · T-006 · T-020 · T-024 · T-025 · T-049 · G0.11 |
+| **1a · Runs on adopted products** | only the delta is built | ✅ T-031 · ✅ T-029 · ✅ T-002 · ✅ T-026 · ✅ T-028 · T-030 · T-027 · T-046 · T-047 · T-032 · T-016 |
+| **1b · Does the right thing** | correct, not only wired | ✅ T-001 · ✅ T-018 · ✅ T-050 (with F-041, critical) · ✅ T-005 · ✅ T-003 · T-006 · T-020 · T-024 · T-025 · T-049 · G0.11 |
 | **1c · Grounded in reality** | the specs describe a real store and a real person | **T-017** · T-042 · **T-007** |
 
 ### Tier 2 · The cycle, made repeatable
@@ -203,6 +203,8 @@ work that is *missing*, with nothing to point at, which is why it is written dow
 
 ✅ **T-018** done 16 Sep: model plus a declared provider, checked at startup.
 
+✅ **T-028** done 18 Sep: both human waits are Temporal workflows — an approval is assessed, waits for a person or its expiry, and carries the refund out itself under its own realm login, so the agent can no longer write a grant; an escalation lapses on its own timer and the sweeper is deleted. With it, **T-003**: a delivery claim two processes share, whose expiry is a timer.
+
 ✅ **T-050** done 17 Sep: seven live failures routed (two scenarios, the spec, the router, the harness) and F-041 fixed, a planted note that could cancel an order. Live pass rate 0.94 → 0.98.
 
 ✅ **T-001** done 17 Sep: opening the chat shows a signed-in customer their orders and work in flight, with no model call. The spec can now declare a read of many rows.
@@ -213,27 +215,26 @@ work that is *missing*, with nothing to point at, which is why it is written dow
 
 ✅ **T-002** done 16 Sep: verify-only sessions from the Keycloak realm, and an order system that checks the token and the approval itself.
 
-Sorted by tier (see *How we reach the goal*). Tier 1's must-haves first; Tier 2
-starts alongside once T-050 is routed, because it is the bottleneck; Tier 3 when
-Tier 2's four machinery items exist.
+Sorted by tier (see *How we reach the goal*). Tier 1's must-haves first, and
+Tier 1a is now closed but for the *any time* items; Tier 2 runs alongside; Tier 3
+when Tier 2's four machinery items exist.
 
 **Tier 1 · finish production grade**
 
-1. **T-028**: Temporal for the approval and escalation waits, taking approvals out of the agent's write access (from T-002), and T-003's durable delivery claim with an expiry.
-2. **T-017**: Saleor as the real store, and a person in front of the agent.
-3. **T-007**: `pass^k` reliability.
+1. **T-017**: Saleor as the real store, and a person in front of the agent.
+2. **T-007**: `pass^k` reliability.
 
 **Tier 2 · make the cycle repeatable** (in parallel with item 1)
 
-4. **T-035**: the four gates as one command. Every cycle's step 6.
-5. **T-033**: stack profiles that resolve `extends`.
-6. **T-034**: the Generation Brief. Every cycle's step 4.
-7. **T-039** then **T-044**: LangWatch Scenario, and a one-step AgentTwin setup. Every cycle's step 5.
-8. **T-048**: ports as a standard, with its criteria written before cycle 2.
+3. **T-035**: the four gates as one command. Every cycle's step 6.
+4. **T-033**: stack profiles that resolve `extends`.
+5. **T-034**: the Generation Brief. Every cycle's step 4.
+6. **T-039** then **T-044**: LangWatch Scenario, and a one-step AgentTwin setup. Every cycle's step 5.
+7. **T-048**: ports as a standard, with its criteria written before cycle 2.
 
 **Tier 3 · the first axis**
 
-9. **T-036**: cycle 2, the support agent on LangGraph.
+8. **T-036**: cycle 2, the support agent on LangGraph.
 **Any time, blocking nothing:** Tier 1a T-030, T-027, T-046, T-047, T-032; Tier 1b
 T-006, T-020, T-024, T-025, T-049; Tier 3 T-013 (the Spark AOAS, cheap, and it
 sharpens T-022 before cycle 4).
@@ -259,7 +260,6 @@ sharpens T-022 before cycle 4).
 | | Item | Repo | Cost | Needs |
 |---|---|---|---|---|
 | **T-006** | A customer cannot find their own past conversations | reference-agent | days | — |
-| **T-003** | Effects idempotent at the far end: **done for every declared identity (T-050)**; left, a durable delivery claim that expires, which moves into T-028 | reference-agent | with T-028 | T-028 |
 | **T-017** | **Adopt Saleor** as the real store, and put a person in front of the agent | reference-agent | days | — |
 | **T-020** | Trace context and run id cross the MCP hop (AHC-0006, AHC-0026) | reference-agent | small | — |
 | **T-024** | Two release gates with no test: AAC-0051, AAC-0096 | reference-agent | a day | — |
@@ -272,7 +272,6 @@ sharpens T-022 before cycle 4).
 
 | | Item | Repo | Cost | Needs |
 |---|---|---|---|---|
-| **T-028** | **Temporal** for the approval and escalation waits | reference-agent | days | — |
 | **T-030** | **Presidio** for PII in place of our patterns. The positions stay ours | reference-agent | a day | — |
 | **T-027** | **VCR.py** in place of `cassette/`, keeping the replay seam | reference-agent | a day | — |
 | **T-046** | **promptfoo** for prompt-level checks, beside AgentTwin | reference-agent | a day | — |
@@ -376,7 +375,7 @@ sharpens T-022 before cycle 4).
 | **AgentTwin adopts the simulated user, graders and replay.** It builds only the world, the perturbations and the world-diff oracle | 2026-09-16 |
 | **The model call goes through a LiteLLM proxy.** Not the SDK, which would break the fault-injection seam (F-029) | 2026-09-16 |
 | **Hybrid**: mechanism in a library, seams written per agent. What keeps it honest is each new cycle. **Falsified by** a hotel agent that has to edit a mechanism module, with `policy.CLAIM_PATTERNS` the named suspect | 2026-09-13 |
-| **Escalation queue** is a Postgres table plus `LISTEN/NOTIFY`, not a broker. **The wait moves to Temporal in T-028** | 2026-09-06 |
+| **Escalation queue** was a Postgres table plus `LISTEN/NOTIFY`, not a broker. **The wait is a Temporal workflow since T-028**, and the table is gone | 2026-09-06, revised 2026-09-18 |
 | **Rules stay in the project's own predicate language**, not CEL or OPA, because AgentTwin's oracle reads that vocabulary | 2026-09-06 |
 | **Spec first, per change** | G0 |
 
@@ -402,7 +401,7 @@ assembles what was already decided in four places: T-016's register;
 | HTTP edge | L6 | **Starlette / FastAPI** | Open Stack | ✅ in use |
 | PII | L7 | **Presidio** | Open Stack | T-030 |
 | Record and replay | L9 | **VCR.py / pytest-recording** | Open Stack | T-027 |
-| Durable waits | L10, L14 | **Temporal** | Open Stack | T-028 |
+| Durable waits | L10, L14 | **Temporal** | Open Stack | ✅ T-028 |
 | Traces | L11 | **OpenTelemetry → Langfuse** | all | ✅ adopted 16 Sep |
 | Simulated user | L12 | **LangWatch Scenario** | AgentTwin | T-039 |
 | Prompt-level checks | L12 | **promptfoo** | all | T-046 |
@@ -463,7 +462,7 @@ assembles what was already decided in four places: T-016's register;
 | **B4** | Policy positions, claim grounding against the world, the **ownership rule** | only the world knows AB-10003 has shipped | ✅ positions · ✅ ownership, checked at the far end too (T-002) |
 | **B5** | Scenarios, the golden set, AgentTwin's world, perturbations and world-diff oracle | the runners grade outputs; none owns our data | ✅ · T-039, T-040 adopt around it |
 | **B6** | The budget governor, and **the Open Stack's loop**: step budget, oscillation check, cost ceiling | the only position that sees a trajectory | ✅ kept, 16 Sep |
-| **B7** | What needs a human, and what a stale approval means | a workflow engine waits; it does not decide | ✅ · the wait moves to T-028 |
+| **B7** | What needs a human, and what a stale approval means | a workflow engine waits; it does not decide | ✅ · Temporal waits and our validator decides (T-028) |
 | **B8** | Adapters to the world: the MCP tool server, identity threaded through | it is the estate | ✅ projected world · T-017 real store |
 | — | The span contract: *complete against what?* | every trace store accepts whatever it is sent | ✅ |
 | — | The run fingerprint: what a version of this agent is | a flag system flips a value; it does not know the baseline moved | ✅ · T-018 |
@@ -782,7 +781,7 @@ tested.
 
 ### T-003 · Deduplication only works for one process — and the answer is mostly to adopt, not to build
 
-**Status** **Part done 2026-09-17.** Option 1 below, the effect idempotent where the state lives, now holds for every operation with a declared `identity`: T-050 found a return was prose, not state, and the spec fixed it. Left: the durable delivery claim with an expiry, which moves into T-028. Originally not started. Raised 2026-09-05, and **revised the same day** after the
+**Status** **Done 2026-09-18.** Option 1, the effect idempotent where the state lives, holds for every operation with a declared `identity` since T-050 — which found a return that was prose rather than state. The claim is now a Temporal workflow named after the delivery, and the hard half, an expiry, is its own timer: running means somebody has it, completed means it was handled, and a claim nobody settled fails, which the id-reuse policy reads as claimable again (`6d03e7e`). Originally not started. Raised 2026-09-05, and **revised the same day** after the
 right question: *why are we writing any of this?*
 
 **The defect in the plan, first.** The module currently claims the durable version
@@ -1114,28 +1113,6 @@ replay mode is the one that does not. **Done when** the replay passes the
 context it runs under and `test_scripts.py` runs `--replay`, so it cannot break
 quietly again.
 
-### T-028 · Adopt Temporal for the approval and escalation waits
-
-**Status** Not started. Decided 2026-09-16 under *adopt, build only the delta*.
-**Cycle 1, Open Stack.** Repo: `reference-agent`. Temporal runs from `compose.yaml`, profile `durable`.
-
-**Carried from T-002.** The order system now loads the approval named in a refund call and checks it (`src/order_system`). That check is only as independent as the approvals store, and today the agent writes that store and grants small refunds by its own policy. Moving approvals here must also take them out of the agent's write access, and the far end's lookup must follow them.
-
-**What.** The approval and escalation waits become Temporal workflows: raise,
-wait for a signal, act, expire. T-003 lists what this subsumes: `trigger`
-(run-once semantics), `state`'s resume half, and `approvals`' long wait that
-survives a restart. `PREFERRED-STACK.md` already argued the split: **the chat turn
-stays in our loop, and the wait goes on Temporal**, because durability is worth
-its cost exactly where work spans time.
-
-**The delta that stays ours.** What needs a human, what a stale approval means
-(`PRODUCTION-STACK.md` L14), no self-approval, and the stored key that makes a
-double grant refund once.
-
-**Done when.** A restart during an hour-long approval resumes it; the approval
-and escalation scenarios pass unchanged; the modules Temporal subsumes are
-deleted rather than wrapped; `stacks/open-stack.yaml` moves `workflow` and
-`approval` to `x_status: current`.
 
 ### T-030 · Adopt Presidio for PII
 
@@ -3187,6 +3164,59 @@ have the same gap.
 the live runner lost its clock once already; confirm it composes the desk as the
 suite does before blaming the agent. **Done when** each row has a route taken and
 the report is regenerated.
+
+### T-028 · Adopt Temporal for the approval and escalation waits
+
+**Status** **Done 2026-09-18.** Four commits in `reference-agent`: `8784696`
+(approvals), `74b36c5` (the worker's own login at the realm), `d4df3c1`
+(escalations), `6d03e7e` (T-003's claim).
+
+**What it cost the agent, which was the point.** The agent holds
+`TemporalApprovals` — ask and read — and a reviewer holds `ApprovalDesk`. The
+approval store's `put` is gone, so there is no path by which the party that
+wants a refund can record that somebody granted it; `InMemoryApprovalStore`,
+`PostgresApprovalStore`, both escalation stores, the two `agent_state` tables
+and `sweep` are deleted rather than wrapped. A granted refund is carried out by
+the workflow the moment it is granted, under a `support-approvals` login whose
+token carries `orders:read` and no `refunds:write`; the order system reads whose
+the call is from the approval it names, so nothing the caller asserts is used.
+
+**What the simulator found.** Making the lapse real broke two things that had
+been passing for the wrong reason, and both were AgentTwin being right: an
+approver or a desk that arrives *too late* never arrived at all, because a queue
+that drops an expired item leaves nothing to refuse — they now keep hold of what
+they have seen; and two scenarios with a desk ran on the default hour a turn,
+which the scenario format's own warning says lapses a thirty-minute window
+before a colleague can look.
+
+**Done when — met.** A restart during an hour-long approval resumes it, twice
+over: the worker restarts in `tests/test_approvals.py`, and the composed
+Temporal container itself restarts in `tests/test_temporal_live.py`, after which
+the same approval is still queued, is granted, and produces exactly one refund.
+The approval and escalation scenarios pass unchanged except for the two clock
+declarations above. `stacks/open-stack.yaml` moves `workflow` and `approval` to
+`x_status: current`.
+
+
+
+**Carried from T-002.** The order system now loads the approval named in a refund call and checks it (`src/order_system`). That check is only as independent as the approvals store, and today the agent writes that store and grants small refunds by its own policy. Moving approvals here must also take them out of the agent's write access, and the far end's lookup must follow them.
+
+**What.** The approval and escalation waits become Temporal workflows: raise,
+wait for a signal, act, expire. T-003 lists what this subsumes: `trigger`
+(run-once semantics), `state`'s resume half, and `approvals`' long wait that
+survives a restart. `PREFERRED-STACK.md` already argued the split: **the chat turn
+stays in our loop, and the wait goes on Temporal**, because durability is worth
+its cost exactly where work spans time.
+
+**The delta that stays ours.** What needs a human, what a stale approval means
+(`PRODUCTION-STACK.md` L14), no self-approval, and the stored key that makes a
+double grant refund once.
+
+**Done when.** A restart during an hour-long approval resumes it; the approval
+and escalation scenarios pass unchanged; the modules Temporal subsumes are
+deleted rather than wrapped; `stacks/open-stack.yaml` moves `workflow` and
+`approval` to `x_status: current`.
+
 
 ### T-009 · Seven capabilities are believed met and named by no test
 
