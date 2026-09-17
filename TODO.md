@@ -119,20 +119,21 @@ work that is *missing*, with nothing to point at, which is why it is written dow
 
 ✅ **T-018** done 16 Sep: model plus a declared provider, checked at startup.
 
+✅ **T-001** done 17 Sep: opening the chat shows a signed-in customer their orders and work in flight, with no model call. The spec can now declare a read of many rows.
+
 ✅ **T-029** done 17 Sep: every model call through the LiteLLM proxy with the agent's own key; all 34 scenarios run live through it.
 
 ✅ **T-026** done 17 Sep: customers log in through a portal that keeps their login server-side, chat through Chatwoot, and are handed to a person on escalation; AHC has a `channel` port.
 
 ✅ **T-002** done 16 Sep: verify-only sessions from the Keycloak realm, and an order system that checks the token and the approval itself.
 
-1. **T-001**: what the customer sees when the chat opens, their orders and anything in flight, with no model call. **Not closed by T-026**: Chatwoot supplies the surface, and the bot can now answer the widget opening.
-2. **T-050**: seven scenarios below 1.00 against the live model, each failing the same way twice. Findings to route, one of them a duplicate effect.
-3. **T-028**: Temporal for the approval and escalation waits.
-4. **T-017**: Saleor as the real store, and a person in front of the agent.
-5. **T-035**: the four gates as one command. Every cycle's step 6.
-6. **T-034** and **T-044**: the Generation Brief and a one-step AgentTwin setup. Every cycle's steps 4 and 5.
-7. **T-048**: ports as a standard, tiers 1 and 2 and the three typed ports, with its criteria written before cycle 2 starts.
-8. **T-033**: fill the LangGraph stack profile, then **cycle 2 (T-036)**.
+1. **T-050**: seven scenarios below 1.00 against the live model, each failing the same way twice. Findings to route, one of them a duplicate effect.
+2. **T-028**: Temporal for the approval and escalation waits.
+3. **T-017**: Saleor as the real store, and a person in front of the agent.
+4. **T-035**: the four gates as one command. Every cycle's step 6.
+5. **T-034** and **T-044**: the Generation Brief and a one-step AgentTwin setup. Every cycle's steps 4 and 5.
+6. **T-048**: ports as a standard, tiers 1 and 2 and the three typed ports, with its criteria written before cycle 2 starts.
+7. **T-033**: fill the LangGraph stack profile, then **cycle 2 (T-036)**.
 
 **Independent, any time:** T-020, T-024, T-025, T-030, T-027, T-046, T-013 (the
 Spark AOAS, cheap, and it sharpens T-022 before cycle 4), T-039.
@@ -157,7 +158,6 @@ Spark AOAS, cheap, and it sharpens T-022 before cycle 4), T-039.
 
 | | Item | Repo | Cost | Needs |
 |---|---|---|---|---|
-| **T-001** | Nothing happens when the chat opens: no orders to pick from, nothing in flight shown, and it must cost no model call. T-026 gave it a surface, not the content | reference-agent | a day | — |
 | **T-006** | A customer cannot find their own past conversations | reference-agent | days | — |
 | **T-003** + **T-005** | Effects idempotent at the far end, and the key carried there | reference-agent, agenttwin | days | — |
 | **T-017** | **Adopt Saleor** as the real store, and put a person in front of the agent | reference-agent | days | — |
@@ -619,64 +619,6 @@ replayed as a test case without a translation step.
 **G0 is done when** `v0.2.0` is tagged with: the three checks passing, every
 finding closed or accepted, the Assurance Map showing no untagged test, and a
 complete harness profile. Then it is frozen.
-
-### T-001 · Nothing happens when the chat opens
-
-**Status** Not started. Raised 2026-09-05. **Re-scoped 17 Sep:** the TODO said T-026 would close this without writing UI, and it does not. Chatwoot supplies the chat surface; what the customer is shown on opening, their own orders and work in flight at no model cost, is still missing. The route is now a bot reply to Chatwoot's widget-opened event rather than a `GET /session` on the old page.
-
-**What is missing.** The customer clicks *Talk to our AI agent*, a box opens, and
-it is empty. There is no greeting, no list of their orders, nothing about work
-already in flight. The only route that does anything is `POST /chat`, and it
-requires text — so **a session opening is not expressible at all**: it is an
-entry point that is not a message.
-
-**Why it matters.** Three reasons, in order of weight.
-
-*The customer has to know their order number.* Every scenario in the suite opens
-with a customer who conveniently types `AB-10003`. Real ones do not have it to
-hand, so the first two turns of every real conversation are spent establishing
-which order — turns that cost money and that a list of three orders would have
-skipped entirely.
-
-*Work already in flight is invisible.* A refund waiting on a colleague, a return
-part-way through — the agent holds all of it and the customer sees none of it
-until they ask. `pending_approval_id` is already on the conversation and nothing
-surfaces it.
-
-*It is the cheapest possible turn and we are not taking it.* Listing somebody's
-own orders is a database read. Greeting them by name is a string. **Opening a
-chat should cost zero model calls**, and a product that generates its greeting
-with the model pays for every abandoned open — which is most opens.
-
-**Where it lands.**
-
-- `serve` — a new `GET /session` returning who you are, your recent orders, and
-  anything outstanding. Same identity check as `/chat`; the check being easy to
-  forget on a read-only route is exactly why it needs its own test.
-- `ui` — fetch it on load and render it; make the orders clickable so the
-  customer picks rather than types.
-- The world already has everything needed. No new tool: `get_order` exists, and
-  a `list_orders` action would be four lines of YAML.
-
-**What it must not become.** A model call. The router's whole point is that a
-question with a deterministic answer never reaches the model, and *"what are my
-orders"* is the most deterministic question there is.
-
-**What to be careful of.**
-
-- *Another customer's orders.* The identity check on a read-only endpoint is the
-  one people skip.
-- *A greeting that claims something untrue.* "Your refund has been processed"
-  when it has not is the same failure class the truth oracle exists for, and it
-  would now happen **before the customer has typed anything**.
-- *Stale data.* Orders listed at open, acted on a minute later — the same
-  check-then-act window `StaleRead` already models, moved to a place nothing
-  currently tests.
-
-**AgentTwin needs it too.** A scenario begins with an actor saying something.
-There is no way to express *"the customer opened the chat and saw this"*, so the
-opening state a real conversation starts from cannot be simulated. Both sides
-have the same gap.
 
 ### T-006 · A customer's own conversations cannot be found
 
@@ -3054,6 +2996,88 @@ retry layers, and cost stays priced by our own `UnknownPrice`-safe code.
   counts them. The mapping is `llm.failure_from`, tested by table, and the
   three gateway answers are tested against the composed proxy with short-lived
   keys.
+
+### T-001 · Nothing happens when the chat opens
+
+**Status** **Done 2026-09-17.** `clean-ai-engineering` `e5705ae` (spec), `agenttwin`
+`3b9b5f3` and `c5eb5c3`, `reference-agent` `b543a0f` and `c98f9e2`.
+
+**What landed.**
+
+- **The spec could not say it.** Every read took a key and returned one entity. AOAS
+  now allows `output: entity[]`, and the validator refuses a many-read that is not
+  scoped to the session (`unscoped-collection`), which is F-016 as a listing. The
+  worked example gains `list_orders` and **P-OPEN**. A step-7 routing: the gap was
+  in the spec, and the fix went there first.
+- **AgentTwin** serves a many-read with no key and only the rows the session may
+  see, failing closed with no session; and a scenario may `open` the conversation
+  before saying anything.
+- **The agent**: `Agent.opening` reads `list_orders`, filters its own approval and
+  escalation queues to the customer, and writes up to five orders, the rest counted,
+  and anything waiting on a colleague. No model; a scenario not in `SCRIPTS` proves
+  it, and every test row checks no `gen_ai` span.
+- **Chatwoot**: on `webwidget_triggered` for a signed-in contact with no
+  conversation, the bot opens one, requires `hmac_verified`, and posts the opening.
+  Live: the greeting with AB-10003 appears before a word is typed, and the first
+  message lands in that conversation.
+
+**Not in it.** Past conversations are T-006. The queues are filtered in memory, which
+is fine at this size and is a query when they are not.
+
+
+**What is missing.** The customer clicks *Talk to our AI agent*, a box opens, and
+it is empty. There is no greeting, no list of their orders, nothing about work
+already in flight. The only route that does anything is `POST /chat`, and it
+requires text — so **a session opening is not expressible at all**: it is an
+entry point that is not a message.
+
+**Why it matters.** Three reasons, in order of weight.
+
+*The customer has to know their order number.* Every scenario in the suite opens
+with a customer who conveniently types `AB-10003`. Real ones do not have it to
+hand, so the first two turns of every real conversation are spent establishing
+which order — turns that cost money and that a list of three orders would have
+skipped entirely.
+
+*Work already in flight is invisible.* A refund waiting on a colleague, a return
+part-way through — the agent holds all of it and the customer sees none of it
+until they ask. `pending_approval_id` is already on the conversation and nothing
+surfaces it.
+
+*It is the cheapest possible turn and we are not taking it.* Listing somebody's
+own orders is a database read. Greeting them by name is a string. **Opening a
+chat should cost zero model calls**, and a product that generates its greeting
+with the model pays for every abandoned open — which is most opens.
+
+**Where it lands.**
+
+- `serve` — a new `GET /session` returning who you are, your recent orders, and
+  anything outstanding. Same identity check as `/chat`; the check being easy to
+  forget on a read-only route is exactly why it needs its own test.
+- `ui` — fetch it on load and render it; make the orders clickable so the
+  customer picks rather than types.
+- The world already has everything needed. No new tool: `get_order` exists, and
+  a `list_orders` action would be four lines of YAML.
+
+**What it must not become.** A model call. The router's whole point is that a
+question with a deterministic answer never reaches the model, and *"what are my
+orders"* is the most deterministic question there is.
+
+**What to be careful of.**
+
+- *Another customer's orders.* The identity check on a read-only endpoint is the
+  one people skip.
+- *A greeting that claims something untrue.* "Your refund has been processed"
+  when it has not is the same failure class the truth oracle exists for, and it
+  would now happen **before the customer has typed anything**.
+- *Stale data.* Orders listed at open, acted on a minute later — the same
+  check-then-act window `StaleRead` already models, moved to a place nothing
+  currently tests.
+
+**AgentTwin needs it too.** A scenario begins with an actor saying something.
+There is no way to express *"the customer opened the chat and saw this"*, so the
+opening state a real conversation starts from cannot be simulated. Both sides
+have the same gap.
 
 ### T-009 · Seven capabilities are believed met and named by no test
 
