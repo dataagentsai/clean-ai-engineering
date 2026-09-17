@@ -12,6 +12,89 @@ grade means adopting the open source that best fits each concern and building
 only the delta nobody supplies, and that applies to every spec and every binding,
 not only to the agents.
 
+## How we reach the goal: four tiers
+
+The goal is one sentence; the work under it is not. It moves in four tiers, each
+the precondition for the next: **one agent** proves it can be done, **the cycle**
+makes a second agent cheap, **varying one axis** proves the specs general, and the
+**specs** are what the goal actually delivers. Every item below belongs to exactly
+one tier. When an item is added, it is added to its tier here as well as to its
+table in *Every open item*.
+
+```
+GOAL  Every spec and every binding production grade, proven by agents of different shapes
+ │
+ ├─ TIER 1  One agent, production grade, on one stack      prove it can be done at all
+ ├─ TIER 2  The cycle, made repeatable                      so a second agent is cheap
+ ├─ TIER 3  Vary one axis at a time                         so the specs are proven general
+ └─ TIER 4  Specs harden and release                        what the goal delivers
+```
+
+✅ done · **bold** in the queue · plain: open, not yet queued
+
+### Tier 1 · One agent, production grade (cycle 1: support agent, Open Stack)
+
+**Exit:** the agent passes the four gates, a person has used it against a real
+store, and its reliability is measured.
+
+| Layer | What it proves | Items |
+|---|---|---|
+| **1a · Runs on adopted products** | only the delta is built | ✅ T-031 · ✅ T-029 · ✅ T-002 · ✅ T-026 · **T-028** · T-030 · T-027 · T-046 · T-047 · T-032 · T-016 |
+| **1b · Does the right thing** | correct, not only wired | ✅ T-001 · ✅ T-018 · **T-050** · **T-003 + T-005** · T-006 · T-020 · T-024 · T-025 · T-049 · G0.11 |
+| **1c · Grounded in reality** | the specs describe a real store and a real person | **T-017** · T-042 · **T-007** |
+
+### Tier 2 · The cycle, made repeatable
+
+**Exit:** a new agent goes from specs to a verdict with its failures routed, in
+days rather than weeks.
+
+| Cycle step | Items |
+|---|---|
+| 3 · Declare the stack | **T-033** |
+| 4 · Generate | **T-034** |
+| 5 · Set up AgentTwin | **T-044** · **T-039** · T-041 · T-023 |
+| 6 · Test through the gates | **T-035** · T-040 |
+| 7 · Route the failures | T-021 |
+| Portability across stacks | **T-048** |
+
+### Tier 3 · Vary one axis at a time
+
+**Exit:** each axis has passed once, and its last pass produced no new spec change.
+
+| Axis | Cycles | Items |
+|---|---|---|
+| **Stack** | 2 LangGraph · 3 Claude Agent SDK · 7 Claude family | **T-036** · T-037 · T-043 + T-004 |
+| **Domain** | 4 Hotel | ✅ G2.1 · T-022 · T-019 · G2.2 · G2.3 · G2.6 |
+| **Shape** | 5 Spark cost analyst · 6 Invoice reconciliation | T-013 · T-038 · T-045 |
+
+### Tier 4 · Specs harden and release
+
+**Exit:** each spec is a versioned release, schema and lint green, with every
+statement exercised by some agent or recorded as not yet.
+
+Tier 4 moves in the background: every cycle's step 7 lands here. The ✅ rows are
+spec changes Tier 1 items forced, which is the cycle working.
+
+| Spec | Items |
+|---|---|
+| **AOAS** | ✅ reads of many rows (T-001) · T-022 · G2.4 · G2.5 |
+| **AHC** | ✅ `channel` port (T-026) · Phase 3 blueprints · Phase 4 realizations (G3.1) · Phase 5 skeletons · G3.3 · T-048 |
+| **AAC** | Phase 1 crosswalks · Phase 3 adapters |
+| **AgentTwin** | ✅ `authorise` hook (T-002) · ✅ many-reads and `opens` (T-001) · T-041 · T-042 |
+| **Bindings** | ✅ `open-stack` mostly current · `langgraph`, `claude-agent-sdk`, `claude-family` filled by their cycles |
+
+### What the tiers say about order
+
+- **Tier 1 is adopted but not yet production grade.** 1b still lets an effect land
+  twice live (T-050, T-003 + T-005), and 1c has not started: nobody real has used
+  the agent, and its reliability is unmeasured.
+- **Tier 2 is the bottleneck.** No second agent starts until T-033, T-034, T-035 and
+  T-044 exist, and none of them has.
+- **Tier 1a's remaining adoptions block nothing downstream.** T-030, T-027, T-046
+  and T-047 can happen whenever convenient.
+
+---
+
 ## The cycle
 
 Every agent goes through the same seven steps, and the cycle repeats:
@@ -127,16 +210,33 @@ work that is *missing*, with nothing to point at, which is why it is written dow
 
 ✅ **T-002** done 16 Sep: verify-only sessions from the Keycloak realm, and an order system that checks the token and the approval itself.
 
-1. **T-050**: seven scenarios below 1.00 against the live model, each failing the same way twice. Findings to route, one of them a duplicate effect.
-2. **T-028**: Temporal for the approval and escalation waits.
-3. **T-017**: Saleor as the real store, and a person in front of the agent.
-4. **T-035**: the four gates as one command. Every cycle's step 6.
-5. **T-034** and **T-044**: the Generation Brief and a one-step AgentTwin setup. Every cycle's steps 4 and 5.
-6. **T-048**: ports as a standard, tiers 1 and 2 and the three typed ports, with its criteria written before cycle 2 starts.
-7. **T-033**: fill the LangGraph stack profile, then **cycle 2 (T-036)**.
+Sorted by tier (see *How we reach the goal*). Tier 1's must-haves first; Tier 2
+starts alongside once T-050 is routed, because it is the bottleneck; Tier 3 when
+Tier 2's four machinery items exist.
 
-**Independent, any time:** T-020, T-024, T-025, T-030, T-027, T-046, T-013 (the
-Spark AOAS, cheap, and it sharpens T-022 before cycle 4), T-039.
+**Tier 1 · finish production grade**
+
+1. **T-050**: seven scenarios below 1.00 against the live model, each failing the same way twice. One is a duplicate effect.
+2. **T-003 + T-005**: effects idempotent at the far end, with the key carried there. Where T-050's duplicate lands.
+3. **T-028**: Temporal for the approval and escalation waits, taking approvals out of the agent's write access (carried from T-002).
+4. **T-017**: Saleor as the real store, and a person in front of the agent.
+5. **T-007**: `pass^k` reliability.
+
+**Tier 2 · make the cycle repeatable** (in parallel from item 2)
+
+6. **T-035**: the four gates as one command. Every cycle's step 6.
+7. **T-033**: stack profiles that resolve `extends`.
+8. **T-034**: the Generation Brief. Every cycle's step 4.
+9. **T-039** then **T-044**: LangWatch Scenario, and a one-step AgentTwin setup. Every cycle's step 5.
+10. **T-048**: ports as a standard, with its criteria written before cycle 2.
+
+**Tier 3 · the first axis**
+
+11. **T-036**: cycle 2, the support agent on LangGraph.
+
+**Any time, blocking nothing:** Tier 1a T-030, T-027, T-046, T-047, T-032; Tier 1b
+T-006, T-020, T-024, T-025, T-049; Tier 3 T-013 (the Spark AOAS, cheap, and it
+sharpens T-022 before cycle 4).
 
 ---
 
