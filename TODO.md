@@ -41,7 +41,7 @@ store, and its reliability is measured.
 |---|---|---|
 | **1a · Runs on adopted products** | only the delta is built | ✅ T-031 · ✅ T-029 · ✅ T-002 · ✅ T-026 · ✅ T-028 · T-030 · T-027 · T-046 · T-047 · T-032 · T-016 |
 | **1b · Does the right thing** | correct, not only wired | ✅ T-001 · ✅ T-018 · ✅ T-050 (with F-041, critical) · ✅ T-005 · ✅ T-003 · T-006 · T-020 · T-024 · T-025 · T-049 · G0.11 |
-| **1c · Grounded in reality** | the specs describe a real store and a real person | ◐ **T-017**, the store is real; a person's session is left · **T-042** · **T-007** |
+| **1c · Grounded in reality** | the specs describe a real store and a real person | ◐ **T-017**, the store is real; a person's session is under way (F-042) · ✅ T-042 · T-051 · **T-007** |
 
 ### Tier 2 · The cycle, made repeatable
 
@@ -203,6 +203,8 @@ work that is *missing*, with nothing to point at, which is why it is written dow
 
 ✅ **T-018** done 16 Sep: model plus a declared provider, checked at startup.
 
+✅ **T-042** done 18 Sep: 29 of 33 scenarios run unchanged against Saleor and say the same as against the world. The first run found F-043 (a real store refunds only against a payment) and F-044 (a customer's orders were found by searching the whole store).
+
 ✅ **T-028** done 18 Sep: both human waits are Temporal workflows — an approval is assessed, waits for a person or its expiry, and carries the refund out itself under its own realm login, so the agent can no longer write a grant; an escalation lapses on its own timer and the sweeper is deleted. With it, **T-003**: a delivery claim two processes share, whose expiry is a timer.
 
 ✅ **T-050** done 17 Sep: seven live failures routed (two scenarios, the spec, the router, the harness) and F-041 fixed, a planted note that could cancel an order. Live pass rate 0.94 → 0.98.
@@ -221,12 +223,10 @@ when Tier 2's four machinery items exist.
 
 **Tier 1 · finish production grade**
 
-1. **T-017**'s last step, **yours**: open the agent against the real store
-   (`run_server.py --store --real`) and try to get something done. Findings go in
-   `FINDINGS.md`; the prediction to beat is in the item.
-2. **T-042**: the same scenarios against the projected world and against Saleor,
-   each difference routed. Takes over T-017's step 4.
-3. **T-007**: `pass^k` reliability.
+1. **T-017**'s last step, **yours** and under way: using the agent against the
+   real store. It has already found F-042; each finding is fixed as it comes.
+2. **T-007**: `pass^k` reliability.
+3. **T-051**: the four scenarios that cannot yet run against a real store.
 
 **Tier 2 · make the cycle repeatable** (in parallel with item 1)
 
@@ -356,7 +356,7 @@ sharpens T-022 before cycle 4).
 | **T-039** | **Adopt LangWatch Scenario** for the simulated user | days | — |
 | **T-040** | **Adopt DeepEval or Inspect** for graders | days | AAC Phase 3 |
 | **T-041** | Actors and perturbations move from code into the world file | days | — |
-| **T-042** | Shadow mode: the same scenarios against the projected world and against Saleor, each difference routed. Needs an AgentTwin world that reads a real store for its checks | days | ✅ T-017's store |
+| **T-051** | The four scenarios that cannot run against a real store yet: three inject a fault into the world (`stale_read`, `slow`, `lost_reply`) and need a way to perturb a real store's MCP server; one advances days, which needs the store's delivery dates moved instead | days | ✅ T-042 |
 | **T-023** | Time passes within a turn | a day | — |
 
 ---
@@ -1750,7 +1750,14 @@ model provider is also an external system a world cannot yet perturb.
 
 #### T-042 · Shadow mode
 
-**Status** Not started. Needs T-017. **S4 · AgentTwin.**
+**Status** **Done 2026-09-18** (`reference-agent` `d2daaba`). The same scenario
+files run against Saleor through the store's own MCP server, with the checks
+reading Saleor (`evals/shadow.py`, and the second test in
+`tests/test_scenario_files.py`). Each run seeds a private copy of the world
+under a namespace, because Saleor cannot delete a completed order. **29 of 33
+pass unchanged.** The first run found F-043 and F-044, both fixed. The four that
+cannot run yet are **T-051**. `fidelity.verified_against` can now name Saleor
+for everything but those four. **S4 · AgentTwin.**
 
 A real store beside the projected one, both answering, with the difference
 recorded. Until it exists, `fidelity.verified_against` is `null` in every world,
