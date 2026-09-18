@@ -79,7 +79,7 @@ spec changes Tier 1 items forced, which is the cycle working.
 | Spec | Items |
 |---|---|
 | **AOAS** | ✅ reads of many rows (T-001) · ✅ a return is state the order holds (T-050) · T-022 · G2.4 · G2.5 |
-| **AHC** | ✅ `channel` port (T-026) · ✅ metrics, later outcomes, a synthetic run: AHC-0111, 0112, 0113 · Phase 3 blueprints · Phase 4 realizations (G3.1) · Phase 5 skeletons · G3.3 · T-048 |
+| **AHC** | ✅ `channel` port (T-026) · ✅ metrics, later outcomes, a synthetic run, the evaluation record: AHC-0111 to 0114 · Phase 3 blueprints · Phase 4 realizations (G3.1) · Phase 5 skeletons · G3.3 · T-048 |
 | **AAC** | ✅ watching a deployed system: AAC-0114, 0115, 0116 (0.16.0) · AAC-0084 for judges outside A10 · Phase 1 crosswalks · Phase 3 adapters |
 | **AgentTwin** | ✅ `authorise` hook (T-002) · ✅ many-reads and `opens` (T-001) · ✅ lasting faults, safe refusals, `forces` (T-050) · ✅ shadow mode (T-042) · ✅ reviewers keep what they saw (T-028) · T-041 |
 | **Bindings** | ✅ `open-stack` mostly current · `langgraph`, `claude-agent-sdk`, `claude-family` filled by their cycles |
@@ -282,7 +282,7 @@ sharpens T-022 before cycle 4).
 | **T-007** | `pass^k` reliability (AAC-0010) | reference-agent | a day | — |
 | **T-055** | **The numbers leave the process.** A MeterProvider, an OTel Collector, Prometheus, Grafana and Alertmanager in compose; latency histograms; the approvals counter fixed; alert rules on behaviour rates against a baseline (AHC-0111, AAC-0114, AAC-0007) | reference-agent | a day | — |
 | **T-056** | **A canary.** Scenarios through the deployed edge every ten minutes as a synthetic customer in its own namespace, marked and excluded from the rates, alerting on a failure (AHC-0113, AAC-0116) | reference-agent, agenttwin | a day | T-055 |
-| **T-057** | **Online scoring and later outcomes.** Sampled, redacted capture; a check that the reply agrees with its tools' results; a judge validated against labels; scores to Langfuse; the customer returning, a refund reversed and feedback joined to the run (AHC-0112, AAC-0014, AAC-0115, AAC-0042) | reference-agent | days | T-055 |
+| **T-057** | **Online scoring and later outcomes.** Sampled, redacted capture; a check that the reply agrees with its tools' results; a judge validated against labels; scores to Langfuse; the customer returning, a refund reversed and feedback joined to the run; the evaluation record's nine groups complete (AHC-0114, AHC-0112, AAC-0014, AAC-0115, AAC-0042) | reference-agent | days | T-055 |
 | **G0.11** | Remainder: inline grader (AHC-0028), production turn becomes a dataset row (AHC-0029), policy budget and timeout (AHC-0095), context size per release (AHC-0031) | reference-agent, AHC | days | T-040 |
 
 *Open Stack work: adopt the list, keep only the delta:*
@@ -1158,9 +1158,11 @@ Shadow mode already runs scenarios through the agent's own tools against Saleor,
 
 ### T-057 · Online scoring, and what happened afterwards
 
-**Status** Not started. Raised 2026-09-19. **Cycle 1, Tier 1b.** Repo: `reference-agent`. Statements: AHC-0112, AAC-0014, AAC-0115, AAC-0042; the judge per AHC-0081 and AHC-0028. Needs T-055. Overlaps G0.11 (AHC-0029).
+**Status** Not started. Raised 2026-09-19. **Cycle 1, Tier 1b.** Repo: `reference-agent`. Statements: AHC-0114, AHC-0112, AAC-0014, AAC-0115, AAC-0042; the judge per AHC-0081 and AHC-0028. Needs T-055. Overlaps G0.11 (AHC-0029).
 
-**Done when:** a sample of turns is captured redacted (AAC-0095); a certain check that the reply agrees with what its tools returned scores every sampled turn; a judge, versioned apart from the agent and checked against a small labelled set, scores tone and policy; scores land in Langfuse with the grader's version and are exported as metrics; and three later outcomes — the customer returning about the same order within a day, a refund reversed, explicit feedback from the channel — are recorded against the run and counted beside the scores. **Minimum slice:** the certain check plus the "came back within a day" outcome.
+The evaluation record (AHC-0114) has six of its nine groups. Missing: the words — `telemetry.set_payload` is called from nowhere, so capture switched on captures nothing — tool arguments and results, and the synthetic and sampled markers.
+
+**Done when:** every group of AHC-0114 is emitted and the span contract checks it; a sample of turns is captured redacted (AAC-0095); a certain check that the reply agrees with what its tools returned scores every sampled turn; a judge, versioned apart from the agent and checked against a small labelled set, scores tone and policy; scores land in Langfuse with the grader's version and are exported as metrics; and three later outcomes — the customer returning about the same order within a day, a refund reversed, explicit feedback from the channel — are recorded against the run and counted beside the scores. **Minimum slice:** the certain check plus the "came back within a day" outcome.
 
 ### T-049 · The first live call's replay has been broken, silently
 
