@@ -44,6 +44,6 @@ accepted_gaps: []
 
 # Adopted, with no AHC port to bind to yet: the store is reached over MCP and is
 # the world, not a harness seam.
-x_store:   { approach: open-source, adapter: saleor, x_status: target, x_item: T-017, x_note: "behind the MCP tool server; the world's resolution becomes real" }
+x_store:   { approach: open-source, adapter: saleor, x_status: current, x_item: T-017, x_note: "behind the store's own MCP server (order_system.server) with the far end's checks; seeded from the world; scenarios still run against the projection until T-042" }
 
 x_runs_from: reference-agent/compose.yaml

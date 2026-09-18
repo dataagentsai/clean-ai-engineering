@@ -41,7 +41,7 @@ store, and its reliability is measured.
 |---|---|---|
 | **1a · Runs on adopted products** | only the delta is built | ✅ T-031 · ✅ T-029 · ✅ T-002 · ✅ T-026 · ✅ T-028 · T-030 · T-027 · T-046 · T-047 · T-032 · T-016 |
 | **1b · Does the right thing** | correct, not only wired | ✅ T-001 · ✅ T-018 · ✅ T-050 (with F-041, critical) · ✅ T-005 · ✅ T-003 · T-006 · T-020 · T-024 · T-025 · T-049 · G0.11 |
-| **1c · Grounded in reality** | the specs describe a real store and a real person | **T-017** · T-042 · **T-007** |
+| **1c · Grounded in reality** | the specs describe a real store and a real person | ◐ **T-017**, the store is real; a person's session is left · **T-042** · **T-007** |
 
 ### Tier 2 · The cycle, made repeatable
 
@@ -221,20 +221,24 @@ when Tier 2's four machinery items exist.
 
 **Tier 1 · finish production grade**
 
-1. **T-017**: Saleor as the real store, and a person in front of the agent.
-2. **T-007**: `pass^k` reliability.
+1. **T-017**'s last step, **yours**: open the agent against the real store
+   (`run_server.py --store --real`) and try to get something done. Findings go in
+   `FINDINGS.md`; the prediction to beat is in the item.
+2. **T-042**: the same scenarios against the projected world and against Saleor,
+   each difference routed. Takes over T-017's step 4.
+3. **T-007**: `pass^k` reliability.
 
 **Tier 2 · make the cycle repeatable** (in parallel with item 1)
 
-3. **T-035**: the four gates as one command. Every cycle's step 6.
-4. **T-033**: stack profiles that resolve `extends`.
-5. **T-034**: the Generation Brief. Every cycle's step 4.
-6. **T-039** then **T-044**: LangWatch Scenario, and a one-step AgentTwin setup. Every cycle's step 5.
-7. **T-048**: ports as a standard, with its criteria written before cycle 2.
+4. **T-035**: the four gates as one command. Every cycle's step 6.
+5. **T-033**: stack profiles that resolve `extends`.
+6. **T-034**: the Generation Brief. Every cycle's step 4.
+7. **T-039** then **T-044**: LangWatch Scenario, and a one-step AgentTwin setup. Every cycle's step 5.
+8. **T-048**: ports as a standard, with its criteria written before cycle 2.
 
 **Tier 3 · the first axis**
 
-8. **T-036**: cycle 2, the support agent on LangGraph.
+9. **T-036**: cycle 2, the support agent on LangGraph.
 **Any time, blocking nothing:** Tier 1a T-030, T-027, T-046, T-047, T-032; Tier 1b
 T-006, T-020, T-024, T-025, T-049; Tier 3 T-013 (the Spark AOAS, cheap, and it
 sharpens T-022 before cycle 4).
@@ -260,7 +264,7 @@ sharpens T-022 before cycle 4).
 | | Item | Repo | Cost | Needs |
 |---|---|---|---|---|
 | **T-006** | A customer cannot find their own past conversations | reference-agent | days | — |
-| **T-017** | **Adopt Saleor** as the real store, and put a person in front of the agent | reference-agent | days | — |
+| **T-017** | **Saleor adopted**: composed, seeded from the world, behind the store's own MCP server with the far end's checks, and `run_server --store` in front of it. **Left: a person's session** — the scenarios against both stores moved into T-042 | reference-agent | a session | — |
 | **T-020** | Trace context and run id cross the MCP hop (AHC-0006, AHC-0026) | reference-agent | small | — |
 | **T-024** | Two release gates with no test: AAC-0051, AAC-0096 | reference-agent | a day | — |
 | **T-025** | Verify the provider price table before any figure is published | reference-agent | an hour | — |
@@ -352,7 +356,7 @@ sharpens T-022 before cycle 4).
 | **T-039** | **Adopt LangWatch Scenario** for the simulated user | days | — |
 | **T-040** | **Adopt DeepEval or Inspect** for graders | days | AAC Phase 3 |
 | **T-041** | Actors and perturbations move from code into the world file | days | — |
-| **T-042** | Shadow mode: a real store beside the projected one | days | T-017 |
+| **T-042** | Shadow mode: the same scenarios against the projected world and against Saleor, each difference routed. Needs an AgentTwin world that reads a real store for its checks | days | ✅ T-017's store |
 | **T-023** | Time passes within a turn | a day | — |
 
 ---
@@ -950,7 +954,28 @@ recognises.
 
 ### T-017 · A real store, and a human in front of it
 
-**Status** Not started. Raised 2026-09-16. **Depends on P1 (T-001; T-002 done).** The real store's tool server runs `order_system.authoriser`, and the agent's composition root wires `identity.TokenExchange` with the `support-agent` client; the simulated shop does neither.
+**Status** **The store is real, 18 Sep; a person's session is left.** In
+`reference-agent`: `0909e39` Saleor in compose under a `store` profile; `c393c26`
+the clothing world seeded into it by its own API (`deploy/saleor/seed.py`);
+`fd07ca2` the store's own MCP server (`src/order_system/server.py`) with the
+far end's checks and its own idempotency record; `b48eddf` the agent end to end
+against it; `2c8288e` `run_server.py --store`. The `ecom` schema is dropped
+(step 5): nothing read it. Step 4 moves into **T-042**, which needs an AgentTwin
+world that reads a real store for its checks.
+
+**What the crossing found**, each routed:
+
+| Found | Where it goes |
+|---|---|
+| Saleor records dispatch, never arrival, so `shipped` and `delivered` are one status there | binding: the seed writes a delivery date as metadata, and the store server tells the two apart by it. A store with a carrier integration has the real event |
+| No final-sale flag | binding: metadata |
+| A real store would not complete an order nobody can deliver — channel, warehouse, a priced shipping method, a published product in a category, an Indian address with a state | the seed; the simulation never had to care, which is the gap `fidelity.not_faithful_about` already names |
+| Saleor ships a `default-channel` in dollars, and a channel's currency cannot change once it has orders | the seed makes its own channel in rupees |
+| A refund with no payment gateway is a *granted* refund — the store's record that money is owed back | binding. Whether the spec's `refunded` should mean "granted" or "settled" is a question for the AOAS, not answered here |
+| The router recognises an order id by its shape (`[A-Z]{1,3}-\d{3,8}`); a longer one is not an order to the agent, so the consent gate finds nothing asked for | recorded. A real store's ids will not all fit one pattern — a spec gap for when T-042 runs a store whose ids differ |
+| Two statements of each eligibility rule (spec and store) and two scope tables (binding and store), on purpose | kept: a disagreement is loud, and sharing one would hide it |
+
+Raised 2026-09-16. **Depends on P1 (T-001; T-002 done).** The real store's tool server runs `order_system.authoriser`, and the agent's composition root wires `identity.TokenExchange` with the `support-agent` client; the simulated shop does neither.
 
 **Decided 2026-09-16 (the user): adopt Saleor, and this is the grounding item.**
 The user's requirement is a real e-commerce app behind the agent so that it is
