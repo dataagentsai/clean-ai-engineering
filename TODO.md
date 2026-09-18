@@ -35,12 +35,13 @@ GOAL  Every spec and every binding production grade, proven by agents of differe
 ### Tier 1 · One agent, production grade (cycle 1: support agent, Open Stack)
 
 **Exit:** the agent passes the four gates, a person has used it against a real
-store, and its reliability is measured.
+store, its reliability is measured, and whoever runs it learns it has stopped
+working before a customer does (T-055, T-056).
 
 | Layer | What it proves | Items |
 |---|---|---|
 | **1a · Runs on adopted products** | only the delta is built | ✅ T-031 · ✅ T-029 · ✅ T-002 · ✅ T-026 · ✅ T-028 · ✅ T-052 · **T-054** · T-030 · T-027 · T-046 · T-047 · T-032 · T-016 |
-| **1b · Does the right thing** | correct, not only wired | ✅ T-001 · ✅ T-018 · ✅ T-050 (with F-041, critical) · ✅ T-005 · ✅ T-003 · T-053 · T-006 · T-020 · T-024 · T-025 · T-049 · G0.11 |
+| **1b · Does the right thing** | correct, not only wired | ✅ T-001 · ✅ T-018 · ✅ T-050 (with F-041, critical) · ✅ T-005 · ✅ T-003 · **T-055** · **T-056** · T-057 · T-053 · T-006 · T-020 · T-024 · T-025 · T-049 · G0.11 |
 | **1c · Grounded in reality** | the specs describe a real store and a real person | ◐ **T-017**, the store is real; a person's session is under way (F-042) · ✅ T-042 · T-051 · **T-007** |
 
 ### Tier 2 · The cycle, made repeatable
@@ -78,8 +79,8 @@ spec changes Tier 1 items forced, which is the cycle working.
 | Spec | Items |
 |---|---|
 | **AOAS** | ✅ reads of many rows (T-001) · ✅ a return is state the order holds (T-050) · T-022 · G2.4 · G2.5 |
-| **AHC** | ✅ `channel` port (T-026) · Phase 3 blueprints · Phase 4 realizations (G3.1) · Phase 5 skeletons · G3.3 · T-048 |
-| **AAC** | Phase 1 crosswalks · Phase 3 adapters |
+| **AHC** | ✅ `channel` port (T-026) · ✅ metrics, later outcomes, a synthetic run: AHC-0111, 0112, 0113 · Phase 3 blueprints · Phase 4 realizations (G3.1) · Phase 5 skeletons · G3.3 · T-048 |
+| **AAC** | ✅ watching a deployed system: AAC-0114, 0115, 0116 (0.16.0) · AAC-0084 for judges outside A10 · Phase 1 crosswalks · Phase 3 adapters |
 | **AgentTwin** | ✅ `authorise` hook (T-002) · ✅ many-reads and `opens` (T-001) · ✅ lasting faults, safe refusals, `forces` (T-050) · ✅ shadow mode (T-042) · ✅ reviewers keep what they saw (T-028) · T-041 |
 | **Bindings** | ✅ `open-stack` mostly current · `langgraph`, `claude-agent-sdk`, `claude-family` filled by their cycles |
 
@@ -230,20 +231,24 @@ when Tier 2's four machinery items exist.
 1. **T-054**: the order system out of the agent's process, as an MCP service over streamable HTTP, and the MCP standard where we deviate.
 2. **T-017**'s last step, **yours** and under way: using the agent against the
    real store. It has already found F-042; each finding is fixed as it comes.
-3. **T-007**: `pass^k` reliability.
-4. **T-051**: the four scenarios that cannot yet run against a real store.
+3. **T-055**: the agent's numbers leave the process — a Collector, Prometheus,
+   Grafana and Alertmanager, latency histograms, and alerts on behaviour rates.
+4. **T-056**: a canary — scenarios through the deployed edge every ten minutes.
+5. **T-007**: `pass^k` reliability.
+6. **T-057**: online scoring, and later outcomes joined to their runs.
+7. **T-051**: the four scenarios that cannot yet run against a real store.
 
 **Tier 2 · make the cycle repeatable** (in parallel with item 1)
 
-5. **T-035**: the four gates as one command. Every cycle's step 6.
-6. **T-033**: stack profiles that resolve `extends`.
-7. **T-034**: the Generation Brief. Every cycle's step 4.
-8. **T-039** then **T-044**: LangWatch Scenario, and a one-step AgentTwin setup. Every cycle's step 5.
-9. **T-048**: ports as a standard, with its criteria written before cycle 2.
+8. **T-035**: the four gates as one command. Every cycle's step 6.
+9. **T-033**: stack profiles that resolve `extends`.
+10. **T-034**: the Generation Brief. Every cycle's step 4.
+11. **T-039** then **T-044**: LangWatch Scenario, and a one-step AgentTwin setup. Every cycle's step 5.
+12. **T-048**: ports as a standard, with its criteria written before cycle 2.
 
 **Tier 3 · the first axis**
 
-10. **T-036**: cycle 2, the support agent on LangGraph.
+13. **T-036**: cycle 2, the support agent on LangGraph.
 **Any time, blocking nothing:** Tier 1a T-030, T-027, T-046, T-047, T-032; Tier 1b
 T-006, T-020, T-024, T-025, T-049; Tier 3 T-013 (the Spark AOAS, cheap, and it
 sharpens T-022 before cycle 4).
@@ -275,6 +280,9 @@ sharpens T-022 before cycle 4).
 | **T-025** | Verify the provider price table before any figure is published | reference-agent | an hour | — |
 | **T-049** | `first_real_call.py --replay` has failed since the cassette began requiring a declared context; nothing runs it | reference-agent | an hour | — |
 | **T-007** | `pass^k` reliability (AAC-0010) | reference-agent | a day | — |
+| **T-055** | **The numbers leave the process.** A MeterProvider, an OTel Collector, Prometheus, Grafana and Alertmanager in compose; latency histograms; the approvals counter fixed; alert rules on behaviour rates against a baseline (AHC-0111, AAC-0114, AAC-0007) | reference-agent | a day | — |
+| **T-056** | **A canary.** Scenarios through the deployed edge every ten minutes as a synthetic customer in its own namespace, marked and excluded from the rates, alerting on a failure (AHC-0113, AAC-0116) | reference-agent, agenttwin | a day | T-055 |
+| **T-057** | **Online scoring and later outcomes.** Sampled, redacted capture; a check that the reply agrees with its tools' results; a judge validated against labels; scores to Langfuse; the customer returning, a refund reversed and feedback joined to the run (AHC-0112, AAC-0014, AAC-0115, AAC-0042) | reference-agent | days | T-055 |
 | **G0.11** | Remainder: inline grader (AHC-0028), production turn becomes a dataset row (AHC-0029), policy budget and timeout (AHC-0095), context size per release (AHC-0031) | reference-agent, AHC | days | T-040 |
 
 *Open Stack work: adopt the list, keep only the delta:*
@@ -1131,6 +1139,28 @@ policy is prose in a prompt where ours is declared and machine-checkable — tak
 their cases would mean giving that up. **Do** read the retail policy document as
 a cross-check on the AOAS: it is 115 tasks' worth of edge cases somebody has
 already thought through for a retail support agent.
+
+### T-055 · The numbers leave the process
+
+**Status** Not started. Raised 2026-09-19, asking whether an operator would learn of a broken agent before a customer did. **Cycle 1, Tier 1b.** Repo: `reference-agent`. Statements: AHC-0111, AAC-0114, AAC-0007.
+
+Seven counters are defined in `telemetry/counters.py`, labelled from closed sets and recorded where a turn ends — and no `MeterProvider` is configured, so every one of them records into the no-op provider. The approvals counter counts only `requested` since T-028 moved decisions into Temporal. There is no latency histogram at all.
+
+**Done when:** an OTel Collector, Prometheus, Grafana and Alertmanager run in compose; the agent exports metrics and fails to start in a deployed profile without an exporter; latency histograms exist for the turn, each model call and each tool; approvals count `granted`, `refused` and `expired` from the workflow; a dashboard answers the operator's questions in the single page; and alert rules on escalation, refusal, malformed-model and p95-cost rates against a baseline fire in a test that replays a day with one rule forced. **Minimum slice:** the MeterProvider and Prometheus, with one alert on escalation rate.
+
+### T-056 · A canary through the deployed edge
+
+**Status** Not started. Raised 2026-09-19. **Cycle 1, Tier 1b.** Repos: `reference-agent`, `agenttwin`. Statements: AHC-0113, AAC-0116. Needs T-055.
+
+Shadow mode already runs scenarios through the agent's own tools against Saleor, and seeding into a namespace gives a customer data only it owns. Neither runs against the *deployed* edge — the portal login, Keycloak, LiteLLM, Temporal — nor on a schedule, nor alerts.
+
+**Done when:** a synthetic customer in its own realm user and Saleor namespace runs about eight scenarios through `/chat` every ten minutes; its runs carry a marker every production rate excludes; a failed case or a missed run alerts; and a deliberately broken dependency (a rotated LiteLLM key) fails it within one period. **Minimum slice:** one read scenario on a schedule with an alert.
+
+### T-057 · Online scoring, and what happened afterwards
+
+**Status** Not started. Raised 2026-09-19. **Cycle 1, Tier 1b.** Repo: `reference-agent`. Statements: AHC-0112, AAC-0014, AAC-0115, AAC-0042; the judge per AHC-0081 and AHC-0028. Needs T-055. Overlaps G0.11 (AHC-0029).
+
+**Done when:** a sample of turns is captured redacted (AAC-0095); a certain check that the reply agrees with what its tools returned scores every sampled turn; a judge, versioned apart from the agent and checked against a small labelled set, scores tone and policy; scores land in Langfuse with the grader's version and are exported as metrics; and three later outcomes — the customer returning about the same order within a day, a refund reversed, explicit feedback from the channel — are recorded against the run and counted beside the scores. **Minimum slice:** the certain check plus the "came back within a day" outcome.
 
 ### T-049 · The first live call's replay has been broken, silently
 
