@@ -39,7 +39,7 @@ store, and its reliability is measured.
 
 | Layer | What it proves | Items |
 |---|---|---|
-| **1a · Runs on adopted products** | only the delta is built | ✅ T-031 · ✅ T-029 · ✅ T-002 · ✅ T-026 · ✅ T-028 · ✅ T-052 · T-030 · T-027 · T-046 · T-047 · T-032 · T-016 |
+| **1a · Runs on adopted products** | only the delta is built | ✅ T-031 · ✅ T-029 · ✅ T-002 · ✅ T-026 · ✅ T-028 · ✅ T-052 · **T-054** · T-030 · T-027 · T-046 · T-047 · T-032 · T-016 |
 | **1b · Does the right thing** | correct, not only wired | ✅ T-001 · ✅ T-018 · ✅ T-050 (with F-041, critical) · ✅ T-005 · ✅ T-003 · T-053 · T-006 · T-020 · T-024 · T-025 · T-049 · G0.11 |
 | **1c · Grounded in reality** | the specs describe a real store and a real person | ◐ **T-017**, the store is real; a person's session is under way (F-042) · ✅ T-042 · T-051 · **T-007** |
 
@@ -227,22 +227,23 @@ when Tier 2's four machinery items exist.
 
 **Tier 1 · finish production grade**
 
-1. **T-017**'s last step, **yours** and under way: using the agent against the
+1. **T-054**: the order system out of the agent's process, as an MCP service over streamable HTTP, and the MCP standard where we deviate.
+2. **T-017**'s last step, **yours** and under way: using the agent against the
    real store. It has already found F-042; each finding is fixed as it comes.
-2. **T-007**: `pass^k` reliability.
-3. **T-051**: the four scenarios that cannot yet run against a real store.
+3. **T-007**: `pass^k` reliability.
+4. **T-051**: the four scenarios that cannot yet run against a real store.
 
 **Tier 2 · make the cycle repeatable** (in parallel with item 1)
 
-4. **T-035**: the four gates as one command. Every cycle's step 6.
-5. **T-033**: stack profiles that resolve `extends`.
-6. **T-034**: the Generation Brief. Every cycle's step 4.
-7. **T-039** then **T-044**: LangWatch Scenario, and a one-step AgentTwin setup. Every cycle's step 5.
-8. **T-048**: ports as a standard, with its criteria written before cycle 2.
+5. **T-035**: the four gates as one command. Every cycle's step 6.
+6. **T-033**: stack profiles that resolve `extends`.
+7. **T-034**: the Generation Brief. Every cycle's step 4.
+8. **T-039** then **T-044**: LangWatch Scenario, and a one-step AgentTwin setup. Every cycle's step 5.
+9. **T-048**: ports as a standard, with its criteria written before cycle 2.
 
 **Tier 3 · the first axis**
 
-9. **T-036**: cycle 2, the support agent on LangGraph.
+10. **T-036**: cycle 2, the support agent on LangGraph.
 **Any time, blocking nothing:** Tier 1a T-030, T-027, T-046, T-047, T-032; Tier 1b
 T-006, T-020, T-024, T-025, T-049; Tier 3 T-013 (the Spark AOAS, cheap, and it
 sharpens T-022 before cycle 4).
@@ -362,6 +363,7 @@ sharpens T-022 before cycle 4).
 | **T-041** | Actors and perturbations move from code into the world file | days | — |
 | **T-051** | The four scenarios that cannot run against a real store yet: three inject a fault into the world (`stale_read`, `slow`, `lost_reply`) and need a way to perturb a real store's MCP server; one advances days, which needs the store's delivery dates moved instead | days | ✅ T-042 |
 | **T-053** | `test_the_four_reviewers[answers after the window]` failed once under the full suite's load (the reviewer was never shown the approval) and passes alone. Find why before it is trusted as a gate | days | — |
+| **T-054** | The order system as its own MCP service over **streamable HTTP**, with the MCP standard where we deviate today: tool annotations (`readOnlyHint`, `destructiveHint`, `idempotentHint`) beside our `side_effect`; prefixed `_meta` keys; the connection authorised per the MCP authorization spec, the customer's delegated token still per call. See the item | reference-agent | days | — |
 | **T-023** | Time passes within a turn | a day | — |
 
 ---
@@ -1752,6 +1754,40 @@ Actors and perturbations are declared in code (`actor.py`, `perturbation.py`),
 not in the world file, so a new agent's scenarios cannot declare them. That is
 step 5 of every cycle, which makes this a blocker for T-044 in practice. The
 model provider is also an external system a world cannot yet perturb.
+
+#### T-054 · The order system as its own MCP service
+
+**Status** Not started. Raised 2026-09-19. **Tier 1a.** Repo: `reference-agent`.
+
+**Why.** The store's MCP server (`src/order_system/server.py`) and the agent's
+MCP client meet in one Python process, through the SDK's in-memory transport. The
+checks are already written as if the two were apart — the store verifies a token
+addressed to it and trusts nothing the caller asserts — but a far end that runs
+inside the caller is not one. `AGENT_MCP_BASE_URL` exists in the config and
+nothing serves it.
+
+**What.**
+
+1. Serve `order_system.server` with the SDK's **streamable HTTP** transport as a
+   compose service in the `store` profile, with its own Saleor credentials; the
+   agent and the approvals worker `connect()` to its URL.
+2. Where we deviate from the MCP specification, meet it:
+   - **Tool annotations.** Declare `readOnlyHint`, `destructiveHint` and
+     `idempotentHint` — the specification's own words for what `side_effect`
+     says — so a client that is not ours reads the same thing. Keep
+     `side_effect`, which says more (reversible vs irreversible).
+   - **`_meta` keys.** Tool-level `side_effect` and `required_scope` carry no
+     prefix; give them one, as the request-level `aoas/…` keys already have.
+   - **Authorization.** The specification authorises the *connection* with OAuth
+     2.1 at the HTTP layer. Authorise the agent's connection that way (its own
+     client credential); the customer's delegated token stays per call in
+     `_meta`, because one connection serves many customers and the store must
+     know whose each call is.
+3. The live tests and shadow mode run against the service, not the object.
+
+**Done when** the agent reaches the store only over HTTP, `tests/test_store_live.py`
+and shadow mode pass that way, and an MCP client that is not ours (the SDK's
+inspector) lists the tools with correct annotations.
 
 #### T-042 · Shadow mode
 
