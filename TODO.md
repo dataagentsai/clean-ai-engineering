@@ -80,15 +80,17 @@ spec changes Tier 1 items forced, which is the cycle working.
 | **AOAS** | ✅ reads of many rows (T-001) · ✅ a return is state the order holds (T-050) · T-022 · G2.4 · G2.5 |
 | **AHC** | ✅ `channel` port (T-026) · Phase 3 blueprints · Phase 4 realizations (G3.1) · Phase 5 skeletons · G3.3 · T-048 |
 | **AAC** | Phase 1 crosswalks · Phase 3 adapters |
-| **AgentTwin** | ✅ `authorise` hook (T-002) · ✅ many-reads and `opens` (T-001) · ✅ lasting faults, safe refusals, `forces` (T-050) · T-041 · T-042 |
+| **AgentTwin** | ✅ `authorise` hook (T-002) · ✅ many-reads and `opens` (T-001) · ✅ lasting faults, safe refusals, `forces` (T-050) · ✅ shadow mode (T-042) · ✅ reviewers keep what they saw (T-028) · T-041 |
 | **Bindings** | ✅ `open-stack` mostly current · `langgraph`, `claude-agent-sdk`, `claude-family` filled by their cycles |
 
 ### What the tiers say about order
 
-- **Tier 1 is adopted but not yet production grade.** 1b is largely closed: T-050
-  routed seven live failures and found F-041, a planted note that could cancel an
-  order. 1c has not started: nobody real has used the agent, and its reliability
-  is unmeasured.
+- **Tier 1 is nearly there.** 1a's must-haves are adopted (Temporal, Keycloak,
+  LiteLLM, Chatwoot, Saleor). 1b is closed but for small items. 1c is under way:
+  the agent runs against Saleor, 29 of 33 scenarios say the same there as against
+  the world (T-042), and a person is using it (F-042 was the first thing they
+  found, 18 Sep). What is left for the exit: that session to finish, and T-007,
+  reliability measured.
 - **Tier 2 is the bottleneck.** No second agent starts until T-033, T-034, T-035 and
   T-044 exist, and none of them has.
 - **Tier 1a's remaining adoptions block nothing downstream.** T-030, T-027, T-046
