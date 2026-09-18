@@ -39,8 +39,8 @@ store, and its reliability is measured.
 
 | Layer | What it proves | Items |
 |---|---|---|
-| **1a · Runs on adopted products** | only the delta is built | ✅ T-031 · ✅ T-029 · ✅ T-002 · ✅ T-026 · ✅ T-028 · T-030 · T-027 · T-046 · T-047 · T-032 · T-016 |
-| **1b · Does the right thing** | correct, not only wired | ✅ T-001 · ✅ T-018 · ✅ T-050 (with F-041, critical) · ✅ T-005 · ✅ T-003 · T-006 · T-020 · T-024 · T-025 · T-049 · G0.11 |
+| **1a · Runs on adopted products** | only the delta is built | ✅ T-031 · ✅ T-029 · ✅ T-002 · ✅ T-026 · ✅ T-028 · ✅ T-052 · T-030 · T-027 · T-046 · T-047 · T-032 · T-016 |
+| **1b · Does the right thing** | correct, not only wired | ✅ T-001 · ✅ T-018 · ✅ T-050 (with F-041, critical) · ✅ T-005 · ✅ T-003 · T-053 · T-006 · T-020 · T-024 · T-025 · T-049 · G0.11 |
 | **1c · Grounded in reality** | the specs describe a real store and a real person | ◐ **T-017**, the store is real; a person's session is under way (F-042) · ✅ T-042 · T-051 · **T-007** |
 
 ### Tier 2 · The cycle, made repeatable
@@ -205,6 +205,8 @@ work that is *missing*, with nothing to point at, which is why it is written dow
 
 ✅ **T-018** done 16 Sep: model plus a declared provider, checked at startup.
 
+✅ **T-052** done 18 Sep: every chat turn is a trace in Langfuse, found by customer or conversation, with each model call's tokens and cost — priced from the agent's own table. It had been marked current since 16 Sep and never looked at.
+
 ✅ **T-042** done 18 Sep: 29 of 33 scenarios run unchanged against Saleor and say the same as against the world. The first run found F-043 (a real store refunds only against a payment) and F-044 (a customer's orders were found by searching the whole store).
 
 ✅ **T-028** done 18 Sep: both human waits are Temporal workflows — an approval is assessed, waits for a person or its expiry, and carries the refund out itself under its own realm login, so the agent can no longer write a grant; an escalation lapses on its own timer and the sweeper is deleted. With it, **T-003**: a delivery claim two processes share, whose expiry is a timer.
@@ -359,6 +361,7 @@ sharpens T-022 before cycle 4).
 | **T-040** | **Adopt DeepEval or Inspect** for graders | days | AAC Phase 3 |
 | **T-041** | Actors and perturbations move from code into the world file | days | — |
 | **T-051** | The four scenarios that cannot run against a real store yet: three inject a fault into the world (`stale_read`, `slow`, `lost_reply`) and need a way to perturb a real store's MCP server; one advances days, which needs the store's delivery dates moved instead | days | ✅ T-042 |
+| **T-053** | `test_the_four_reviewers[answers after the window]` failed once under the full suite's load (the reviewer was never shown the approval) and passes alone. Find why before it is trusted as a gate | days | — |
 | **T-023** | Time passes within a turn | a day | — |
 
 ---
