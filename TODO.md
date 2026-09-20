@@ -40,7 +40,7 @@ working before a customer does (T-055, T-056).
 
 | Layer | What it proves | Items |
 |---|---|---|
-| **1a · Runs on adopted products** | only the delta is built | ✅ T-031 · ✅ T-029 · ✅ T-002 · ✅ T-026 · ✅ T-028 · ✅ T-052 · **T-054** · T-030 · T-027 · T-046 · T-047 · T-032 · T-016 |
+| **1a · Runs on adopted products** | only the delta is built | ✅ T-031 · ✅ T-029 · ✅ T-002 · ✅ T-026 · ✅ T-028 · ✅ T-052 · T-054 · T-030 · T-027 · T-046 · T-047 · T-032 · T-016 |
 | **1b · Does the right thing** | correct, not only wired | ✅ T-001 · ✅ T-018 · ✅ T-050 (with F-041, critical) · ✅ T-005 · ✅ T-003 · ✅ T-055 · ✅ T-056 · ✅ T-059 · ◐ T-057 · T-058 · T-053 · T-006 · T-020 · T-024 · T-025 · T-049 · G0.11 |
 | **1c · Grounded in reality** | the specs describe a real store and a real person | ◐ **T-017**, the store is real; a person's session is under way (F-042) · ✅ T-042 · T-051 · **T-007** |
 
@@ -232,27 +232,29 @@ when Tier 2's four machinery items exist.
 
 **Tier 1 · finish production grade**
 
-1. **T-054**: the order system out of the agent's process, as an MCP service over streamable HTTP, and the MCP standard where we deviate.
-2. **T-017**'s last step, **yours** and under way: using the agent against the
+1. **T-017**'s last step, **yours** and under way: using the agent against the
    real store. It has already found F-042; each finding is fixed as it comes.
-3. **T-007**: `pass^k` reliability.
-4. **T-057**'s remainder: the model-graded rubric (Langfuse's evaluator, checked
+2. **T-007**: `pass^k` reliability.
+3. **T-057**'s remainder: the model-graded rubric (Langfuse's evaluator, checked
    against labels first, AAC-0084) and feedback buttons in the chat.
-5. **T-058**: the ten patterns with a signal and no detector yet.
-6. **T-051**: the four scenarios that cannot yet run against a real store.
+4. **T-058**: the ten patterns with a signal and no detector yet.
+5. **T-051**: the four scenarios that cannot yet run against a real store.
 
-**Tier 2 · make the cycle repeatable** (in parallel with item 1)
+**Tier 2 · make the cycle repeatable** (in parallel with the items above)
 
-7. **T-035**: the four gates as one command. Every cycle's step 6.
-9. **T-033**: stack profiles that resolve `extends`.
-10. **T-034**: the Generation Brief. Every cycle's step 4.
-11. **T-039** then **T-044**: LangWatch Scenario, and a one-step AgentTwin setup. Every cycle's step 5.
-12. **T-048**: ports as a standard, with its criteria written before cycle 2.
+6. **T-035**: the four gates as one command. Every cycle's step 6.
+7. **T-033**: stack profiles that resolve `extends`.
+8. **T-034**: the Generation Brief. Every cycle's step 4.
+9. **T-039** then **T-044**: LangWatch Scenario, and a one-step AgentTwin setup. Every cycle's step 5.
+10. **T-048**: ports as a standard, with its criteria written before cycle 2.
 
 **Tier 3 · the first axis**
 
-13. **T-036**: cycle 2, the support agent on LangGraph.
-**Any time, blocking nothing:** Tier 1a T-030, T-027, T-046, T-047, T-032; Tier 1b
+11. **T-036**: cycle 2, the support agent on LangGraph.
+**Any time, blocking nothing:** Tier 1a **T-054** (deprioritised 2026-09-20: the
+store is already behind its own MCP server with the far end's checks; moving it
+out of the process changes the transport, not what is checked), T-030, T-027,
+T-046, T-047, T-032; Tier 1b
 T-006, T-020, T-024, T-025, T-049; Tier 3 T-013 (the Spark AOAS, cheap, and it
 sharpens T-022 before cycle 4).
 
