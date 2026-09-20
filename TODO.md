@@ -41,7 +41,7 @@ working before a customer does (T-055, T-056).
 | Layer | What it proves | Items |
 |---|---|---|
 | **1a · Runs on adopted products** | only the delta is built | ✅ T-031 · ✅ T-029 · ✅ T-002 · ✅ T-026 · ✅ T-028 · ✅ T-052 · **T-054** · T-030 · T-027 · T-046 · T-047 · T-032 · T-016 |
-| **1b · Does the right thing** | correct, not only wired | ✅ T-001 · ✅ T-018 · ✅ T-050 (with F-041, critical) · ✅ T-005 · ✅ T-003 · ✅ T-055 · ✅ T-056 · ◐ T-057 · T-058 · T-053 · T-006 · T-020 · T-024 · T-025 · T-049 · G0.11 |
+| **1b · Does the right thing** | correct, not only wired | ✅ T-001 · ✅ T-018 · ✅ T-050 (with F-041, critical) · ✅ T-005 · ✅ T-003 · ✅ T-055 · ✅ T-056 · ◐ T-057 · **T-059** · T-058 · T-053 · T-006 · T-020 · T-024 · T-025 · T-049 · G0.11 |
 | **1c · Grounded in reality** | the specs describe a real store and a real person | ◐ **T-017**, the store is real; a person's session is under way (F-042) · ✅ T-042 · T-051 · **T-007** |
 
 ### Tier 2 · The cycle, made repeatable
@@ -236,20 +236,22 @@ when Tier 2's four machinery items exist.
 3. **T-007**: `pass^k` reliability.
 4. **T-057**'s remainder: the model-graded rubric (Langfuse's evaluator, checked
    against labels first, AAC-0084) and feedback buttons in the chat.
-5. **T-058**: the ten patterns with a signal and no detector yet.
-6. **T-051**: the four scenarios that cannot yet run against a real store.
+5. **T-059**: the approvals desk — a surface to decide on, and Chatwoot telling
+   the person it is waiting. Without it every approval expires unattended.
+6. **T-058**: the ten patterns with a signal and no detector yet.
+7. **T-051**: the four scenarios that cannot yet run against a real store.
 
 **Tier 2 · make the cycle repeatable** (in parallel with item 1)
 
-7. **T-035**: the four gates as one command. Every cycle's step 6.
-8. **T-033**: stack profiles that resolve `extends`.
-9. **T-034**: the Generation Brief. Every cycle's step 4.
-10. **T-039** then **T-044**: LangWatch Scenario, and a one-step AgentTwin setup. Every cycle's step 5.
-11. **T-048**: ports as a standard, with its criteria written before cycle 2.
+8. **T-035**: the four gates as one command. Every cycle's step 6.
+9. **T-033**: stack profiles that resolve `extends`.
+10. **T-034**: the Generation Brief. Every cycle's step 4.
+11. **T-039** then **T-044**: LangWatch Scenario, and a one-step AgentTwin setup. Every cycle's step 5.
+12. **T-048**: ports as a standard, with its criteria written before cycle 2.
 
 **Tier 3 · the first axis**
 
-12. **T-036**: cycle 2, the support agent on LangGraph.
+13. **T-036**: cycle 2, the support agent on LangGraph.
 **Any time, blocking nothing:** Tier 1a T-030, T-027, T-046, T-047, T-032; Tier 1b
 T-006, T-020, T-024, T-025, T-049; Tier 3 T-013 (the Spark AOAS, cheap, and it
 sharpens T-022 before cycle 4).
@@ -283,6 +285,7 @@ sharpens T-022 before cycle 4).
 | **T-007** | `pass^k` reliability (AAC-0010) | reference-agent | a day | — |
 | **T-055** | **The numbers leave the process.** A MeterProvider, an OTel Collector, Prometheus, Grafana and Alertmanager in compose; latency histograms; the approvals counter fixed; alert rules on behaviour rates against a baseline (AHC-0111, AAC-0114, AAC-0007) | reference-agent | a day | — |
 | **T-056** | **A canary.** Scenarios through the deployed edge every ten minutes as a synthetic customer in its own namespace, marked and excluded from the rates, alerting on a failure (AHC-0113, AAC-0116) | reference-agent, agenttwin | a day | T-055 |
+| **T-059** | **The approvals desk: a surface, and a push through Chatwoot.** Today an approval can only be decided from code, so every one expires unless somebody writes Python. Needed: `/ops/approvals` (list, read, decide) beside the escalations routes; a notify activity on `ApprovalWorkflow` that reopens the Chatwoot conversation with a private note at raise and once before expiry, through the channel port; and one desk page showing both queues. The decision stays in the system — the message carries a link, never a verdict | reference-agent | a day | — |
 | **T-058** | **Ten patterns with a signal and no detector**, listed with the reason in `watch/rules.py` `NOT_YET`: a configuration fingerprint on the rates (AACP-0002, 0055), truncation and unknown-tool and schema-failure counts (0004, 0023, 0024), tools offered as a metric (0026), a per-conversation metric (0043), the escalation verdict by rule (0044), tokens per turn in the record (0003), one form for model names (0054) | reference-agent | days | ✅ T-055 |
 | **T-057** | **Online scoring and later outcomes.** Sampled, redacted capture; a check that the reply agrees with its tools' results; a judge validated against labels; scores to Langfuse; the customer returning, a refund reversed and feedback joined to the run; the evaluation record's nine groups complete (AHC-0114, AHC-0112, AAC-0014, AAC-0115, AAC-0042) | reference-agent | days | T-055 |
 | **G0.11** | Remainder: inline grader (AHC-0028), production turn becomes a dataset row (AHC-0029), policy budget and timeout (AHC-0095), context size per release (AHC-0031) | reference-agent, AHC | days | T-040 |
@@ -398,6 +401,7 @@ sharpens T-022 before cycle 4).
 | **Hybrid**: mechanism in a library, seams written per agent. What keeps it honest is each new cycle. **Falsified by** a hotel agent that has to edit a mechanism module, with `policy.CLAIM_PATTERNS` the named suspect | 2026-09-13 |
 | **Escalation queue** was a Postgres table plus `LISTEN/NOTIFY`, not a broker. **The wait is a Temporal workflow since T-028**, and the table is gone | 2026-09-06, revised 2026-09-18 |
 | **Rules stay in the project's own predicate language**, not CEL or OPA, because AgentTwin's oracle reads that vocabulary | 2026-09-06 |
+| **Telling a person there is work is the channel's job — Chatwoot, for approvals as well as escalations.** Temporal holds the record, the rule and the timer and pushes to nobody; the desk API decides. Email, Slack and a pager stay possible behind the same port, and none is wired: the approver and the colleague are the same person in the same inbox. An approval must never be decided by clicking a link in a message — mail scanners click links — so a notification is a doorbell and the decision happens in the system | 2026-09-20 |
 | **Spec first, per change** | G0 |
 
 ### Open source: adopt, evaluate, leave, build
