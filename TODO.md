@@ -41,7 +41,7 @@ working before a customer does (T-055, T-056).
 | Layer | What it proves | Items |
 |---|---|---|
 | **1a · Runs on adopted products** | only the delta is built | ✅ T-031 · ✅ T-029 · ✅ T-002 · ✅ T-026 · ✅ T-028 · ✅ T-052 · **T-054** · T-030 · T-027 · T-046 · T-047 · T-032 · T-016 |
-| **1b · Does the right thing** | correct, not only wired | ✅ T-001 · ✅ T-018 · ✅ T-050 (with F-041, critical) · ✅ T-005 · ✅ T-003 · **T-055** · **T-056** · T-057 · T-053 · T-006 · T-020 · T-024 · T-025 · T-049 · G0.11 |
+| **1b · Does the right thing** | correct, not only wired | ✅ T-001 · ✅ T-018 · ✅ T-050 (with F-041, critical) · ✅ T-005 · ✅ T-003 · ✅ T-055 · ✅ T-056 · ◐ T-057 · T-058 · T-053 · T-006 · T-020 · T-024 · T-025 · T-049 · G0.11 |
 | **1c · Grounded in reality** | the specs describe a real store and a real person | ◐ **T-017**, the store is real; a person's session is under way (F-042) · ✅ T-042 · T-051 · **T-007** |
 
 ### Tier 2 · The cycle, made repeatable
@@ -206,6 +206,8 @@ work that is *missing*, with nothing to point at, which is why it is written dow
 
 ✅ **T-018** done 16 Sep: model plus a declared provider, checked at startup.
 
+✅ **T-055, T-056** done 19 Sep, and most of **T-057**: the agent's numbers leave the process (an OTel Collector, Prometheus, Alertmanager, Grafana, with traces through the collector's queue), a canary signs in as C-7001 and crosses every hop every ten minutes, and an online watch runs 20 turn rules and 2 conversation rules over sampled turns in Langfuse and writes its verdicts back as scores. Every rule implements a pattern in AAC's catalog, which grew a `signal` and 38 patterns (AACP-0019 to 0056). Found live: F-047, F-048, and telemetry lost to Langfuse timeouts (AACP-0056).
+
 ✅ **T-052** done 18 Sep: every chat turn is a trace in Langfuse, found by customer or conversation, with each model call's tokens and cost — priced from the agent's own table. It had been marked current since 16 Sep and never looked at.
 
 ✅ **T-042** done 18 Sep: 29 of 33 scenarios run unchanged against Saleor and say the same as against the world. The first run found F-043 (a real store refunds only against a payment) and F-044 (a customer's orders were found by searching the whole store).
@@ -231,24 +233,23 @@ when Tier 2's four machinery items exist.
 1. **T-054**: the order system out of the agent's process, as an MCP service over streamable HTTP, and the MCP standard where we deviate.
 2. **T-017**'s last step, **yours** and under way: using the agent against the
    real store. It has already found F-042; each finding is fixed as it comes.
-3. **T-055**: the agent's numbers leave the process — a Collector, Prometheus,
-   Grafana and Alertmanager, latency histograms, and alerts on behaviour rates.
-4. **T-056**: a canary — scenarios through the deployed edge every ten minutes.
-5. **T-007**: `pass^k` reliability.
-6. **T-057**: online scoring, and later outcomes joined to their runs.
-7. **T-051**: the four scenarios that cannot yet run against a real store.
+3. **T-007**: `pass^k` reliability.
+4. **T-057**'s remainder: the model-graded rubric (Langfuse's evaluator, checked
+   against labels first, AAC-0084) and feedback buttons in the chat.
+5. **T-058**: the ten patterns with a signal and no detector yet.
+6. **T-051**: the four scenarios that cannot yet run against a real store.
 
 **Tier 2 · make the cycle repeatable** (in parallel with item 1)
 
-8. **T-035**: the four gates as one command. Every cycle's step 6.
-9. **T-033**: stack profiles that resolve `extends`.
-10. **T-034**: the Generation Brief. Every cycle's step 4.
-11. **T-039** then **T-044**: LangWatch Scenario, and a one-step AgentTwin setup. Every cycle's step 5.
-12. **T-048**: ports as a standard, with its criteria written before cycle 2.
+7. **T-035**: the four gates as one command. Every cycle's step 6.
+8. **T-033**: stack profiles that resolve `extends`.
+9. **T-034**: the Generation Brief. Every cycle's step 4.
+10. **T-039** then **T-044**: LangWatch Scenario, and a one-step AgentTwin setup. Every cycle's step 5.
+11. **T-048**: ports as a standard, with its criteria written before cycle 2.
 
 **Tier 3 · the first axis**
 
-13. **T-036**: cycle 2, the support agent on LangGraph.
+12. **T-036**: cycle 2, the support agent on LangGraph.
 **Any time, blocking nothing:** Tier 1a T-030, T-027, T-046, T-047, T-032; Tier 1b
 T-006, T-020, T-024, T-025, T-049; Tier 3 T-013 (the Spark AOAS, cheap, and it
 sharpens T-022 before cycle 4).
@@ -282,6 +283,7 @@ sharpens T-022 before cycle 4).
 | **T-007** | `pass^k` reliability (AAC-0010) | reference-agent | a day | — |
 | **T-055** | **The numbers leave the process.** A MeterProvider, an OTel Collector, Prometheus, Grafana and Alertmanager in compose; latency histograms; the approvals counter fixed; alert rules on behaviour rates against a baseline (AHC-0111, AAC-0114, AAC-0007) | reference-agent | a day | — |
 | **T-056** | **A canary.** Scenarios through the deployed edge every ten minutes as a synthetic customer in its own namespace, marked and excluded from the rates, alerting on a failure (AHC-0113, AAC-0116) | reference-agent, agenttwin | a day | T-055 |
+| **T-058** | **Ten patterns with a signal and no detector**, listed with the reason in `watch/rules.py` `NOT_YET`: a configuration fingerprint on the rates (AACP-0002, 0055), truncation and unknown-tool and schema-failure counts (0004, 0023, 0024), tools offered as a metric (0026), a per-conversation metric (0043), the escalation verdict by rule (0044), tokens per turn in the record (0003), one form for model names (0054) | reference-agent | days | ✅ T-055 |
 | **T-057** | **Online scoring and later outcomes.** Sampled, redacted capture; a check that the reply agrees with its tools' results; a judge validated against labels; scores to Langfuse; the customer returning, a refund reversed and feedback joined to the run; the evaluation record's nine groups complete (AHC-0114, AHC-0112, AAC-0014, AAC-0115, AAC-0042) | reference-agent | days | T-055 |
 | **G0.11** | Remainder: inline grader (AHC-0028), production turn becomes a dataset row (AHC-0029), policy budget and timeout (AHC-0095), context size per release (AHC-0031) | reference-agent, AHC | days | T-040 |
 
@@ -421,7 +423,9 @@ assembles what was already decided in four places: T-016's register;
 | PII | L7 | **Presidio** | Open Stack | T-030 |
 | Record and replay | L9 | **VCR.py / pytest-recording** | Open Stack | T-027 |
 | Durable waits | L10, L14 | **Temporal** | Open Stack | ✅ T-028 |
-| Traces | L11 | **OpenTelemetry → Langfuse** | all | ✅ adopted 16 Sep |
+| Traces | L11 | **OpenTelemetry → Langfuse** | all | ✅ adopted 16 Sep; through the OTel Collector since 19 Sep |
+| Metrics, alerting, dashboards | L11 | **OTel Collector → Prometheus, Alertmanager, Grafana** | Open Stack | ✅ adopted 19 Sep (T-055) |
+| Online scores | L12 | **Langfuse scores**, and its evaluators for a model-graded rubric | Open Stack | ✅ scores 19 Sep (T-057); evaluators with T-057's remainder |
 | Simulated user | L12 | **LangWatch Scenario** | AgentTwin | T-039 |
 | Prompt-level checks | L12 | **promptfoo** | all | T-046 |
 | Property-based tests | L12 | **Hypothesis** | all | ✅ adopted 14 Sep |
@@ -1142,7 +1146,7 @@ already thought through for a retail support agent.
 
 ### T-055 · The numbers leave the process
 
-**Status** Not started. Raised 2026-09-19, asking whether an operator would learn of a broken agent before a customer did. **Cycle 1, Tier 1b.** Repo: `reference-agent`. Statements: AHC-0111, AAC-0114, AAC-0007.
+**Status** ✅ Done 2026-09-19: `telemetry/meters.py` and `counters.py` (standard GenAI client metrics beside `agent.*`), `deploy/otel-collector`, `deploy/prometheus` (21 rules, promtool-tested), `deploy/alertmanager`, `deploy/grafana` (25 panels), Temporal's worker metrics, and `AGENT_DEPLOYMENT` refusing to start without an exporter. Raised 2026-09-19, asking whether an operator would learn of a broken agent before a customer did. **Cycle 1, Tier 1b.** Repo: `reference-agent`. Statements: AHC-0111, AAC-0114, AAC-0007.
 
 Seven counters are defined in `telemetry/counters.py`, labelled from closed sets and recorded where a turn ends — and no `MeterProvider` is configured, so every one of them records into the no-op provider. The approvals counter counts only `requested` since T-028 moved decisions into Temporal. There is no latency histogram at all.
 
@@ -1150,7 +1154,7 @@ Seven counters are defined in `telemetry/counters.py`, labelled from closed sets
 
 ### T-056 · A canary through the deployed edge
 
-**Status** Not started. Raised 2026-09-19. **Cycle 1, Tier 1b.** Repos: `reference-agent`, `agenttwin`. Statements: AHC-0113, AAC-0116. Needs T-055.
+**Status** ✅ Done 2026-09-19: `watch/canary.py` and `scripts/canary.py`, C-7001 in the world, the realm and Saleor; 4/4 through the live edge. It found F-047 (simulated shop) and F-048 (ids with U+2011). Raised 2026-09-19. **Cycle 1, Tier 1b.** Repos: `reference-agent`, `agenttwin`. Statements: AHC-0113, AAC-0116. Needs T-055.
 
 Shadow mode already runs scenarios through the agent's own tools against Saleor, and seeding into a namespace gives a customer data only it owns. Neither runs against the *deployed* edge — the portal login, Keycloak, LiteLLM, Temporal — nor on a schedule, nor alerts.
 
@@ -1158,7 +1162,7 @@ Shadow mode already runs scenarios through the agent's own tools against Saleor,
 
 ### T-057 · Online scoring, and what happened afterwards
 
-**Status** Not started. Raised 2026-09-19. **Cycle 1, Tier 1b.** Repo: `reference-agent`. Statements: AHC-0114, AHC-0112, AAC-0014, AAC-0115, AAC-0042; the judge per AHC-0081 and AHC-0028. Needs T-055. Overlaps G0.11 (AHC-0029).
+**Status** ◐ 2026-09-19: the record's nine groups are emitted and checked; `watch/` runs 20 turn rules and 2 conversation rules over Langfuse and writes scores; outcomes `returned`, `asked_for_person` and `feedback_*` (`POST /feedback`) are joined to their turns. **Left:** a model-graded rubric through Langfuse's evaluator, validated against a labelled set first (AAC-0084), and feedback buttons in the chat surfaces. Raised 2026-09-19. **Cycle 1, Tier 1b.** Repo: `reference-agent`. Statements: AHC-0114, AHC-0112, AAC-0014, AAC-0115, AAC-0042; the judge per AHC-0081 and AHC-0028. Needs T-055. Overlaps G0.11 (AHC-0029).
 
 The evaluation record (AHC-0114) has six of its nine groups. Missing: the words — `telemetry.set_payload` is called from nowhere, so capture switched on captures nothing — tool arguments and results, and the synthetic and sampled markers.
 

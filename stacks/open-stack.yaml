@@ -30,7 +30,7 @@ bindings:
   workflow:     { approach: open-source, adapter: temporal,                 x_status: current, x_item: T-028, x_note: "the approval and escalation waits, and the delivery claim (T-003); the turn stays in our loop" }
   approval:     { approach: open-source, adapter: temporal-updates,         x_status: current, x_item: T-028, x_note: "a decision is an update whose validator is our rule; the workflow carries the refund out itself, under its own login" }
   identity:     { approach: open-source, adapter: keycloak,                 x_status: current, x_item: T-002, x_note: "realm in reference-agent/deploy/keycloak; customers log in through the portal (T-026); the order system verifies an exchanged token (T-002)" }
-  telemetry:    { approach: open-source, adapter: otel-to-langfuse,         x_status: current, x_item: T-052, x_note: "verified 2026-09-18: traces found by customer and conversation, model calls priced from the agent's own table (deploy/langfuse/models.py)" }
+  telemetry:    { approach: open-source, adapter: otel-to-langfuse,         x_status: current, x_item: T-052, x_note: "verified 2026-09-18: traces found by customer and conversation, model calls priced from the agent's own table (deploy/langfuse/models.py). Since 2026-09-19 through the OTel Collector's queue (AACP-0056), and the online rules write their verdicts back as Langfuse scores (T-057)" }
   policy:       { approach: in-house,    adapter: positioned-rule-lists,    x_status: current, x_why: "no guardrail library models position; PII moves to Presidio (T-030)" }
   recorder:     { approach: open-source, adapter: vcrpy,                    x_status: target,  x_item: T-027, x_current: json-cassettes }
   eval_task:    { approach: open-source, adapter: agenttwin,                x_status: current, x_note: "simulated user and graders adopted in T-039, T-040; promptfoo for prompt-level checks in T-046" }
@@ -44,6 +44,7 @@ accepted_gaps: []
 
 # Adopted, with no AHC port to bind to yet: the store is reached over MCP and is
 # the world, not a harness seam.
+x_metrics: { approach: open-source, adapter: otel-collector-prometheus, x_status: current, x_item: T-055, x_note: "OTel Collector → Prometheus with Alertmanager and Grafana; alert rules implement AAC patterns' window signals (deploy/prometheus/rules/agent.yml); Temporal's worker metrics through the same collector" }
 x_store:   { approach: open-source, adapter: saleor, x_status: current, x_item: T-017, x_note: "behind the store's own MCP server (order_system.server) with the far end's checks; seeded from the world; scenarios still run against the projection until T-042" }
 
 x_runs_from: reference-agent/compose.yaml
