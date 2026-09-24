@@ -7,6 +7,8 @@
   "type": "commonjs",
   "scripts": {
     "lint": "node tools/validate-aoas.js",
+    "brief": "node tools/brief.js",
+    "briefs": "node tools/brief.js drafts/examples/support-agent.aoas.yaml ../reference-agent/harness-profile.yaml -o briefs/support-agent.brief.md",
     "test": "node --test 'tools/*.test.js' && npm run lint"
   },
   "dependencies": {
