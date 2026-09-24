@@ -52,7 +52,7 @@ days rather than weeks.
 | Cycle step | Items |
 |---|---|
 | 3 · Declare the stack | ◐ **T-033** — `extends` resolves; each stack filled at its cycle |
-| 4 · Generate | **T-034** |
+| 4 · Generate | ◐ **T-034** — the brief is generated; the run is next |
 | 5 · Set up AgentTwin | **T-044** · **T-039** · T-041 · T-023 |
 | 6 · Test through the gates | **T-035** · T-040 |
 | 7 · Route the failures | T-021 |
@@ -267,7 +267,7 @@ sharpens T-022 before cycle 4).
 | | Item | Repo | Cost | Needs |
 |---|---|---|---|---|
 | **T-033** | ◐ **Stack profiles. `extends` resolves as of 2026-09-25**; filling each stack stays open, at its cycle. The resolver is `ai-harness-catalog/tools/resolve.js` (`npm run resolve`), with the merge rules in its header and two findings that are about the *diff* rather than the merge: an override of a bound port without `x_why` is an error, and restating an inherited value is a warning. The lint resolves before validating. **The first resolution paid for the work**: the reference agent's profile and `open-stack.yaml` disagreed on seven bindings and omitted `workflow` — `approval` still said a Postgres queue although T-028 moved it to Temporal, `eval_task` still said scenario-runner although agenttwin has been the runner for 35 imports' worth of tests, and `recorder` was the stack naming its target as the adapter. Nothing could notice, because nothing had ever compared the two. Left: LangGraph (T-036), Claude Agent SDK, Claude family | clean-ai-engineering, AHC tools, reference-agent | a day | — |
-| **T-034** | The Generation Brief: specs plus a stack profile, which Claude Code generates from | clean-ai-engineering | days | T-033 |
+| **T-034** | ◐ **The Generation Brief — the document exists as of 2026-09-25; the generation run does not.** `tools/brief.js` (`npm run briefs`) assembles one from four sources: the AOAS, the capabilities the declared shape owes, the obligations it will be tested against, and the resolved stack with its thresholds and answered decisions. 72 capabilities, 56 obligations, 15 ports for the support agent. **It is generated, not written, and that is the whole design**: a brief written by somebody who knows the reference agent describes it, and the generated code then matches for a reason the specs cannot claim credit for — so `leaks()` refuses to emit a brief naming a source directory, a module of the reference implementation, or an architectural style, and the brief says in its own words that it will not tell the builder how to lay out the code. **Left: run it.** Hand the brief to a session that has not seen `reference-agent`, build in an isolated worktree, and diff. Every difference is a sentence the specs failed to say, and that list is the deliverable — it is the first list of spec gaps produced by anything other than reading our own code | clean-ai-engineering | days | ◐ T-033 |
 | **T-035** | The four gates as one command: an implementation in, a verdict and a routed failure list out | reference-agent, agenttwin | a day or two | — |
 | **T-044** | Set up AgentTwin for a new agent in one step: a world scaffold from the AOAS, a scenario template, the three callables | agenttwin | days | T-039 |
 | **T-048** | AHC's ports as a standard: reference existing standards, a conformance suite per port, typed signatures for approval, cost_ledger and policy. Cycles 2 and 3 decide tier 3 | AHC, reference-agent, agenttwin | weeks | T-035 |
