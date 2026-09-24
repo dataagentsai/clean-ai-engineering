@@ -19,8 +19,26 @@ the fix goes into the catalog, never into one agent (T-021).
 Each file is a **base harness profile**, in AHC's own format
 (`ai-harness-catalog/schema/profile.schema.json`). An agent's profile names one
 with `extends`, and adds only what belongs to that agent: its archetypes, its
-thresholds, its gaps. The schema already declares `extends`; nothing resolves it
-yet, and making it resolve is part of **T-033**.
+thresholds, its gaps.
+
+**`extends` resolves as of T-033** (2026-09-25), and the first resolution paid
+for the work: the reference agent's profile and `open-stack.yaml` disagreed on
+seven bindings and omitted `workflow` entirely. Six of the seven were this file
+being ahead — `approval` had moved to Temporal in T-028 and the agent's copy
+still said a Postgres queue — and the seventh was this file breaking its own
+convention, naming `recorder`'s *target* as the adapter and its *current* as an
+`x_` field. Nothing could notice any of it, because nothing had ever compared
+the two documents.
+
+    node ../ai-harness-catalog/tools/resolve.js reference-agent/harness-profile.yaml
+
+Two rules make the inheritance worth having, and both are about the diff rather
+than the merge:
+
+- **An override must carry `x_why`.** Leaving the baseline is allowed; leaving
+  it silently is how a fleet ends up on six stacks that all claim to be one.
+- **Restating a baseline value is a warning.** A line repeating what it would
+  have inherited is a line that goes stale when this file moves.
 
     stack file (here)           agent's harness-profile.yaml (its own repo)
     ─────────────────           ───────────────────────────────────────────

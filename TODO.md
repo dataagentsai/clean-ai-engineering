@@ -51,7 +51,7 @@ days rather than weeks.
 
 | Cycle step | Items |
 |---|---|
-| 3 · Declare the stack | **T-033** |
+| 3 · Declare the stack | ◐ **T-033** — `extends` resolves; each stack filled at its cycle |
 | 4 · Generate | **T-034** |
 | 5 · Set up AgentTwin | **T-044** · **T-039** · T-041 · T-023 |
 | 6 · Test through the gates | **T-035** · T-040 |
@@ -266,7 +266,7 @@ sharpens T-022 before cycle 4).
 
 | | Item | Repo | Cost | Needs |
 |---|---|---|---|---|
-| **T-033** | Stack profiles. **Placeholders done 16 Sep** (`stacks/`); make `extends` resolve, and fill each at its cycle | clean-ai-engineering, AHC tools | a day | — |
+| **T-033** | ◐ **Stack profiles. `extends` resolves as of 2026-09-25**; filling each stack stays open, at its cycle. The resolver is `ai-harness-catalog/tools/resolve.js` (`npm run resolve`), with the merge rules in its header and two findings that are about the *diff* rather than the merge: an override of a bound port without `x_why` is an error, and restating an inherited value is a warning. The lint resolves before validating. **The first resolution paid for the work**: the reference agent's profile and `open-stack.yaml` disagreed on seven bindings and omitted `workflow` — `approval` still said a Postgres queue although T-028 moved it to Temporal, `eval_task` still said scenario-runner although agenttwin has been the runner for 35 imports' worth of tests, and `recorder` was the stack naming its target as the adapter. Nothing could notice, because nothing had ever compared the two. Left: LangGraph (T-036), Claude Agent SDK, Claude family | clean-ai-engineering, AHC tools, reference-agent | a day | — |
 | **T-034** | The Generation Brief: specs plus a stack profile, which Claude Code generates from | clean-ai-engineering | days | T-033 |
 | **T-035** | The four gates as one command: an implementation in, a verdict and a routed failure list out | reference-agent, agenttwin | a day or two | — |
 | **T-044** | Set up AgentTwin for a new agent in one step: a world scaffold from the AOAS, a scenario template, the three callables | agenttwin | days | T-039 |
