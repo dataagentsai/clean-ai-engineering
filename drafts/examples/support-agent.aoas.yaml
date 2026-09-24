@@ -477,7 +477,7 @@ policies:
       # old wording meant a customer whose handoff lapsed could never ask for
       # a person again. A condition rule can loop; a customer asking cannot.
       - {id: P-ESC-ONCE, rule: "each on_condition rule fires once per conversation, whatever happens to what it raised; an on_request rule may fire again once what it raised has lapsed or closed, within P-ESC-CAP", concern: reliability, facet: faultlessness}
-      - {id: P-ESC-MODEL, rule: "an escalation raised through the escalate operation records the rule model-requested, is not limited by P-ESC-ONCE, and counts towards P-ESC-CAP", concern: reliability, facet: faultlessness}
+      - {id: P-ESC-MODEL, rule: "where the model is offered the escalate operation, an escalation it raises records the rule model-requested, is not limited by P-ESC-ONCE, and counts towards P-ESC-CAP", concern: reliability, facet: faultlessness}
       - {id: P-ESC-CAP, rule: "past the cap the agent says something true instead of issuing another reference", at_most: 2, concern: interaction-capability, facet: user assistance}
       - {id: P-ESC-TTL, rule: "a queued escalation nobody comes to lapses after its rule's own ttl, or after this one where the rule declares none", ttl: 30m, concern: reliability, facet: recoverability}
       - {id: P-ESC-LAPSE, rule: "on lapse the conversation returns to the agent, and the customer is told nobody came", concern: reliability, facet: recoverability}
@@ -490,7 +490,7 @@ policies:
       - {id: P-ESC-OWNS, rule: "while a person owns the conversation the agent does not answer it, and only the desk that holds it may close it", concern: security, facet: integrity}
       - {id: P-ESC-TIER1, rule: "a rule never replaces a handoff the conversation already has: neither an escalation raised from the turn's own words, nor a decision a person is in the middle of making", concern: reliability, facet: faultlessness}
       - {id: P-ESC-QUEUE, rule: "the queue a reviewer reads holds the open escalations, oldest first, and a closed one leaves it; a rule's priority is shown to the desk and does not reorder the queue", concern: reliability, facet: faultlessness}
-      - {id: P-ESC-OUTCOME, rule: "closing records an outcome from a declared set, once, and the rule that raised it stays with the record", values: [resolved, unnecessary, customer_left, transferred], concern: maintainability, facet: analysability}
+      - {id: P-ESC-OUTCOME, rule: "closing records an outcome from a declared set, once, and the rule that raised it stays with the record", values: [resolved, agent_could_have, misrouted, customer_gone], concern: maintainability, facet: analysability}
     deferred_triggers:
       - order flagged for fraud review     # no such field yet
       - three failed resolution attempts   # partly covered by repeated-intent
