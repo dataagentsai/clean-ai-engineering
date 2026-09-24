@@ -78,6 +78,35 @@ function owed(dir, shapes, idKey = "id") {
     .sort((a, b) => String(a[idKey]).localeCompare(String(b[idKey])));
 }
 
+/**
+ * The shapes this agent owes, from both places that declare them.
+ *
+ * The AOAS says what the agent is (`conformance.archetypes`); the profile says
+ * what its harness was built for (`subject.archetypes`). The first brief read
+ * only the profile, so an agent the AOAS calls A6 + A5 was briefed as A6 alone.
+ * The union is owed; a disagreement is stated, not resolved quietly.
+ */
+function shapesOf(aoas, profile) {
+  const fromSpec = ((aoas.conformance || {}).archetypes || []).slice();
+  const fromProfile = ((profile.subject || {}).archetypes || []).slice();
+  const all = [...new Set([...fromSpec, ...fromProfile])];
+  const agree = fromSpec.length === 0 || fromSpec.slice().sort().join() === fromProfile.slice().sort().join();
+  return { all, fromSpec, fromProfile, agree };
+}
+
+/** Obligations the AOAS excludes, each with its reason and what revokes it. */
+function exclusionsOf(aoas) {
+  return (((aoas.conformance || {}).aac || {}).excluded || []).map((e) => ({ ...e }));
+}
+
+/*
+ * The binding fields a builder needs to talk to the far end. `x_` is the
+ * profile format's extension point, so most `x_` fields are history or
+ * commentary and stay out of the brief. These three are the wire contract, and
+ * a regeneration that could not see them invented its own (generation run 1).
+ */
+const NORMATIVE_X = ["x_meta", "x_tool_meta", "x_scopes"];
+
 /* ------------------------------------------------------------- the sections */
 
 function oneLine(text) {
@@ -155,6 +184,30 @@ function bindingTable(bindings) {
   return ["| Port | Approach | Adapter |", "|---|---|---|", ...rows].join("\n");
 }
 
+function wireContract(bindings) {
+  const out = [];
+  for (const [port, spec] of Object.entries(bindings).sort(([a], [b]) => a.localeCompare(b))) {
+    for (const key of NORMATIVE_X) {
+      if (!spec || spec[key] === undefined) continue;
+      out.push(`**\`${port}.${key}\`**`, "", "```yaml", yaml.dump(spec[key], { lineWidth: 100 }).trimEnd(), "```", "");
+    }
+  }
+  return out.length
+    ? out.join("\n")
+    : "_None declared. A far end whose keys are not written down is one every implementation binds to differently._";
+}
+
+function exclusionList(excluded) {
+  if (!excluded.length) return "";
+  return [
+    "**Excluded by the AOAS**, each with its reason and the change that revokes it. These are",
+    "not in the table above; a test suite records them as exclusions, not as silence.",
+    "",
+    ...excluded.map((e) => `- **${e.id}** — ${oneLine(e.reason)} *(revisit when ${oneLine(e.revisit_when)})*`),
+    "",
+  ].join("\n");
+}
+
 function thresholdTable(thresholds) {
   const rows = Object.entries(thresholds || {})
     .filter(([k]) => !k.startsWith("x_"))
@@ -177,8 +230,13 @@ function decisionList(decisions) {
 /* ----------------------------------------------------------------- the brief */
 
 function brief({ aoas, profile, caps, obs, aoasPath, profilePath }) {
-  const shapes = profile.subject.archetypes;
+  const sh = shapesOf(aoas, profile);
+  const shapes = sh.all;
   const gaps = profile.accepted_gaps || [];
+  const excluded = exclusionsOf(aoas);
+  const excludedIds = new Set(excluded.map((e) => e.id));
+  const owedObs = obs.filter((o) => !excludedIds.has(o.id));
+  const specAac = ((aoas.conformance || {}).aac || {}).version;
 
   return `# Generation Brief — ${aoas.agent.id}
 
@@ -188,7 +246,11 @@ instead of a specification, and the whole point of this document is that it
 cannot.*
 
 Built ${new Date().toISOString().slice(0, 10)} · AOAS \`${aoas.agent.version}\` ·
-AHC \`${profile.catalog.ahc}\`${profile.catalog.aac ? ` · AAC \`${profile.catalog.aac}\`` : ""}
+AHC \`${profile.catalog.ahc}\`${profile.catalog.aac ? ` · AAC \`${profile.catalog.aac}\`` : ""}${
+    specAac && profile.catalog.aac && !String(profile.catalog.aac).startsWith(String(specAac))
+      ? ` *(the AOAS pins AAC \`${specAac}\`)*`
+      : ""
+  }
 
 ---
 
@@ -197,7 +259,11 @@ AHC \`${profile.catalog.ahc}\`${profile.catalog.aac ? ` · AAC \`${profile.catal
 ${purpose(aoas)}
 
 This system declares itself **${shapes.join(", ")}**. Everything in sections 2
-and 3 follows from that declaration and from nothing else.
+and 3 follows from that declaration and from nothing else.${
+    sh.agree
+      ? ""
+      : `\n\n*The AOAS declares ${sh.fromSpec.join(", ")} and the profile ${sh.fromProfile.join(", ")}; this brief owes the union.*`
+  }
 
 ---
 
@@ -211,7 +277,7 @@ optional and none of them substitutes for another.
 | 1 | **AOAS** | What is this agent *for*? | \`${aoasPath}\` |
 | 2 | **AHC** | What must its harness be *able to do*? | \`ai-harness-catalog/capabilities/\` |
 | 3 | **AAC** | What will it be *tested against*? | \`ai-assurance-catalog/catalog/\` |
-| 4 | **Profile** | Which *product* fills each seam? | \`${profilePath}\` |
+| 4 | **Profile** | Which *product* fills each seam? | section 4 below, resolved in full from \`${profilePath}\` and the stack it extends. Nothing a builder needs is left in the profile |
 
 **This brief lists identifiers and points at the text.** It does not restate
 the capabilities, because a restatement is a second copy that can disagree with
@@ -238,7 +304,7 @@ one binds you to:
 | \`purpose.refuses\` | what this agent must decline, and is a defect for doing |
 | \`facts\` | what the system derives about a conversation, and from what |
 | \`session\` | what is known about the caller before a turn begins |
-
+${aoas.intents ? "| `intents` | the closed set of things a customer asks for, and which path answers each |\n" : ""}
 ${
     aoas.entities
       ? `**Entities declared:** ${Object.keys(aoas.entities).map((e) => `\`${e}\``).join(", ")}`
@@ -268,13 +334,14 @@ collated version by layer, with requirement and failure mode inline:
 
 ## 3 · The obligations it will be tested against
 
-**${obs.length} obligations.** These are not capabilities: a capability is
+**${owedObs.length} obligations.** These are not capabilities: a capability is
 something the system can do, an obligation is something a *test* must
 demonstrate. A system that meets every capability and can demonstrate none of
 them has not finished.
 
-${obligationTable(obs)}
+${obligationTable(owedObs)}
 
+${exclusionList(excluded)}
 The text of each is in \`ai-assurance-catalog/catalog/<id>.yaml\`. Obligations
 marked \`gate: true\` are release gates — a release with one unmet is a release
 that has not been argued for.
@@ -295,6 +362,14 @@ The catalog refuses to publish these, because any number it published would be
 wrong for almost everyone. They are this system's.
 
 ${thresholdTable(profile.thresholds)}
+
+### The wire contract
+
+What travels between the agent and the systems it calls, and the authority
+each operation needs. Both sides declare these; neither learns them from the
+other's code.
+
+${wireContract(profile.bindings)}
 
 ### Design decisions answered
 
@@ -336,6 +411,19 @@ difference between the simulator and the real far end. Whatever you build has
 to be substitutable at every seam for that to be possible — which is not an
 extra requirement, it is capability 2's requirement, restated in the only terms
 that can check it.
+
+The world format is AgentTwin's (\`agenttwin/SPEC.md\`, schema in
+\`agenttwin/schema/awd.schema.json\`). A world cites this AOAS and holds only
+records and presentation; the tool surface is composed from the AOAS operations.
+
+## 6 · Before you start
+
+Some obligations in section 3 are about what the *model* does — accuracy on a
+golden set, choosing the right tool, variance, path length, every route. A
+scripted model can prove the harness around them and cannot discharge them.
+Have a key for the model route in section 4 before starting. If there is none,
+build anyway and say, in the build's notes, which obligations ran against a
+script.
 `;
 }
 
@@ -381,7 +469,7 @@ function main(argv) {
 
   const aoas = load(aoasPath);
   const profile = profileOf(profilePath);
-  const shapes = profile.subject.archetypes;
+  const shapes = shapesOf(aoas, profile).all;
   const caps = owed(path.join(AHC, "capabilities"), shapes);
   const obs = owed(path.join(AAC, "catalog"), shapes);
 
@@ -417,6 +505,6 @@ function main(argv) {
   return 0;
 }
 
-module.exports = { brief, owed, leaks, profileOf };
+module.exports = { brief, owed, leaks, profileOf, shapesOf };
 
 if (require.main === module) process.exit(main(process.argv.slice(2)));

@@ -94,6 +94,43 @@ test("it carries the stack, the numbers and the decisions", () => {
   assert.match(text, /owned by `in-house`/);
 });
 
+// Generation run 1 (2026-09-25) built from a brief that owed A6 where the AOAS
+// said A6 + A5, listed five obligations the AOAS excludes, and dropped the wire
+// contract the profile's x_ fields held. Each row is one of those.
+test("the shapes owed are the union of the AOAS's and the profile's, and a mismatch is said", () => {
+  const text = build({ aoas: { ...AOAS, conformance: { archetypes: ["A6", "A5"] } } });
+  assert.match(text, /declares itself \*\*A6, A5\*\*/);
+  assert.match(text, /The AOAS declares A6, A5 and the profile A6; this brief owes the union/);
+});
+
+test("obligations the AOAS excludes are listed with their reasons, not owed", () => {
+  const aoas = { ...AOAS, conformance: { aac: { version: "0.12", excluded: [
+    { id: "AAC-0007", reason: "latency is undeclared", revisit_when: "a latency property is declared" }] } } };
+  const text = build({ aoas, obs: [{ id: "AAC-0001", dimension: "correctness" }, { id: "AAC-0007", dimension: "latency" }] });
+  assert.match(text, /\*\*1 obligations\.\*\*/);
+  assert.doesNotMatch(text, /\| \*\*latency\*\* \|/);
+  assert.match(text, /\*\*AAC-0007\*\* — latency is undeclared \*\(revisit when a latency property is declared\)\*/);
+});
+
+test("the wire contract is rendered, and commentary x_ fields are not", () => {
+  const profile = { ...PROFILE, bindings: { tool_runtime: { approach: "open-source", adapter: "mcp-client",
+    x_meta: { "aoas/session": { carries: "{token}" } }, x_scopes: { cancel_order: "orders:write" },
+    x_note: "a history nobody building from scratch should read" } } };
+  const text = build({ profile });
+  assert.match(text, /`tool_runtime\.x_meta`/);
+  assert.match(text, /aoas\/session:/);
+  assert.match(text, /cancel_order: orders:write/);
+  assert.doesNotMatch(text, /a history nobody/);
+});
+
+test("the profile row says section 4 is complete, so nobody needs to open the profile", () => {
+  assert.match(build(), /section 4 below, resolved in full from/);
+});
+
+test("model access is stated as a prerequisite", () => {
+  assert.match(build(), /Have a key for the model route in section 4 before starting/);
+});
+
 test("an empty gap list is stated as a claim, not left blank", () => {
   assert.match(build(), /An empty list is a claim, not an absence/);
 });
