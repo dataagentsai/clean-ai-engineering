@@ -25,7 +25,40 @@ thresholds: {}
 
 bindings:
   model:        { approach: gateway,     adapter: litellm-proxy,            x_status: current, x_item: T-029, x_note: "agent holds its own gateway key; no retries or cooldowns in the proxy; all 34 scenarios run live through it 17 Sep" }
-  tool_runtime: { approach: open-source, adapter: mcp-client,               x_status: current }
+  tool_runtime:
+    approach: open-source
+    adapter: mcp-client
+    x_status: current
+    # What travels in an MCP call's `_meta`, for every agent on this stack and
+    # every order system it talks to. Both sides declare these keys; neither
+    # imports the other to learn them. Read from reference-agent's transport and
+    # order system (2026-09-25): until then they lived only in code and in
+    # AgentTwin's docstrings, and generation run 1 invented its own (NOTES §3–4).
+    x_meta:
+      aoas/session:
+        carries: "{token: <the caller's signed credential>}"
+        rule: >-
+          The far end verifies the token itself and takes whose call it is from
+          the token's customer claim. Anything else in the session is ignored by
+          a far end that verifies; a row the caller may not touch is answered as
+          a row that does not exist.
+      aoas/idempotency-key:
+        carries: the write's idempotency key (AHC-0074)
+        rule: >-
+          A write repeating a key the far end has answered gets that same answer,
+          and its effect does not land twice.
+      aoas/approval:
+        carries: the id of the approval that elevated this call
+        rule: >-
+          Sent when the caller's own scopes do not cover the operation. The far
+          end loads the approval and checks it matches the operation, its
+          arguments and the customer, instead of trusting a scope the agent added
+          to its own identity. For the approval workflow's own login, which has
+          no customer, the approval says whose call it is.
+    x_tool_meta:
+      side_effect: "read | reversible | irreversible, as the AOAS declares; an undeclared class is irreversible"
+      required_scope: the scope the operation needs, from the agent profile's `x_scopes`
+      entity: the entity the operation acts on
   state:        { approach: open-source, adapter: postgres,                 x_status: current }
   workflow:     { approach: open-source, adapter: temporal,                 x_status: current, x_item: T-028, x_note: "the approval and escalation waits, and the delivery claim (T-003); the turn stays in our loop" }
   approval:     { approach: open-source, adapter: temporal-updates,         x_status: current, x_item: T-028, x_note: "a decision is an update whose validator is our rule; the workflow carries the refund out itself, under its own login" }
