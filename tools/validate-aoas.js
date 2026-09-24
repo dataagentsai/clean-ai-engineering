@@ -23,7 +23,8 @@
  *   undefined-fact                 a fact is typed and never says what computes it
  *   unknown-state-machine          an enum is `of` a machine that does not exist
  *   unknown-state                  a transition or terminal names a state not in the machine
- *   unknown-operation              a transition, policy or system names a missing operation
+ *   unknown-operation              a transition, policy, system, intent or route names a missing operation
+ *   unknown-intent                 a deferred intent is missing from a declared intent set
  *   unknown-input                  an identity or effect names an input the operation lacks
  *   unscoped-collection            a read of many rows (`output: entity[]`) is not scoped to the caller
  *   terminal-exit                  a transition leaves a terminal state
@@ -268,6 +269,22 @@ function aoasIssues(doc, opts = {}) {
   for (const [pn, p] of Object.entries(doc.policies)) {
     if (!/^P-/.test(pn)) continue;
     for (const o of p.via) if (!operations[o]) add("unknown-operation", `policies.${pn}.via`, `"${o}" is not an operation`);
+  }
+  for (const [on, op] of Object.entries(operations)) {
+    if (op.routes_to && !operations[op.routes_to]) {
+      add("unknown-operation", `operations.${on}.routes_to`, `"${op.routes_to}" is not an operation`);
+    }
+  }
+  // An intent set, once declared, is closed: a deferred intent it does not
+  // name is one a generator will classify somewhere nobody decided.
+  const intents = doc.intents || {};
+  for (const [iname, it] of Object.entries(intents)) {
+    for (const o of it.via || []) if (!operations[o]) add("unknown-operation", `intents.${iname}.via`, `"${o}" is not an operation`);
+  }
+  if (doc.intents) {
+    for (const d of doc.purpose.deferred || []) {
+      if (d.intent && !intents[d.intent]) add("unknown-intent", "purpose.deferred", `"${d.intent}" is deferred and not in intents`);
+    }
   }
   // A fact is computed from the conversation, so its declaration is a type and
   // nothing else until it says how it is computed. `repeated_intent` was typed

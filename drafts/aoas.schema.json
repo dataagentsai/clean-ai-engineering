@@ -45,7 +45,13 @@
               "id": { "type": "string", "pattern": "^R-[A-Z0-9]+(-[A-Z0-9]+)*$" },
               "what": { "type": "string", "minLength": 1 },
               "concern": { "$ref": "#/$defs/concern" },
-              "facet": { "type": "string" }
+              "facet": { "type": "string" },
+              "examples": {
+                "type": "array",
+                "minItems": 1,
+                "items": { "type": "string", "minLength": 1 },
+                "description": "Customer words this refusal must meet. The testable half of `what`: without them every implementation draws the line in its own place, and finds its false positives by accident."
+              }
             }
           },
           "description": "Normative. What the agent must not do is testable only against an explicit list."
@@ -85,6 +91,21 @@
       "propertyNames": { "pattern": "^[a-z][a-z0-9_]*$" },
       "additionalProperties": { "$ref": "#/$defs/field" },
       "description": "What the conversation has become, as values policies read. Declared so a rule over an undeclared fact fails validation instead of silently never firing."
+    },
+    "intents": {
+      "type": "object",
+      "propertyNames": { "pattern": "^[a-z][a-z0-9_]*$" },
+      "additionalProperties": {
+        "type": "object",
+        "required": ["examples", "answered_by"],
+        "additionalProperties": false,
+        "properties": {
+          "examples": { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1 }, "description": "Customer words that carry this intent and no other." },
+          "answered_by": { "enum": ["direct", "loop", "handoff", "refusal", "deferred"], "description": "direct: from declared data, no model call. loop: the model-driven path. handoff: a Tier-1 escalation. refusal: one of purpose.refuses. deferred: recognised and explained, never acted on." },
+          "via": { "type": "array", "uniqueItems": true, "items": { "type": "string" }, "description": "The operations that serve it." }
+        }
+      },
+      "description": "The closed set of things a customer asks for. Rules that count or select by intent — a fact like `repeated_intent`, a direct path for exactly one intent — read this set. Without it every implementation invents its own and the rules fire in different places."
     },
     "state_machines": {
       "type": "object",
@@ -400,7 +421,9 @@
           "$ref": "#/$defs/condition_list",
           "description": "Owed, not merely permitted. Without it an omission is invisible to every other check."
         },
-        "on_refusal": { "type": "string", "description": "What to offer instead. The reason and the offer, never the wording." }
+        "on_refusal": { "type": "string", "description": "What to offer instead. The reason and the offer, never the wording." },
+        "offered": { "type": "boolean", "description": "Absent or true: in the model's tool set. False: never shown to the model, reached only through another operation's `routes_to` or by a person." },
+        "routes_to": { "type": "string", "description": "The operation this one leads to when its conditions allow: a request that becomes an action. The target's `authority` decides whether it runs now or waits for a person." }
       }
     },
 
@@ -418,7 +441,8 @@
           "facet": { "type": "string" },
           "valid_for": { "$ref": "#/$defs/duration" },
           "ttl": { "$ref": "#/$defs/duration" },
-          "at_most": { "type": "integer", "minimum": 1 }
+          "at_most": { "type": "integer", "minimum": 1 },
+          "values": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "type": "string" }, "description": "A declared set the statement draws on, such as the outcomes a close may record." }
         }
       },
       "description": "Normative lines, each with the id a test names to discharge it, each carrying its own parameter where it has one. Prose beside a parameter is two statements of one rule and they drift; prose with no id is a rule the Assurance Map cannot see, which is how this agent's escalation and approval rules went unverified while reading as specified."

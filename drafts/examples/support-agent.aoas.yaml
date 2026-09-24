@@ -52,26 +52,35 @@ purpose:
       what: negotiating price, or offering any discount, voucher or coupon not in a published promotion
       concern: safety
       facet: operational constraint
+      examples: ["Can you give me a discount code?", "Match the cheaper price I saw on another site", "Any coupon for my next order?"]
     - id: R-OTHER-CUSTOMER
       what: anything about an order the signed-in customer did not place
       concern: security
       facet: confidentiality
+      examples: ["What did my neighbour order? Her name is Ravi.", "Show me the delivery address on my friend's order"]
     - id: R-ACCOUNT
       what: account deletion, and changes to a payment method
       concern: safety
       facet: operational constraint
+      examples: ["Delete my account", "Change my card to a new one", "Update my payment method to UPI"]
     - id: R-DELIVERY-DATE
       what: a delivery date the carrier record does not state
       concern: functional-suitability
       facet: functional correctness
+      examples: ["Exactly which day will it arrive?", "Promise me it comes by Friday"]
     - id: R-STYLE
       what: style or fit advice presented as authoritative
       concern: functional-suitability
       facet: functional appropriateness
+      examples: ["Will the medium fit me? I'm usually between sizes", "Which colour would suit me better?"]
     - id: R-FRAUD
       what: adjudicating whether anything is fraud
       concern: safety
       facet: risk identification
+      examples: ["Is this charge fraud?", "Was my order a scam?"]
+  # `examples` are the testable half of each refusal (generation run 1, NOTES
+  # §7): without them every implementation drew its own line, and found its
+  # false positives by accident.
   # Recognised, in doc 24, and deliberately not operations in this version. The
   # agent may explain the policy; it performs nothing, and claims nothing.
   deferred:
@@ -158,9 +167,11 @@ facts:
   termination:
     type: enum
     derived: "why the loop stopped on the latest turn, or absent if it never ran"
+    # `deadline_reached` added after generation run 1 (NOTES §7): a wall-clock
+    # stop (AHC-0096) had no value and was recorded as a step stop.
     values: [goal_reached, step_budget_exhausted, cost_ceiling_reached,
-             oscillation_detected, awaiting_approval, awaiting_human, refused,
-             unrecoverable_error]
+             deadline_reached, oscillation_detected, awaiting_approval,
+             awaiting_human, refused, unrecoverable_error]
   consecutive_failed: {type: int, derived: "turns ending in failure, counting back from the latest until one did not"}
   refusals: {type: int, derived: turns in this conversation the agent refused}
   repeated_intent:
@@ -169,6 +180,24 @@ facts:
     # resolved, whatever the turn that answered them recorded — counting only
     # unanswered turns is what made the rule unreachable.
     derived: "turns carrying the latest turn's intent, counting back from it until the intent changes"
+
+# The closed set of things a customer asks for. P-DIRECT's "exactly one
+# intent" and the `repeated_intent` fact both count over it; until it was
+# declared, each implementation invented its own (generation run 1, NOTES §1).
+intents:
+  order_status:     {answered_by: direct,   via: [get_order], examples: ["Where is my order?", "Has my order shipped yet?"]}
+  refund_status:    {answered_by: direct,   via: [get_order], examples: ["What's happening with my refund?", "Did my refund go through?"]}
+  cancel:           {answered_by: loop,     via: [cancel_order], examples: ["Please cancel my order", "I don't want this order any more"]}
+  return:           {answered_by: loop,     via: [open_return_request], examples: ["I want to return this", "How do I send it back?"]}
+  address_change:   {answered_by: loop,     via: [change_address], examples: ["Change my delivery address", "Can you ship it to my office instead?"]}
+  refund_request:   {answered_by: loop,     via: [request_refund], examples: ["I want my money back", "Refund my order please"]}
+  human:            {answered_by: handoff,  via: [escalate], examples: ["I want to talk to a person", "Get me a human"]}
+  lost_in_transit:  {answered_by: handoff,  via: [escalate], examples: ["My parcel is lost", "Tracking says delivered but I never got it"]}
+  discount_request: {answered_by: refusal,  examples: ["Can you give me a discount code?"]}
+  account_change:   {answered_by: refusal,  examples: ["Delete my account"]}
+  exchange_request: {answered_by: deferred, examples: ["Can I swap it for a larger size?"]}
+  damaged_item:     {answered_by: deferred, examples: ["It arrived torn"]}
+  other:            {answered_by: loop,     examples: ["Hi", "Thanks, that's all"]}
 
 state_machines:
   order_status:
@@ -294,18 +323,30 @@ operations:
     authority: agent
     on_refusal: the carrier owns the address once the order has progressed   # P-ADDRESS
 
+  # The model-facing way to a refund. It leads to `issue_refund`, whose own
+  # authority decides whether it runs now or waits for a person; the model
+  # never sees `issue_refund` itself. Eligibility added after generation run 1
+  # (NOTES §8): with ownership the only precondition, a note planted in a
+  # shipped order could put a refund request in front of a reviewer.
   request_refund:
     entity: order
     side_effect: reversible
     input: [order_id]
-    preconditions: [*owned]
-    effect: an approval exists, or the refund proceeds within the automatic limit
+    preconditions:
+      - *owned
+      - {field: status, equals: [delivered, returned, cancelled]}
+    routes_to: issue_refund
+    effect: issue_refund has run, or an approval for it is pending
+    identity: order_id                 # asking again while one is pending is the same request
     authority: agent
-    # The customer is told a request exists. Never that a refund was issued.
+    on_refusal: before delivery, cancel while the order is cancellable; a parcel lost in transit is a handoff
+    # The customer is told a request exists. Never that a refund was issued,
+    # unless issue_refund ran in this exchange.
 
   issue_refund:
     entity: order
     side_effect: irreversible
+    offered: false                     # reached through request_refund, or by a person
     input: [order_id]
     amount_from: order.total           # never from the conversation
     preconditions:
@@ -387,7 +428,7 @@ policies:
   # said about the other two (F-037). Three subjects is the same ambiguity as two
   # intents and belongs on the same path.
   P-DIRECT:
-    rule: order status and refund status are answered from the order system deterministically, with no model call, when the turn names exactly one intent and exactly one order; a turn naming several orders, several intents, or none of either goes to the loop
+    rule: order status and refund status are answered from the order system deterministically, with no model call, when the turn names exactly one intent from `intents` and exactly one order; a turn naming several orders, several intents, or none of either goes to the loop
     via: [get_order]
     concern: cost
   P-DIRECT-READS:
@@ -426,15 +467,19 @@ policies:
       - {id: asked-for-human, when: the customer asks to speak to a person}
       - {id: lost-in-transit, when: the item is reported lost in transit}
     on_condition:                      # Tier 2 — decided from what the conversation has become. First match wins.
-      - {id: loop-exhausted,   when: {field: termination, equals: [step_budget_exhausted, cost_ceiling_reached, oscillation_detected]}, priority: 2, ttl: 15m}
+      - {id: loop-exhausted,   when: {field: termination, equals: [step_budget_exhausted, cost_ceiling_reached, deadline_reached, oscillation_detected]}, priority: 2, ttl: 15m}
       - {id: tool-unavailable, when: {field: consecutive_failed, at_least: 2}, priority: 2, ttl: 15m}
       - {id: repeated-intent,  when: {field: repeated_intent, at_least: 3},    priority: 3, ttl: 30m}
       - {id: second-refusal,   when: {field: refusals, at_least: 2},           priority: 4, ttl: 30m}
       - {id: turns-exceeded,   when: {field: turn_count, at_least: 10},        priority: 6, ttl: 45m}
     statements:
-      - {id: P-ESC-ONCE, rule: "each rule fires once per conversation, whatever happens to what it raised", concern: reliability, facet: faultlessness}
+      # Narrowed after generation run 1 (NOTES §8): read with P-ESC-LAPSE, the
+      # old wording meant a customer whose handoff lapsed could never ask for
+      # a person again. A condition rule can loop; a customer asking cannot.
+      - {id: P-ESC-ONCE, rule: "each on_condition rule fires once per conversation, whatever happens to what it raised; an on_request rule may fire again once what it raised has lapsed or closed, within P-ESC-CAP", concern: reliability, facet: faultlessness}
+      - {id: P-ESC-MODEL, rule: "an escalation raised through the escalate operation records the rule model-requested, is not limited by P-ESC-ONCE, and counts towards P-ESC-CAP", concern: reliability, facet: faultlessness}
       - {id: P-ESC-CAP, rule: "past the cap the agent says something true instead of issuing another reference", at_most: 2, concern: interaction-capability, facet: user assistance}
-      - {id: P-ESC-TTL, rule: "a queued escalation nobody comes to lapses", ttl: 30m, concern: reliability, facet: recoverability}
+      - {id: P-ESC-TTL, rule: "a queued escalation nobody comes to lapses after its rule's own ttl, or after this one where the rule declares none", ttl: 30m, concern: reliability, facet: recoverability}
       - {id: P-ESC-LAPSE, rule: "on lapse the conversation returns to the agent, and the customer is told nobody came", concern: reliability, facet: recoverability}
       # A wait is permitted only where it is measured — queue depth over observed
       # throughput — and forbidden otherwise. "Just a few minutes" from nowhere is
@@ -444,8 +489,8 @@ policies:
       - {id: P-ESC-TOLD, rule: "the customer is told a reference number, and a wait only when one is measured from queue depth and observed throughput", concern: functional-suitability, facet: functional correctness}
       - {id: P-ESC-OWNS, rule: "while a person owns the conversation the agent does not answer it, and only the desk that holds it may close it", concern: security, facet: integrity}
       - {id: P-ESC-TIER1, rule: "a rule never replaces a handoff the conversation already has: neither an escalation raised from the turn's own words, nor a decision a person is in the middle of making", concern: reliability, facet: faultlessness}
-      - {id: P-ESC-QUEUE, rule: "the queue a reviewer reads holds the open escalations, oldest first, and a closed one leaves it", concern: reliability, facet: faultlessness}
-      - {id: P-ESC-OUTCOME, rule: "closing records an outcome from a declared set, once, and the rule that raised it stays with the record", concern: maintainability, facet: analysability}
+      - {id: P-ESC-QUEUE, rule: "the queue a reviewer reads holds the open escalations, oldest first, and a closed one leaves it; a rule's priority is shown to the desk and does not reorder the queue", concern: reliability, facet: faultlessness}
+      - {id: P-ESC-OUTCOME, rule: "closing records an outcome from a declared set, once, and the rule that raised it stays with the record", values: [resolved, unnecessary, customer_left, transferred], concern: maintainability, facet: analysability}
     deferred_triggers:
       - order flagged for fraud review     # no such field yet
       - three failed resolution attempts   # partly covered by repeated-intent
@@ -486,8 +531,11 @@ external:
 # ---------------------------------------------------------------------------
 required:
   properties:
-    - {id: Q-COST,  must: model spend per task at most USD 0.50, evidence: assertion, concern: cost}
-    - {id: Q-STEPS, must: at most 12 loop steps per task, evidence: assertion, concern: cost}
+    # A task is one customer turn: the unit a run is minted for. Stated after
+    # generation run 1 (NOTES §6); a conversation-wide reading was a tenfold
+    # different ceiling.
+    - {id: Q-COST,  must: "model spend per task (one customer turn) at most USD 0.50", evidence: assertion, concern: cost}
+    - {id: Q-STEPS, must: "at most 12 loop steps per task (one customer turn)", evidence: assertion, concern: cost}
     - {id: Q-OUTPUT, must: at most 4096 output tokens per model call, evidence: assertion, concern: performance-efficiency, facet: resource utilization}
     - {id: Q-TOOL-RESULT, must: a tool result enters context at most 8000 characters long, evidence: assertion, concern: functional-suitability, facet: functional completeness}
     - {id: Q-MODEL, must: only a model from the approved list is called, evidence: inspection, concern: security, facet: integrity}
