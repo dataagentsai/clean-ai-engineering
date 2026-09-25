@@ -5,8 +5,8 @@ hand: a brief somebody edited is a brief that can describe an implementation
 instead of a specification, and the whole point of this document is that it
 cannot.*
 
-Built 2026-09-24 · AOAS `0.1.0` ·
-AHC `0.3.0` · AAC `0.13.0`
+Built 2026-09-25 · AOAS `0.1.0` ·
+AHC `0.3.0` · AAC `0.13.0` *(the AOAS pins AAC `0.12`)*
 
 ---
 
@@ -42,8 +42,10 @@ AHC `0.3.0` · AAC `0.13.0`
 - `track_shipment` (operation)
 
 
-This system declares itself **A6**. Everything in sections 2
+This system declares itself **A6, A5**. Everything in sections 2
 and 3 follows from that declaration and from nothing else.
+
+*The AOAS declares A6, A5 and the profile A6; this brief owes the union.*
 
 ---
 
@@ -57,7 +59,7 @@ optional and none of them substitutes for another.
 | 1 | **AOAS** | What is this agent *for*? | `drafts/examples/support-agent.aoas.yaml` |
 | 2 | **AHC** | What must its harness be *able to do*? | `ai-harness-catalog/capabilities/` |
 | 3 | **AAC** | What will it be *tested against*? | `ai-assurance-catalog/catalog/` |
-| 4 | **Profile** | Which *product* fills each seam? | `../reference-agent/harness-profile.yaml` |
+| 4 | **Profile** | Which *product* fills each seam? | section 4 below, resolved in full from `../reference-agent/harness-profile.yaml` and the stack it extends. Nothing a builder needs is left in the profile |
 
 **This brief lists identifiers and points at the text.** It does not restate
 the capabilities, because a restatement is a second copy that can disagree with
@@ -84,6 +86,7 @@ one binds you to:
 | `purpose.refuses` | what this agent must decline, and is a defect for doing |
 | `facts` | what the system derives about a conversation, and from what |
 | `session` | what is known about the caller before a turn begins |
+| `intents` | the closed set of things a customer asks for, and which path answers each |
 
 **Entities declared:** `customer`, `order`, `approval`, `escalation`
 
@@ -93,7 +96,7 @@ one binds you to:
 
 ## 2 · The capabilities this shape owes
 
-**72 capabilities**, derived from `archetypes: [A6]`.
+**77 capabilities**, derived from `archetypes: [A6, A5]`.
 Each says what the harness must be able to do and names the failure it prevents;
 several carry design decisions the profile answers in section 4.
 
@@ -102,18 +105,18 @@ several carry design decisions the profile answers in section 4.
 | **L1** | AHC-0002, AHC-0011, AHC-0012, AHC-0013, AHC-0031, AHC-0035, AHC-0038, AHC-0045, AHC-0103, AHC-0107, AHC-0108, AHC-0109 |
 | **L2** | AHC-0004, AHC-0009, AHC-0014, AHC-0015, AHC-0027, AHC-0092, AHC-0105 |
 | **L3** | AHC-0036, AHC-0037, AHC-0038, AHC-0039, AHC-0040, AHC-0043, AHC-0100, AHC-0104, AHC-0107 |
-| **L4** | AHC-0041, AHC-0042, AHC-0043, AHC-0044, AHC-0074, AHC-0100, AHC-0104, AHC-0106 |
-| **L5** | AHC-0044, AHC-0045, AHC-0102, AHC-0108, AHC-0109, AHC-0115 |
-| **L6** | AHC-0001, AHC-0015, AHC-0016, AHC-0017, AHC-0025, AHC-0094, AHC-0106, AHC-0110 |
+| **L4** | AHC-0041, AHC-0042, AHC-0043, AHC-0044, AHC-0071, AHC-0072, AHC-0074, AHC-0075, AHC-0100, AHC-0104, AHC-0106 |
+| **L5** | AHC-0044, AHC-0045, AHC-0073, AHC-0102, AHC-0108, AHC-0109, AHC-0115 |
+| **L6** | AHC-0001, AHC-0015, AHC-0016, AHC-0017, AHC-0025, AHC-0071, AHC-0094, AHC-0106, AHC-0110 |
 | **L7** | AHC-0008, AHC-0018, AHC-0019, AHC-0093, AHC-0094, AHC-0095 |
 | **L8** | AHC-0020, AHC-0021, AHC-0095, AHC-0096, AHC-0097, AHC-0098 |
 | **L9** | AHC-0014, AHC-0022, AHC-0023 |
-| **L10** | AHC-0005, AHC-0017, AHC-0021, AHC-0024, AHC-0025, AHC-0074, AHC-0096, AHC-0105, AHC-0110 |
+| **L10** | AHC-0005, AHC-0017, AHC-0021, AHC-0024, AHC-0025, AHC-0058, AHC-0073, AHC-0074, AHC-0096, AHC-0105, AHC-0110 |
 | **L11** | AHC-0006, AHC-0018, AHC-0019, AHC-0026, AHC-0027, AHC-0029, AHC-0090, AHC-0111, AHC-0112, AHC-0114 |
 | **L12** | AHC-0010, AHC-0022, AHC-0028, AHC-0029, AHC-0090, AHC-0112, AHC-0113, AHC-0114 |
-| **L13** | AHC-0007, AHC-0012, AHC-0024, AHC-0030, AHC-0031, AHC-0097, AHC-0101, AHC-0111 |
-| **L14** | AHC-0039, AHC-0057 |
-| **L15** | AHC-0003, AHC-0009, AHC-0032, AHC-0033, AHC-0092 |
+| **L13** | AHC-0007, AHC-0012, AHC-0024, AHC-0030, AHC-0031, AHC-0075, AHC-0097, AHC-0101, AHC-0111 |
+| **L14** | AHC-0039, AHC-0057, AHC-0058 |
+| **L15** | AHC-0003, AHC-0009, AHC-0032, AHC-0033, AHC-0072, AHC-0092 |
 | **L16** | AHC-0034, AHC-0035, AHC-0040, AHC-0099, AHC-0113, AHC-0115 |
 
 The text of each is in `ai-harness-catalog/capabilities/<id>.yaml`. For the
@@ -131,24 +134,32 @@ them has not finished.
 
 | Dimension | Obligations |
 |---|---|
-| **correctness** | AAC-0001, AAC-0014, AAC-0098, AAC-0112, AAC-0115 |
-| **cost** | AAC-0008, AAC-0093, AAC-0102, AAC-0103, AAC-0104, AAC-0105 |
-| **determinism** | AAC-0010, AAC-0059 |
+| **correctness** | AAC-0001, AAC-0044, AAC-0049, AAC-0098, AAC-0112, AAC-0115 |
+| **cost** | AAC-0008, AAC-0050, AAC-0093, AAC-0102, AAC-0103, AAC-0104, AAC-0105 |
+| **determinism** | AAC-0010, AAC-0048, AAC-0059 |
 | **drift** | AAC-0012, AAC-0013, AAC-0016, AAC-0101 |
-| **format** | AAC-0002, AAC-0099 |
+| **format** | AAC-0002, AAC-0045, AAC-0099 |
 | **grounding** | AAC-0029, AAC-0110 |
 | **instruction** | AAC-0003 |
-| **latency** | AAC-0007 |
 | **observability** | AAC-0011, AAC-0060, AAC-0100, AAC-0114 |
 | **oversight** | AAC-0094 |
-| **privacy** | AAC-0006, AAC-0095, AAC-0096, AAC-0097, AAC-0117 |
+| **privacy** | AAC-0006, AAC-0095, AAC-0117 |
 | **reliability** | AAC-0009, AAC-0046, AAC-0047, AAC-0055, AAC-0076, AAC-0116 |
 | **robustness** | AAC-0015 |
-| **safety** | AAC-0005, AAC-0056, AAC-0091, AAC-0092 |
+| **safety** | AAC-0005, AAC-0056, AAC-0091 |
 | **security** | AAC-0004, AAC-0057, AAC-0058, AAC-0106, AAC-0107, AAC-0111 |
 | **state** | AAC-0113 |
 | **tool-use** | AAC-0051, AAC-0052, AAC-0053 |
 | **trajectory** | AAC-0054, AAC-0109 |
+
+**Excluded by the AOAS**, each with its reason and the change that revokes it. These are
+not in the table above; a test suite records them as exclusions, not as silence.
+
+- **AAC-0092** — the agent does not stream output *(revisit when streaming is added)*
+- **AAC-0096** — no response cache exists *(revisit when any response or prompt cache is added)*
+- **AAC-0007** — latency is undeclared (see required.undeclared) *(revisit when a latency property is declared)*
+- **AAC-0014** — no production traffic exists *(revisit when deployed)*
+- **AAC-0097** — residency is undeclared *(revisit when a residency property is declared)*
 
 The text of each is in `ai-assurance-catalog/catalog/<id>.yaml`. Obligations
 marked `gate: true` are release gates — a release with one unmet is a release
@@ -200,6 +211,53 @@ wrong for almost everyone. They are this system's.
 | `oscillation_repeat_threshold` | 3 |
 | `refund_without_a_person_inr` | 10000 |
 
+### The wire contract
+
+What travels between the agent and the systems it calls, and the authority
+each operation needs. Both sides declare these; neither learns them from the
+other's code.
+
+**`tool_runtime.x_meta`**
+
+```yaml
+aoas/session:
+  carries: '{token: <the caller''s signed credential>}'
+  rule: >-
+    The far end verifies the token itself and takes whose call it is from the token's customer
+    claim. Anything else in the session is ignored by a far end that verifies; a row the caller may
+    not touch is answered as a row that does not exist.
+aoas/idempotency-key:
+  carries: the write's idempotency key (AHC-0074)
+  rule: >-
+    A write repeating a key the far end has answered gets that same answer, and its effect does not
+    land twice.
+aoas/approval:
+  carries: the id of the approval that elevated this call
+  rule: >-
+    Sent when the caller's own scopes do not cover the operation. The far end loads the approval and
+    checks it matches the operation, its arguments and the customer, instead of trusting a scope the
+    agent added to its own identity. For the approval workflow's own login, which has no customer,
+    the approval says whose call it is.
+```
+
+**`tool_runtime.x_tool_meta`**
+
+```yaml
+side_effect: read | reversible | irreversible, as the AOAS declares; an undeclared class is irreversible
+required_scope: the scope the operation needs, from the agent profile's `x_scopes`
+entity: the entity the operation acts on
+```
+
+**`tool_runtime.x_scopes`**
+
+```yaml
+cancel_order: orders:write
+open_return_request: returns:write
+change_address: orders:write
+issue_refund: refunds:write
+```
+
+
 ### Design decisions answered
 
 Each capability that raises a decision expects one. `golden-path` means the
@@ -213,10 +271,13 @@ catalog's own resolution was taken as written and recorded rather than assumed.
 - **`AHC-0004/sdk_containment`** → `import-contract` *(chosen)* — lint-imports fails the build when any module but `llm` imports the provider SDK.
 - **`AHC-0009/allow_list_scope`** → `global` *(golden-path)* — One tenant, one list, checked at startup so a typo fails the process rather than a turn.
 - **`AHC-0009/withdrawn_model`** → `fail-at-build` *(chosen)* — A model with no price is a configuration fault raised where the run is configured, not three calls in (AHC-0101).
+- **`AHC-0014/unsettable_parameter`** → `not-arising` *(chosen)* — Temperature is set explicitly (0.0) at the choke point and the configured route accepts it, so no parameter is fixed by the model. Revisit with any change of model pin: moving to a model that rejects temperature makes this the live question, and the variance measurement has to be re-run.
 - **`AHC-0019/eval_path`** → `same-path` *(chosen)* — The eval path exports through the same tracer, so it redacts by construction rather than by remembering to.
 - **`AHC-0019/redaction_point`** → `before-export` *(chosen)* — One redaction function, on the capture path, so no unredacted copy is written anywhere.
 - **`AHC-0019/reversibility`** → `irreversible` *(chosen)* — Card numbers, emails, phones and key-shaped strings are replaced, not tokenised. Reversible redaction is a second secret to hold.
+- **`AHC-0057/grant_carriage`** → `approval-on-the-call` *(chosen)* — An elevated call names its approval in `_meta` under `aoas/approval`; the order system loads that approval and refuses unless it matches the operation, the arguments and the customer (T-002). The approvals worker's login has no customer, and for that party alone the approval says whose the call is. No scope is ever added to an identity for a grant. The keys are the stack's (open-stack `tool_runtime.x_meta`).
 - **`AHC-0057/irreversible_scope`** → `authority-by-whose` *(chosen)* — Not every irreversible action needs a person here, and the line is not reversibility — it is whose authority the effect needs. Moving money out of the business is the business's decision and `issue_refund` is gated. Cancelling your own unshipped order is yours, and `P-OWNERSHIP` already establishes that only the owner reaches it, so the person whose order it is has authorised it by asking. A gate there would queue the commonest request behind a human with nothing to add, which is the failure the capability's own resolution names. The authority sits in the AOAS as conditions over declared state and is checked where the action executes, so the agent never decides at the time which kind it is looking at. Decided 2026-09-12.
+- **`AHC-0074/key_source`** → `run-step-iteration` *(golden-path)* — `run:step:iteration`, and a call still owed a reply keeps the key its first attempt was minted with, so a retry reaches the far end under the same name (F-039). An approval stores its key and rebuilds it when the grant is carried out, so a resumed approval cannot refund twice. Not verified: a process that dies mid-turn loses the owed-key map, which lives in memory, and whether the redelivered turn re-derives the same key has no test.
 - **`AHC-0109/summary_provenance`** → `no-summariser` *(chosen)* — There is no summariser. `context.assembled` orders for cache friendliness and then drops whole exchanges from the middle, so every unit in the window is text that entered with its own label and kept it. The alternative was argued and rejected on the capability's own grounds: a model-written summary of a window containing fenced material is untrusted output, and getting that wrong launders a planted instruction into the system's own voice. Trimming loses the earliest exchange instead, which is a worse product and a smaller hole.
 
 ### Knowingly not met
@@ -262,3 +323,16 @@ difference between the simulator and the real far end. Whatever you build has
 to be substitutable at every seam for that to be possible — which is not an
 extra requirement, it is capability 2's requirement, restated in the only terms
 that can check it.
+
+The world format is AgentTwin's (`agenttwin/SPEC.md`, schema in
+`agenttwin/schema/awd.schema.json`). A world cites this AOAS and holds only
+records and presentation; the tool surface is composed from the AOAS operations.
+
+## 6 · Before you start
+
+Some obligations in section 3 are about what the *model* does — accuracy on a
+golden set, choosing the right tool, variance, path length, every route. A
+scripted model can prove the harness around them and cannot discharge them.
+Have a key for the model route in section 4 before starting. If there is none,
+build anyway and say, in the build's notes, which obligations ran against a
+script.
