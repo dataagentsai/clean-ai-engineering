@@ -80,7 +80,7 @@ spec changes Tier 1 items forced, which is the cycle working.
 |---|---|
 | **AOAS** | ✅ reads of many rows (T-001) · ✅ a return is state the order holds (T-050) · T-022 · G2.4 · G2.5 |
 | **AHC** | ✅ `channel` port (T-026) · ✅ metrics, later outcomes, a synthetic run, the evaluation record: AHC-0111 to 0114 · Phase 3 blueprints · Phase 4 realizations (G3.1) · Phase 5 skeletons · G3.3 · T-048 |
-| **AAC** | ✅ watching a deployed system: AAC-0114, 0115, 0116 (0.16.0) · AAC-0084 for judges outside A10 · Phase 1 crosswalks · Phase 3 adapters |
+| **AAC** | ✅ watching a deployed system: AAC-0114, 0115, 0116 (0.16.0) · AAC-0084 for judges outside A10 · Phase 1 crosswalks · Phase 3 adapters · **T-075** patterns as portable detection rules |
 | **AgentTwin** | ✅ `authorise` hook (T-002) · ✅ many-reads and `opens` (T-001) · ✅ lasting faults, safe refusals, `forces` (T-050) · ✅ shadow mode (T-042) · ✅ reviewers keep what they saw (T-028) · T-041 · T-073 concurrency and load · **T-074** four agents we did not write |
 | **Bindings** | ✅ `open-stack` mostly current · `langgraph`, `claude-agent-sdk`, `claude-family` filled by their cycles |
 
@@ -252,11 +252,13 @@ when Tier 2's four machinery items exist.
 
 11. **T-036**: cycle 2, the support agent on LangGraph.
 
-**Tier 4 · AgentTwin against agents we did not write**
+**Tier 4 · AgentTwin against agents we did not write, and checks that travel**
 
 12. **T-074**: crash-test τ²-bench's retail agent, OpenAI's CS agents demo,
     LangGraph's support tutorial and our agent on the Claude Agent SDK. τ²-bench
     first, by hand; the rest once T-041 and T-044 make an adapter cheap.
+13. **T-075**: AAC's patterns as portable detection rules on two backends,
+    proven on a trace corpus that T-074's attack runs feed.
 **Any time, blocking nothing:** Tier 1a **T-054** (deprioritised 2026-09-20: the
 store is already behind its own MCP server with the far end's checks; moving it
 out of the process changes the transport, not what is checked), T-030, T-027,
@@ -385,6 +387,7 @@ sharpens T-022 before cycle 4).
 |---|---|---|
 | **AAC Phase 1** | Crosswalks: NIST AI RMF, ISO/IEC 42001, EU AI Act. OWASP has shipped | days |
 | **AAC Phase 3** | DeepEval and eval-platform adapters, which T-040 needs | days |
+| **T-075** | **AAC's patterns as portable detection rules: Sigma for agents.** Raised 2026-09-26 by Basant. Security has Sigma — a detection written once, compiled to Splunk or Elastic; agent telemetry has only each vendor's own evaluators, and nothing written for Langfuse runs on LangSmith. We already hold the three halves: AAC's 38 patterns with a `signal` (AACP-0019 to 0056), the online watch's 22 rules in `reference-agent/src/support_agent/watch/rules.py` (T-057), and the window rules in `deploy/prometheus/rules/agent.yml`. **The catch, and the design turns on it:** `rules.py` says its rules are "the rules no product ships, because each knows what *this* agent's tools and statuses mean". So a portable rule is two parts: the **pattern logic**, generic (*a reply claims a state no tool result supports*), and the **agent's vocabulary** — tools, statuses, claims — projected from its AOAS, as T-068 does for the router. A rule that cannot be split that way stays agent-local and is marked so. **Scope:** (1) a rule format (YAML: id, version, pattern, level turn / conversation / window, severity, needs-words, the match) over the **OpenTelemetry GenAI semantic conventions**, pinned to a version because they are still experimental; (2) the 22 rules and the Prometheus ones rewritten in it, `rules.py` becoming their Langfuse compilation, with T-058's ten `NOT_YET` added as each gets a signal; (3) a **second backend** — the OTel Collector or LangSmith — so portability is demonstrated rather than claimed; (4) a **trace corpus**: for every rule, a trace that must fire it and one that must not, taken from AgentTwin runs and T-074's perturbed runs, so the claim "the checks catch what got through" is a test; (5) redaction before any rule reads words (T-030); LLM-judge rules only once calibrated against labels (AAC-0084). **Done when** the same rule file runs on two backends with identical verdicts over the corpus, and the write-up — *what goes wrong with agents in production, and how each shows in telemetry* — is published | AAC, reference-agent, agenttwin | weeks | T-058 for the ten; T-074 for the attack corpus |
 
 **S3 · AOAS**: T-022 and G2.5, in cycle 4, because a new domain is what exercises the format.
 
