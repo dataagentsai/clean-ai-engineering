@@ -30,9 +30,12 @@
  *   AAC       what it will be tested against, from the same shapes
  *   profile   which product fills each port, and the numbers this system chose
  *
- * `leaks()` below enforces that: a brief naming a path or a module of the
- * reference implementation fails to build. It is a crude check and it is the
- * one that keeps the experiment honest.
+ * `leaks()` below enforces that: a brief naming a path, a module, a symbol or a
+ * tracker item of the reference implementation fails to build. The profile's
+ * notes are written by the people who built the reference and name all four, so
+ * they are scrubbed first (`scrub()`): a sentence that would leak is dropped,
+ * and the decision it explained is still shown. It is a crude check and it is
+ * the one that keeps the experiment honest.
  * ---------------------------------------------------------------------------
  */
 
@@ -102,15 +105,46 @@ function exclusionsOf(aoas) {
 /*
  * The binding fields a builder needs to talk to the far end. `x_` is the
  * profile format's extension point, so most `x_` fields are history or
- * commentary and stay out of the brief. These three are the wire contract, and
- * a regeneration that could not see them invented its own (generation run 1).
+ * commentary and stay out of the brief. These are the wire contract, and a
+ * regeneration that could not see them invented its own: the first three in
+ * generation run 1; the channel's delivery rules, the model route's wire format
+ * and the model pin in generation run 2.
  */
-const NORMATIVE_X = ["x_meta", "x_tool_meta", "x_scopes"];
+const NORMATIVE_X = ["x_meta", "x_tool_meta", "x_scopes", "x_delivery", "x_wire", "x_model"];
 
 /* ------------------------------------------------------------- the sections */
 
 function oneLine(text) {
   return String(text || "").trim().replace(/\s+/g, " ");
+}
+
+/*
+ * A profile note, fit for a builder who must not see the reference.
+ *
+ * Generation run 2 (NOTES §1) read the reference's class names, its import
+ * rule and its tracker items in the decisions section of a document that says
+ * it cannot describe an implementation. Tracker ids are cut where they only
+ * cite; any sentence still naming the implementation is dropped whole. What
+ * survives is the reason, in the capability's terms.
+ */
+const TRACKER = /\b(?:TODO\s+)?(?:[FT]-\d{3}|G\d+\.\d+)\b/g;
+const DATE = /\b\d{4}-\d{2}-\d{2}\b/g;
+
+function scrub(text, opts = {}) {
+  let t = oneLine(text).replace(/\(([^()]*)\)/g, (whole, inner) => {
+    if (!new RegExp(TRACKER.source).test(inner)) return whole;
+    const kept = inner.replace(TRACKER, "").replace(DATE, "").replace(/\s*,(\s*,)+/g, ",").replace(/^[\s,;]+|[\s,;]+$/g, "");
+    return kept ? `(${kept})` : "";
+  });
+  t = t.replace(TRACKER, "");
+  const sentences = t.split(/(?<=[.!?])\s+/).filter((x) => x && !leaks(x, opts).length);
+  return sentences
+    .join(" ")
+    .replace(/\s+([.,;:])/g, "$1")
+    .replace(/([.!?])(\s*[.!?])+/g, "$1")
+    .replace(/\s{2,}/g, " ")
+    .replace(/^[.\s]+$/, "")
+    .trim();
 }
 
 /**
@@ -218,13 +252,84 @@ function thresholdTable(thresholds) {
     : "_None declared. A capability whose threshold is missing is incomplete rather than defaulted._";
 }
 
-function decisionList(decisions) {
+function decisionList(decisions, opts) {
   const entries = Object.entries(decisions || {}).filter(([k]) => !k.startsWith("x_"));
   if (!entries.length) return "_None answered._";
   return entries
     .sort(([a], [b]) => a.localeCompare(b))
-    .map(([key, d]) => `- **\`${key}\`** → \`${d.value}\` *(${d.source})*${d.note ? ` — ${oneLine(d.note)}` : ""}`)
+    .map(([key, d]) => {
+      const note = d.note ? scrub(d.note, opts) : "";
+      return `- **\`${key}\`** → \`${d.value}\` *(${d.source})*${note ? ` — ${note}` : ""}`;
+    })
     .join("\n");
+}
+
+/*
+ * The keyed decisions the owed capabilities raise and the profile does not
+ * answer. Generation run 2 (NOTES §1) found five by reading the catalog: a
+ * brief that lists only the answers makes an unanswered question invisible,
+ * which is the opposite of what the section is for.
+ */
+function unansweredDecisions(caps, decisions) {
+  const answered = new Set(Object.keys(decisions || {}));
+  const open = [];
+  for (const c of caps) {
+    for (const d of c.design_decisions || []) {
+      if (d.key && !answered.has(`${c.id}/${d.key}`)) open.push({ key: `${c.id}/${d.key}`, question: d.question });
+    }
+  }
+  return open.sort((a, b) => a.key.localeCompare(b.key));
+}
+
+function unansweredList(open) {
+  if (!open.length) return "_None: every keyed decision the owed capabilities raise is answered above._";
+  return [
+    "Raised by a capability this shape owes, and not answered by the profile. Each is",
+    "yours to answer and record; the catalog's resolution applies only once a",
+    "profile records it, as `golden-path` or otherwise.",
+    "",
+    ...open.map((d) => `- **\`${d.key}\`** — *unanswered.* ${oneLine(d.question)}`),
+  ].join("\n");
+}
+
+/*
+ * The model pin. Generation run 2 (NOTES §5) found no model named or priced in
+ * anything it was given, so the cost ceiling measured nothing; and its answer
+ * to AHC-0014 flipped when the pin changed. The pin lives in the profile's
+ * `model` binding beside that answer, and an absent one is said.
+ */
+function modelPin(bindings) {
+  const model = (bindings || {}).model;
+  if (!model) return "";
+  if (model.x_model !== undefined) return "";
+  return [
+    "**The model pin.** _None is declared. The profile's `model` binding names no",
+    "model and no price (`x_model`), so the cost ceiling cannot be checked and the",
+    "answer to `AHC-0014/unsettable_parameter` rests on a model nobody named. Pin one,",
+    "with its price and the date the price was read, before any model obligation runs._",
+    "",
+  ].join("\n");
+}
+
+/*
+ * The reference build's accepted gaps. Generation run 2 (NOTES §1) was handed
+ * them under "Knowingly not met", as if they were already accepted for a build
+ * that did not exist. They are shown as whose they are, and a builder is told
+ * each one has to be argued again.
+ */
+function gapList(gaps, opts) {
+  if (!gaps.length) {
+    return "_None. An empty list is a claim, not an absence: it says every applicable capability is accounted for elsewhere._";
+  }
+  return [
+    "The capabilities the build this brief was cut from accepted as not met, each",
+    "with its owner and review date. **They are that build's, not yours.** None is",
+    "pre-accepted for what you build: a capability you also leave unmet goes in your",
+    "own profile's gap list, with a reason that holds for your build, an owner and a",
+    "review date — and where the reason given here does not hold for you, say so.",
+    "",
+    ...gaps.map((g) => `- **${g.capability}** — ${scrub(g.reason, opts)} *(${g.owner}, review ${g.review})*`),
+  ].join("\n");
 }
 
 /* ----------------------------------------------------------------- the brief */
@@ -237,6 +342,7 @@ function brief({ aoas, profile, caps, obs, aoasPath, profilePath }) {
   const excludedIds = new Set(excluded.map((e) => e.id));
   const owedObs = obs.filter((o) => !excludedIds.has(o.id));
   const specAac = ((aoas.conformance || {}).aac || {}).version;
+  const opts = { allow: allowedNames(aoas) };
 
   return `# Generation Brief — ${aoas.agent.id}
 
@@ -277,7 +383,7 @@ optional and none of them substitutes for another.
 | 1 | **AOAS** | What is this agent *for*? | \`${aoasPath}\` |
 | 2 | **AHC** | What must its harness be *able to do*? | \`ai-harness-catalog/capabilities/\` |
 | 3 | **AAC** | What will it be *tested against*? | \`ai-assurance-catalog/catalog/\` |
-| 4 | **Profile** | Which *product* fills each seam? | section 4 below, resolved in full from \`${profilePath}\` and the stack it extends. Nothing a builder needs is left in the profile |
+| 4 | **Profile** | Which *product* fills each seam? | section 4 below, resolved in full from the profile of the build this brief was cut from and the stack it extends. Nothing a builder needs is left in the profile, and you should not open it |
 
 **This brief lists identifiers and points at the text.** It does not restate
 the capabilities, because a restatement is a second copy that can disagree with
@@ -370,30 +476,29 @@ each operation needs. Both sides declare these; neither learns them from the
 other's code.
 
 ${wireContract(profile.bindings)}
-
+${modelPin(profile.bindings)}
 ### Design decisions answered
 
 Each capability that raises a decision expects one. \`golden-path\` means the
 catalog's own resolution was taken as written and recorded rather than assumed.
 
-${decisionList(profile.decisions)}
+${decisionList(profile.decisions, opts)}
 
-### Knowingly not met
+### Design decisions not answered
 
-${
-    gaps.length
-      ? gaps
-          .map((g) => `- **${g.capability}** — ${oneLine(g.reason)} *(${g.owner}, review ${g.review})*`)
-          .join("\n")
-      : "_None. An empty list is a claim, not an absence: it says every applicable capability is accounted for elsewhere._"
-  }
+${unansweredList(unansweredDecisions(caps, profile.decisions))}
+
+### The reference build's gaps
+
+${gapList(gaps, opts)}
 
 ---
 
 ## What finishing means
 
-1. Every capability in section 2 is met, or appears above as a knowing gap with
-   an owner and a review date.
+1. Every capability in section 2 is met, or appears in your own build's profile
+   as a knowing gap with a reason, an owner and a review date. The reference
+   build's gaps in section 4 are not that record.
 2. Every obligation in section 3 has a test behind it that actually runs, and
    the mapping from test to obligation is machine-readable rather than asserted
    in prose.
@@ -415,6 +520,11 @@ that can check it.
 The world format is AgentTwin's (\`agenttwin/SPEC.md\`, schema in
 \`agenttwin/schema/awd.schema.json\`). A world cites this AOAS and holds only
 records and presentation; the tool surface is composed from the AOAS operations.
+
+**No world ships with this brief.** You write one, citing this AOAS, with
+records at each condition's boundaries (the day a window closes and the day
+after, the limit and one past it). The reference build's own world is not an
+input: a world copied from it would carry its choices into your scenarios.
 
 ## 6 · Before you start
 
@@ -451,10 +561,45 @@ const FORBIDDEN = [
   /\bentrypoint\b/,
   /\bports and adapters\b/i,
   /\bhexagonal\b/i,
+  // Added after generation run 2 (NOTES §1), which read each of these in the
+  // brief's decisions: the reference's import rule and its checker, a path to
+  // its profile, and the tracker items its notes cite.
+  /\bmay import\b/i,
+  /\bimport contract\b/i,
+  /\blint-imports\b/,
+  /\/harness-profile\.yaml\b/,
+  /\breference-agent\//,
+  /\b[FT]-\d{3}\b/,
+  /\bG\d+\.\d+\b/,
+  // A symbol: an acronym run into a word (`LLMClient`).
+  /\b[A-Z]{2,}[A-Z][a-z]{2,}[A-Za-z]*\b/,
 ];
 
-function leaks(text) {
-  return FORBIDDEN.filter((re) => re.test(text)).map(String);
+/*
+ * Two checks that need an exception list. A CamelCase word is a class name
+ * unless it is a product a port may name. A dotted name in code quotes is a
+ * module or an attribute (`context.assembled`) unless it is a field of an AOAS
+ * entity (`order.total`), a section of the AOAS (`purpose.refuses`), or a profile key (`tool_runtime.x_meta`).
+ */
+const PRODUCTS = new Set([
+  "AgentTwin", "OpenAI", "LangGraph", "LangChain", "LlamaIndex", "OpenFeature",
+  "OpenTelemetry", "PostgreSQL", "GitHub", "JavaScript", "TypeScript", "DataAgents",
+]);
+
+/** The spec's own dotted names: its sections (`purpose.refuses`) and its entities (`order.total`). */
+function allowedNames(aoas) {
+  return [...Object.keys(aoas || {}), ...Object.keys((aoas || {}).entities || {})];
+}
+
+function leaks(text, { allow = [] } = {}) {
+  const found = FORBIDDEN.filter((re) => re.test(text)).map(String);
+  for (const [w] of text.matchAll(/\b[A-Z][a-z]+(?:[A-Z][a-z]+)+\b/g)) {
+    if (!PRODUCTS.has(w)) found.push(`symbol ${w}`);
+  }
+  for (const [, head, tail] of text.matchAll(/`([a-z][a-z0-9_]*)\.([a-z][a-z0-9_]*)`/g)) {
+    if (!tail.startsWith("x_") && !allow.includes(head)) found.push(`module ${head}.${tail}`);
+  }
+  return found;
 }
 
 /* --------------------------------------------------------------------- cli */
@@ -486,7 +631,7 @@ function main(argv) {
     profilePath: path.relative(ROOT, path.resolve(profilePath)),
   });
 
-  const found = leaks(text);
+  const found = leaks(text, { allow: allowedNames(aoas) });
   if (found.length) {
     console.error(`the brief names an implementation: ${found.join(", ")}`);
     return 1;
@@ -505,6 +650,6 @@ function main(argv) {
   return 0;
 }
 
-module.exports = { brief, owed, leaks, profileOf, shapesOf };
+module.exports = { brief, owed, leaks, scrub, allowedNames, profileOf, shapesOf, unansweredDecisions };
 
 if (require.main === module) process.exit(main(process.argv.slice(2)));

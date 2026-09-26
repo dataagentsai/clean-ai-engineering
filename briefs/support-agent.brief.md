@@ -5,8 +5,8 @@ hand: a brief somebody edited is a brief that can describe an implementation
 instead of a specification, and the whole point of this document is that it
 cannot.*
 
-Built 2026-09-25 · AOAS `0.1.0` ·
-AHC `0.3.0` · AAC `0.13.0` *(the AOAS pins AAC `0.12`)*
+Built 2026-09-26 · AOAS `0.1.0` ·
+AHC `0.3.0` · AAC `0.13.0` *(the AOAS pins AAC `0.16`)*
 
 ---
 
@@ -59,7 +59,7 @@ optional and none of them substitutes for another.
 | 1 | **AOAS** | What is this agent *for*? | `drafts/examples/support-agent.aoas.yaml` |
 | 2 | **AHC** | What must its harness be *able to do*? | `ai-harness-catalog/capabilities/` |
 | 3 | **AAC** | What will it be *tested against*? | `ai-assurance-catalog/catalog/` |
-| 4 | **Profile** | Which *product* fills each seam? | section 4 below, resolved in full from `../reference-agent/harness-profile.yaml` and the stack it extends. Nothing a builder needs is left in the profile |
+| 4 | **Profile** | Which *product* fills each seam? | section 4 below, resolved in full from the profile of the build this brief was cut from and the stack it extends. Nothing a builder needs is left in the profile, and you should not open it |
 
 **This brief lists identifiers and points at the text.** It does not restate
 the capabilities, because a restatement is a second copy that can disagree with
@@ -200,16 +200,25 @@ wrong for almost everyone. They are this system's.
 | Threshold | Value |
 |---|---|
 | `approval_validity_hours` | 24 |
+| `breaker_cooldown_seconds` | 10 |
+| `breaker_failure_threshold` | 3 |
+| `content_capture_sample` | 1 |
 | `escalation_queued_ttl_minutes` | 30 |
 | `escalations_per_conversation` | 2 |
+| `max_concurrent_model_calls` | 4 |
 | `max_concurrent_reads` | 4 |
 | `max_cost_usd_per_task` | 0.5 |
 | `max_history_characters` | 32000 |
+| `max_message_bytes` | 8192 |
 | `max_output_tokens` | 4096 |
+| `max_retries_per_call` | 2 |
 | `max_steps_per_task` | 12 |
 | `max_tool_result_characters` | 8000 |
 | `oscillation_repeat_threshold` | 3 |
+| `policy_evaluation_timeout_ms` | 500 |
 | `refund_without_a_person_inr` | 10000 |
+| `trigger_claim_expiry_seconds` | 600 |
+| `turn_deadline_seconds` | 60 |
 
 ### The wire contract
 
@@ -217,15 +226,49 @@ What travels between the agent and the systems it calls, and the authority
 each operation needs. Both sides declare these; neither learns them from the
 other's code.
 
+**`channel.x_delivery`**
+
+```yaml
+signature: >-
+  X-Chatwoot-Signature is `sha256=` and the hex HMAC-SHA256 of `<X-Chatwoot-Timestamp>.<raw body>`
+  under the bot's secret, compared in constant time. A timestamp more than 300 seconds off is
+  refused, so a captured delivery cannot be replayed.
+delivery_id: >-
+  The Chatwoot message id. A redelivery is recognised by it under the customer it was first
+  delivered for (`customer:key`), so another party's delivery naming the same id reads nothing.
+session_link: >-
+  The customer signs in at the portal, which keeps the login server-side and embeds the widget with
+  the login's `sub` as the contact identifier and its HMAC (Chatwoot identity verification). The
+  webhook acts only for a contact Chatwoot marks hmac_verified, by resuming that stored login into a
+  customer session each turn; with no live login it asks the customer to sign in and does nothing on
+  their behalf.
+```
+
+**`model.x_wire`**
+
+```yaml
+format: OpenAI chat-completions (POST /v1/chat/completions), with tool calls in that shape
+pin: >-
+  The model and its price are each agent's, in its own profile's `model` binding as `x_model` —
+  beside its answer to AHC-0014/unsettable_parameter, because whether temperature can be set is a
+  fact about the pinned model, not about the harness (run 2 pinned two models and the answer
+  flipped).
+seam: >-
+  A client built for another vendor's wire format, pointed at the proxy, may not send the parameters
+  this route's models take: Anthropic's SDK sends no sampling parameters, so temperature and top_p
+  have to travel in the raw body. Use the chat-completions route, or state the seam.
+```
+
 **`tool_runtime.x_meta`**
 
 ```yaml
 aoas/session:
   carries: '{token: <the caller''s signed credential>}'
   rule: >-
-    The far end verifies the token itself and takes whose call it is from the token's customer
-    claim. Anything else in the session is ignored by a far end that verifies; a row the caller may
-    not touch is answered as a row that does not exist.
+    The far end verifies the token itself and takes whose call it is from the token's `customer_id`
+    claim (named after generation run 2, NOTES §7, had to guess it). Anything else in the session is
+    ignored by a far end that verifies; a row the caller may not touch is answered as a row that
+    does not exist.
 aoas/idempotency-key:
   carries: the write's idempotency key (AHC-0074)
   rule: >-
@@ -238,6 +281,16 @@ aoas/approval:
     checks it matches the operation, its arguments and the customer, instead of trusting a scope the
     agent added to its own identity. For the approval workflow's own login, which has no customer,
     the approval says whose call it is.
+  scopes: >-
+    A customer's login never holds the scope a refund needs. A refund always goes through the AOAS's
+    request_refund, which records an approval: granted at once by the automatic limit where
+    issue_refund's agent_when holds, by a person otherwise. The approval workflow's login carries it
+    out, naming the approval here; issue_refund is never offered to the model.
+  loaded_from: >-
+    The harness's own approval records, which the approval port writes: the far end reads them,
+    read-only, by the id this key carries. That couples the order system to the agent's state store
+    — it must be able to reach the approvals table and nothing else in it — and a far end that
+    cannot read the record refuses the call rather than trusting it.
 ```
 
 **`tool_runtime.x_tool_meta`**
@@ -257,30 +310,58 @@ change_address: orders:write
 issue_refund: refunds:write
 ```
 
+**The model pin.** _None is declared. The profile's `model` binding names no
+model and no price (`x_model`), so the cost ceiling cannot be checked and the
+answer to `AHC-0014/unsettable_parameter` rests on a model nobody named. Pin one,
+with its price and the date the price was read, before any model obligation runs._
 
 ### Design decisions answered
 
 Each capability that raises a decision expects one. `golden-path` means the
 catalog's own resolution was taken as written and recorded rather than assumed.
 
-- **`AHC-0001/boundary_position`** → `harness` *(golden-path)* — One parse site, and an import contract makes a second one impossible rather than discouraged — only `llm` may import a provider SDK.
-- **`AHC-0001/parse_failure`** → `fail-typed` *(chosen)* — ModelMalformed is its own type, never retried: the same prompt to the same model produced something unreadable, so a retry mostly buys a second bill. The no-retry rule is asserted so it cannot drift (F-015).
+- **`AHC-0001/boundary_position`** → `harness` *(golden-path)*
+- **`AHC-0001/parse_failure`** → `fail-typed` *(chosen)* — The no-retry rule is asserted so it cannot drift.
 - **`AHC-0001/raw_retention`** → `operator-only` *(chosen)* — The raw text rides on the typed failure for whoever is paged, and never into the customer's reply. Retaining nothing makes a malformed-output report unanswerable; retaining it in the reply is the leak.
-- **`AHC-0004/choke_point`** → `both` *(golden-path)* — The split, written down as the resolution asks (T-029, 2026-09-16). In process: retries, backoff and the breaker (they are the seam scenarios inject faults through, F-029), the allowlist, and cost per task. The LiteLLM proxy: the provider credential, and per-caller keys with a model allowlist, rate limit and budget, which must hold for callers this code does not control. The proxy's own retries and cooldowns are off, so there is one resilience layer.
-- **`AHC-0004/interface_shape`** → `own-interface` *(chosen)* — `LLMClient` is this system's shape, not the provider's, which is what let a recording, a script and a resilience decorator stand in the same slot.
-- **`AHC-0004/sdk_containment`** → `import-contract` *(chosen)* — lint-imports fails the build when any module but `llm` imports the provider SDK.
+- **`AHC-0004/choke_point`** → `both` *(golden-path)* — The split, written down as the resolution asks. In process: retries, backoff and the breaker (they are the seam scenarios inject faults through), the allowlist, and cost per task. The LiteLLM proxy: the provider credential, and per-caller keys with a model allowlist, rate limit and budget, which must hold for callers this code does not control. The proxy's own retries and cooldowns are off, so there is one resilience layer.
+- **`AHC-0004/interface_shape`** → `own-interface` *(chosen)*
+- **`AHC-0004/sdk_containment`** → `import-contract` *(chosen)*
 - **`AHC-0009/allow_list_scope`** → `global` *(golden-path)* — One tenant, one list, checked at startup so a typo fails the process rather than a turn.
 - **`AHC-0009/withdrawn_model`** → `fail-at-build` *(chosen)* — A model with no price is a configuration fault raised where the run is configured, not three calls in (AHC-0101).
 - **`AHC-0014/unsettable_parameter`** → `not-arising` *(chosen)* — Temperature is set explicitly (0.0) at the choke point and the configured route accepts it, so no parameter is fixed by the model. Revisit with any change of model pin: moving to a model that rejects temperature makes this the live question, and the variance measurement has to be re-run.
 - **`AHC-0019/eval_path`** → `same-path` *(chosen)* — The eval path exports through the same tracer, so it redacts by construction rather than by remembering to.
 - **`AHC-0019/redaction_point`** → `before-export` *(chosen)* — One redaction function, on the capture path, so no unredacted copy is written anywhere.
 - **`AHC-0019/reversibility`** → `irreversible` *(chosen)* — Card numbers, emails, phones and key-shaped strings are replaced, not tokenised. Reversible redaction is a second secret to hold.
-- **`AHC-0057/grant_carriage`** → `approval-on-the-call` *(chosen)* — An elevated call names its approval in `_meta` under `aoas/approval`; the order system loads that approval and refuses unless it matches the operation, the arguments and the customer (T-002). The approvals worker's login has no customer, and for that party alone the approval says whose the call is. No scope is ever added to an identity for a grant. The keys are the stack's (open-stack `tool_runtime.x_meta`).
+- **`AHC-0057/grant_carriage`** → `approval-on-the-call` *(chosen)* — An elevated call names its approval in `_meta` under `aoas/approval`; the order system loads that approval and refuses unless it matches the operation, the arguments and the customer. The approvals worker's login has no customer, and for that party alone the approval says whose the call is. No scope is ever added to an identity for a grant. The keys are the stack's (open-stack `tool_runtime.x_meta`).
 - **`AHC-0057/irreversible_scope`** → `authority-by-whose` *(chosen)* — Not every irreversible action needs a person here, and the line is not reversibility — it is whose authority the effect needs. Moving money out of the business is the business's decision and `issue_refund` is gated. Cancelling your own unshipped order is yours, and `P-OWNERSHIP` already establishes that only the owner reaches it, so the person whose order it is has authorised it by asking. A gate there would queue the commonest request behind a human with nothing to add, which is the failure the capability's own resolution names. The authority sits in the AOAS as conditions over declared state and is checked where the action executes, so the agent never decides at the time which kind it is looking at. Decided 2026-09-12.
-- **`AHC-0074/key_source`** → `run-step-iteration` *(golden-path)* — `run:step:iteration`, and a call still owed a reply keeps the key its first attempt was minted with, so a retry reaches the far end under the same name (F-039). An approval stores its key and rebuilds it when the grant is carried out, so a resumed approval cannot refund twice. Not verified: a process that dies mid-turn loses the owed-key map, which lives in memory, and whether the redelivered turn re-derives the same key has no test.
-- **`AHC-0109/summary_provenance`** → `no-summariser` *(chosen)* — There is no summariser. `context.assembled` orders for cache friendliness and then drops whole exchanges from the middle, so every unit in the window is text that entered with its own label and kept it. The alternative was argued and rejected on the capability's own grounds: a model-written summary of a window containing fenced material is untrusted output, and getting that wrong launders a planted instruction into the system's own voice. Trimming loses the earliest exchange instead, which is a worse product and a smaller hole.
+- **`AHC-0074/key_source`** → `run-step-iteration` *(golden-path)* — `run:step:iteration`, and a call still owed a reply keeps the key its first attempt was minted with, so a retry reaches the far end under the same name. An approval stores its key and rebuilds it when the grant is carried out, so a resumed approval cannot refund twice. Not verified: a process that dies mid-turn loses the owed-key map, which lives in memory, and whether the redelivered turn re-derives the same key has no test.
+- **`AHC-0109/summary_provenance`** → `no-summariser` *(chosen)* — There is no summariser. The alternative was argued and rejected on the capability's own grounds: a model-written summary of a window containing fenced material is untrusted output, and getting that wrong launders a planted instruction into the system's own voice. Trimming loses the earliest exchange instead, which is a worse product and a smaller hole.
 
-### Knowingly not met
+### Design decisions not answered
+
+Raised by a capability this shape owes, and not answered by the profile. Each is
+yours to answer and record; the catalog's resolution applies only once a
+profile records it, as `golden-path` or otherwise.
+
+- **`AHC-0025/output_limit`** — *unanswered.* Is hitting the output limit an error or an outcome?
+- **`AHC-0057/approval_source`** — *unanswered.* Where does the executing system read an approval from?
+- **`AHC-0057/approval_staleness`** — *unanswered.* Which state has to still hold when a grant is executed?
+- **`AHC-0057/stale_grant`** — *unanswered.* A grant that has gone stale — retry, or ask again?
+- **`AHC-0094/output_rule_reading`** — *unanswered.* What does a rule over the model's text take as a claim or a recital?
+- **`AHC-0105/replay_equivalence`** — *unanswered.* What may change about a request without invalidating the recording?
+- **`AHC-0107/freshness_scope`** — *unanswered.* Which facts need a window — all of them, or the ones an action depends on?
+- **`AHC-0107/read_stamp`** — *unanswered.* Is a read stamped when it was asked, or when it was answered?
+- **`AHC-0108/facts_source`** — *unanswered.* Written as work happens, or derived from the transcript on demand?
+- **`AHC-0110/failure_axis`** — *unanswered.* What are failures classified by — where they came from, or what to do about them?
+- **`AHC-0115/erasure_key`** — *unanswered.* What identifies the person — the login, or the domain identifier?
+
+### The reference build's gaps
+
+The capabilities the build this brief was cut from accepted as not met, each
+with its owner and review date. **They are that build's, not yours.** None is
+pre-accepted for what you build: a capability you also leave unmet goes in your
+own profile's gap list, with a reason that holds for your build, an owner and a
+review date — and where the reason given here does not hold for you, say so.
 
 - **AHC-0109** — Met vacuously and deliberately: this agent reduces context by dropping whole exchanges, never by summarising, so it produces no new text for a provenance label to be lost across. That is the capability's own third decision taken as written — discarding is the reduction with no laundering surface, and is the right default until measurement says otherwise. If a summariser is ever added here, this entry is the thing that has to change with it, which is why it is recorded rather than left to be noticed. *(reference-agent, review 2026-12-01)*
 - **AHC-0015** — The agent does not stream; a completion and abort contract has nothing to govern. *(reference-agent, review 2026-12-01)*
@@ -289,23 +370,24 @@ catalog's own resolution was taken as written and recorded rather than assumed.
 - **AHC-0073** — No graph. The trajectory is checkpointed per turn (AHC-0044) and an approval resumes from it, which is the part of this that a single loop owes. *(reference-agent, review 2026-12-01)*
 - **AHC-0098** — One class of traffic, one entry point. A priority scheme needs a second class to separate this one from. *(reference-agent, review 2026-12-01)*
 - **AHC-0092** — Residency is declared absent in the AOAS rather than left out, and there is one provider endpoint, so there is no region choice to pin or record. *(reference-agent, review 2026-12-01)*
-- **AHC-0028** — No grader runs in the loop. Judgement with no scenario suite to score it against is an opinion that costs a model call, so this is sequenced with AgentTwin's scenarios rather than built first (TODO G0.11). *(reference-agent, review 2026-11-01)*
+- **AHC-0028** — No grader runs in the loop. Judgement with no scenario suite to score it against is an opinion that costs a model call, so this is sequenced with AgentTwin's scenarios rather than built first. *(reference-agent, review 2026-11-01)*
 - **AHC-0029** — A production turn cannot yet become a dataset row without a translation step, which is what makes online evaluation automatable. Owed with the same work as AHC-0028. *(reference-agent, review 2026-11-01)*
-- **AHC-0031** — No metrics are emitted at all — only spans — so every aggregate question is answered by aggregating traces, which is the wrong instrument. TODO G0.11. *(reference-agent, review 2026-11-01)*
-- **AHC-0095** — Policy evaluation has no budget and no timeout path. All five positions are now reached (F-027); a rule that hangs still takes the turn with it. *(reference-agent, review 2026-11-01)*
+- **AHC-0031** — No metrics are emitted at all — only spans — so every aggregate question is answered by aggregating traces, which is the wrong instrument. *(reference-agent, review 2026-11-01)*
+- **AHC-0095** — Policy evaluation has no budget and no timeout path. All five positions are now reached; a rule that hangs still takes the turn with it. *(reference-agent, review 2026-11-01)*
 - **AHC-0075** — The budget is a per-task ceiling checked as spend accumulates, not an allocation divided between the steps ahead of it. *(reference-agent, review 2026-12-01)*
 - **AHC-0090** — No segment labels are attached at the boundary, so evaluation cannot be sliced by customer segment. Nothing in the AOAS names a segment yet. *(reference-agent, review 2026-12-01)*
 - **AHC-0032** — Prompt, model and policy are versioned and diffable, and no release process restores them together, because this agent is not deployed. *(reference-agent, review 2026-12-01)*
 - **AHC-0033** — No deployment, so there is no artifact serving traffic to compare with the one that was assessed. The Build Manifest is the half of this that exists. *(reference-agent, review 2026-12-01)*
-- **AHC-0006** — One trace per turn in process, and it stops at the process edge. No trace context is injected into anything that leaves: a tool call's MCP `_meta` carries the session and, for writes, the idempotency key, and never a `traceparent`, so the tool server's work cannot attach to the agent's trace. Nothing crosses a gateway because there is none (T-018). Closing it is `propagate.inject` into `_meta` on the transport and an extract on the server, with a test that the server's span has the agent's trace id. *(reference-agent, review 2026-12-01)*
+- **AHC-0006** — One trace per turn in process, and it stops at the process edge. No trace context is injected into anything that leaves: a tool call's MCP `_meta` carries the session and, for writes, the idempotency key, and never a `traceparent`, so the tool server's work cannot attach to the agent's trace. Nothing crosses a gateway because there is none. *(reference-agent, review 2026-12-01)*
 - **AHC-0026** — The run id is minted where the turn begins and is required on `agent.turn`, `agent.run` and `agent.step` by the span contract, so in-process spans join on it. It does not cross a service boundary on its own: it reaches the tool server only inside a write's idempotency key, and a read carries no run id at all. Same fix as AHC-0006 — the run id rides beside the trace context. *(reference-agent, review 2026-12-01)*
 
 ---
 
 ## What finishing means
 
-1. Every capability in section 2 is met, or appears above as a knowing gap with
-   an owner and a review date.
+1. Every capability in section 2 is met, or appears in your own build's profile
+   as a knowing gap with a reason, an owner and a review date. The reference
+   build's gaps in section 4 are not that record.
 2. Every obligation in section 3 has a test behind it that actually runs, and
    the mapping from test to obligation is machine-readable rather than asserted
    in prose.
@@ -327,6 +409,11 @@ that can check it.
 The world format is AgentTwin's (`agenttwin/SPEC.md`, schema in
 `agenttwin/schema/awd.schema.json`). A world cites this AOAS and holds only
 records and presentation; the tool surface is composed from the AOAS operations.
+
+**No world ships with this brief.** You write one, citing this AOAS, with
+records at each condition's boundaries (the day a window closes and the day
+after, the limit and one past it). The reference build's own world is not an
+input: a world copied from it would carry its choices into your scenarios.
 
 ## 6 · Before you start
 
