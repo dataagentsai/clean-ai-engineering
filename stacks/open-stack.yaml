@@ -4,6 +4,11 @@
 # reference-agent/harness-profile.yaml. `x_status: target` is decided and not yet
 # built; the item that builds it is named. Only `bindings:` and `harness:` may
 # name a product. See README.md.
+#
+# Only what every agent on this stack shares belongs here. One agent's own
+# deployment — which store sits behind its tools, which compose file runs it —
+# is that agent's profile's: every agent extending this file inherits whatever
+# it says (generation run 2, NOTES §10).
 apiVersion: harness-profile/v1
 
 subject:
@@ -21,10 +26,43 @@ harness:
   loop: { owner: in-house, adapter: bounded-react-loop, x_status: current, x_why: "decided 2026-09-16: the loop is the kept delta" }
 
 decisions: {}
-thresholds: {}
+
+# The numbers the stack's capabilities need and every agent inherits unless its
+# profile sets its own. Each was missing until generation run 2 (NOTES §6) had
+# to invent all eight. Where the reference agent's harness already holds a
+# value it is taken; the rest are marked chosen, from run 2.
+thresholds:
+  turn_deadline_seconds: 60             # AHC-0096. Chosen (run 2); behind the AOAS's deadline_reached
+  max_retries_per_call: 2               # AHC-0024. Three attempts in all, the reference's resilience default. A retry repeats a failed call; calls made by design are AHC-0041's
+  breaker_failure_threshold: 3          # AHC-0005. Consecutive failures that open it (reference)
+  breaker_cooldown_seconds: 10          # AHC-0005. Open this long, then one probe (reference)
+  max_concurrent_model_calls: 4         # AHC-0020. Model calls in flight, apart from max_concurrent_reads (AHC-0104) (reference)
+  policy_evaluation_timeout_ms: 500     # AHC-0095. Chosen (run 2); a rule past it fails closed
+  max_message_bytes: 8192               # AHC-0016. A customer message larger is refused before a turn (reference)
+  content_capture_sample: 1.0           # AHC-0114. Share of turns whose content is captured, redacted. Chosen (run 2)
+  trigger_claim_expiry_seconds: 600     # requests-store. A claim older than this may be taken again (reference)
 
 bindings:
-  model:        { approach: gateway,     adapter: litellm-proxy,            x_status: current, x_item: T-029, x_note: "agent holds its own gateway key; no retries or cooldowns in the proxy; all 34 scenarios run live through it 17 Sep" }
+  model:
+    approach: gateway
+    adapter: litellm-proxy
+    x_status: current
+    x_item: T-029
+    x_note: "agent holds its own gateway key; no retries or cooldowns in the proxy; all 34 scenarios run live through it 17 Sep"
+    # The wire format the proxy exposes, for every agent on this stack
+    # (generation run 2, NOTES §5: litellm-proxy alone did not say).
+    x_wire:
+      format: OpenAI chat-completions (POST /v1/chat/completions), with tool calls in that shape
+      pin: >-
+        The model and its price are each agent's, in its own profile's `model`
+        binding as `x_model` — beside its answer to AHC-0014/unsettable_parameter,
+        because whether temperature can be set is a fact about the pinned model,
+        not about the harness (run 2 pinned two models and the answer flipped).
+      seam: >-
+        A client built for another vendor's wire format, pointed at the proxy,
+        may not send the parameters this route's models take: Anthropic's SDK
+        sends no sampling parameters, so temperature and top_p have to travel in
+        the raw body. Use the chat-completions route, or state the seam.
   tool_runtime:
     approach: open-source
     adapter: mcp-client
@@ -39,9 +77,10 @@ bindings:
         carries: "{token: <the caller's signed credential>}"
         rule: >-
           The far end verifies the token itself and takes whose call it is from
-          the token's customer claim. Anything else in the session is ignored by
-          a far end that verifies; a row the caller may not touch is answered as
-          a row that does not exist.
+          the token's `customer_id` claim (named after generation run 2, NOTES §7,
+          had to guess it). Anything else in the session is ignored by a far end
+          that verifies; a row the caller may not touch is answered as a row that
+          does not exist.
       aoas/idempotency-key:
         carries: the write's idempotency key (AHC-0074)
         rule: >-
@@ -55,6 +94,20 @@ bindings:
           arguments and the customer, instead of trusting a scope the agent added
           to its own identity. For the approval workflow's own login, which has
           no customer, the approval says whose call it is.
+        # Both added after generation run 2 (NOTES §2, §8) found them unsaid.
+        scopes: >-
+          A customer's login never holds the scope a refund needs. A refund
+          always goes through the AOAS's request_refund, which records an
+          approval: granted at once by the automatic limit where issue_refund's
+          agent_when holds, by a person otherwise. The approval workflow's login
+          carries it out, naming the approval here; issue_refund is never
+          offered to the model.
+        loaded_from: >-
+          The harness's own approval records, which the approval port writes:
+          the far end reads them, read-only, by the id this key carries. That
+          couples the order system to the agent's state store — it must be able
+          to reach the approvals table and nothing else in it — and a far end
+          that cannot read the record refuses the call rather than trusting it.
     x_tool_meta:
       side_effect: "read | reversible | irreversible, as the AOAS declares; an undeclared class is irreversible"
       required_scope: the scope the operation needs, from the agent profile's `x_scopes`
@@ -71,13 +124,39 @@ bindings:
   config:       { approach: open-source, adapter: typed-settings,           x_status: current, x_target: openfeature, x_item: T-047 }
   secrets:      { approach: in-house,    adapter: environment-settings,     x_status: current }
   trigger:      { approach: in-house,    adapter: requests-store,           x_status: current, x_item: T-003, x_note: "one store at two scopes since T-062: a message name and a tool-call name obey one rule. The durable claim was a Temporal workflow whose timer was its expiry; it is a row whose expiry is checked in the statement that takes the claim, so it needs no timer and no sweeper" }
-  channel:      { approach: open-source, adapter: chatwoot-agent-bot,       x_status: current, x_item: T-026, x_note: "port added to AHC 17 Sep; portal keeps the login server-side, webhook acts only for a live one" }
+  channel:
+    approach: open-source
+    adapter: chatwoot-agent-bot
+    x_status: current
+    x_item: T-026
+    x_note: "port added to AHC 17 Sep"
+    # How a delivery is authenticated and whose login it acts under, read from
+    # the reference's channel and portal after generation run 2 (NOTES §8)
+    # found "portal keeps the login server-side" and nothing more.
+    x_delivery:
+      signature: >-
+        X-Chatwoot-Signature is `sha256=` and the hex HMAC-SHA256 of
+        `<X-Chatwoot-Timestamp>.<raw body>` under the bot's secret, compared in
+        constant time. A timestamp more than 300 seconds off is refused, so a
+        captured delivery cannot be replayed.
+      delivery_id: >-
+        The Chatwoot message id. A redelivery is recognised by it under the
+        customer it was first delivered for (`customer:key`), so another
+        party's delivery naming the same id reads nothing.
+      session_link: >-
+        The customer signs in at the portal, which keeps the login server-side
+        and embeds the widget with the login's `sub` as the contact identifier
+        and its HMAC (Chatwoot identity verification). The webhook acts only
+        for a contact Chatwoot marks hmac_verified, by resuming that stored
+        login into a customer session each turn; with no live login it asks the
+        customer to sign in and does nothing on their behalf.
 
 accepted_gaps: []
 
-# Adopted, with no AHC port to bind to yet: the store is reached over MCP and is
-# the world, not a harness seam.
+# Adopted, with no AHC port to bind to yet.
 x_metrics: { approach: open-source, adapter: otel-collector-prometheus, x_status: current, x_item: T-055, x_note: "OTel Collector → Prometheus with Alertmanager and Grafana; alert rules implement AAC patterns' window signals (deploy/prometheus/rules/agent.yml); Temporal's worker metrics through the same collector" }
-x_store:   { approach: open-source, adapter: saleor, x_status: current, x_item: T-017, x_note: "behind the store's own MCP server (order_system.server) with the far end's checks; seeded from the world; scenarios still run against the projection until T-042" }
 
-x_runs_from: reference-agent/compose.yaml
+# `x_store` (the store behind one agent's tools) and `x_runs_from` (its compose
+# file) left this file 2026-09-26: they are the reference agent's facts, and
+# every agent extending the stack was claiming them (generation run 2, NOTES
+# §10). They belong in reference-agent/harness-profile.yaml.

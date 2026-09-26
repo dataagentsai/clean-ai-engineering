@@ -21,6 +21,12 @@ Each file is a **base harness profile**, in AHC's own format
 with `extends`, and adds only what belongs to that agent: its archetypes, its
 thresholds, its gaps.
 
+A stack may set the thresholds its own components need — a turn deadline, a
+breaker, a claim expiry — as defaults an agent's profile overrides key by key.
+What a stack never holds is one agent's deployment: the store behind its tools,
+the file that runs it, the model it pins. Every agent extending the stack would
+inherit the claim (generation run 2, NOTES §10).
+
 **`extends` resolves as of T-033** (2026-09-25), and the first resolution paid
 for the work: the reference agent's profile and `open-stack.yaml` disagreed on
 seven bindings and omitted `workflow` entirely. Six of the seven were this file
