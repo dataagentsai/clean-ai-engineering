@@ -201,6 +201,9 @@ operations:
       - {field: non_refundable, equals: [false]}
     effect: {status: cancelled}
     identity: reservation_id
+    # AHC-0058, required of every write since generation run 2 found the
+    # clothing example silent on it.
+    compensation: {kind: none, how: "the room is released; booking again is the guest's own recovery, at whatever rate then holds"}
     # The same argument the clothing example makes for cancel_order, and it
     # survives the move: the authority is the guest's, exercised on their own
     # row, and `P-OWNERSHIP` already establishes that only the holder reaches
@@ -231,6 +234,7 @@ operations:
     # is worth.
     effect: the reservation moves to the new dates, and its total becomes the rate the reservation system quotes
     identity: [reservation_id, check_in, check_out]   # the same change twice is one change
+    compensation: {kind: undo, how: "change_dates back to the previous dates, while the window is still open and the room is still free"}
     authority: agent
     on_refusal: the new dates are not available at a rate that can be honoured   # P-CHANGE
 
@@ -240,6 +244,7 @@ operations:
     input: [reservation_id]
     preconditions: [*held_by]
     effect: an approval exists, or the refund proceeds within the automatic limit
+    compensation: {kind: counteract, how: "a pending approval is refused by a reviewer; once issue_refund has run, its compensation holds"}
     authority: agent
     # The guest is told a request exists. Never that a refund was issued.
 
@@ -254,6 +259,7 @@ operations:
       - {field: non_refundable, equals: [false]}
     effect: {status: refunded}
     identity: reservation_id            # a reservation is refunded at most once
+    compensation: {kind: none, how: "money that has left the business is not recalled by this system"}
     authority:
       agent_when:
         # Alone, the agent refunds only what is owed and small. A cancelled
@@ -275,6 +281,7 @@ operations:
     side_effect: reversible
     input: [reason]
     effect: an escalation exists, and the conversation belongs to a person until it resolves or lapses
+    compensation: {kind: counteract, how: "the desk closes it, and the conversation returns to the agent"}
     authority: agent
 
 # ---------------------------------------------------------------------------

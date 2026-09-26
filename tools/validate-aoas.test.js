@@ -84,6 +84,10 @@ const CASES = [
 
   // ---- discipline
   ["an irreversible operation with no identity", "irreversible-without-identity", (d) => delete ops(d).issue_refund.identity],
+  ["a write with no compensation declared", "undeclared-compensation", (d) => delete ops(d).change_address.compensation],
+  ["a read needs no compensation", null, (d) => delete ops(d).get_order.compensation],
+  ["a compensation of a kind that is not one of the three", "schema", (d) => (ops(d).cancel_order.compensation.kind = "retry")],
+  ["a refusal answered somewhere undeclared", "schema", (d) => (d.purpose.refuses[0].answered_by = ["prompt"])],
   ["an operation both deferred and defined", "deferred-and-defined", (d) => d.purpose.deferred.push({ operation: "cancel_order" })],
   ["two refusals with one id", "duplicate-id", (d) => d.purpose.refuses.push({ id: "R-DISCOUNT", what: "again", concern: "safety" })],
   ["a text trigger and a condition rule sharing an id", "duplicate-id", (d) => (d.policies.escalation.on_request[0].id = "loop-exhausted")],

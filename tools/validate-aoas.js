@@ -32,6 +32,7 @@
  *   transition-without-effect      a transition credits an operation that does not make it
  *   precondition-mismatch          an operation's guard and its transitions disagree on where it may start
  *   irreversible-without-identity  an irreversible operation never says what "the same request" is
+ *   undeclared-compensation        a write never says whether it can be undone, counteracted, or neither
  *   deferred-and-defined           an operation is both deferred and defined
  *   duplicate-id                   two statements share an identifier
  *   names-technology               the spec names a realisation — charter §2, question 3
@@ -185,6 +186,11 @@ function aoasIssues(doc, opts = {}) {
     }
     if (op.side_effect === "irreversible" && op.identity === undefined) {
       add("irreversible-without-identity", at, "irreversible, and never says what makes a repeat the same request");
+    }
+    // AHC-0058. Generation run 2 had to decide these itself, from domain
+    // knowledge the spec held nowhere; "none" is an answer, silence is not.
+    if (op.side_effect !== "read" && op.compensation === undefined) {
+      add("undeclared-compensation", at, "a write that never says whether it can be undone, counteracted, or neither");
     }
     for (const id of [].concat(op.identity || [])) {
       if (!op.input.includes(id)) add("unknown-input", `${at}.identity`, `"${id}" is not an input of ${on}`);

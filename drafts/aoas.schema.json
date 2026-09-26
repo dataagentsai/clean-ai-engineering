@@ -51,6 +51,13 @@
                 "minItems": 1,
                 "items": { "type": "string", "minLength": 1 },
                 "description": "Customer words this refusal must meet. The testable half of `what`: without them every implementation draws the line in its own place, and finds its false positives by accident."
+              },
+              "answered_by": {
+                "type": "array",
+                "minItems": 1,
+                "uniqueItems": true,
+                "items": { "enum": ["direct", "loop", "output", "structural"] },
+                "description": "Where the refusal is made, every control a test holds to account. direct: recognised from the customer's words and answered with no model call. loop: the model declines. output: a reply that does it is blocked on the way out. structural: nothing the agent can reach is able to do it. Without it a refusal with no intent has no declared path, and each builder picks one (generation run 2)."
               }
             }
           },
@@ -138,9 +145,10 @@
             "rule": { "type": "string", "minLength": 1 },
             "via": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "type": "string" } },
             "concern": { "$ref": "#/$defs/concern" },
-            "facet": { "type": "string", "description": "Optional. A 25010:2023 sub-characteristic of the concern, where the characteristic alone is too coarse." }
+            "facet": { "type": "string", "description": "Optional. A 25010:2023 sub-characteristic of the concern, where the characteristic alone is too coarse." },
+            "addressed_to": { "enum": ["model", "harness"], "description": "Who the rule governs. harness: which path answers or what a path may do, never rendered into the model's instruction. model: rendered, and enforced where `via` says. Absent: both." }
           },
-          "description": "A rule in words, and the operations whose conditions enforce it. A policy no operation enforces is a preference."
+          "description": "A rule in words, and the operations whose conditions enforce it. A policy no operation enforces is a preference. `rule` is rendered alone, among others, so it names its own subject."
         },
         "^x_": {}
       },
@@ -386,7 +394,7 @@
           "enum": ["read", "reversible", "irreversible"],
           "description": "What repeating it costs. Irreversible means repeating charges someone twice."
         },
-        "input": { "type": "array", "uniqueItems": true, "items": { "type": "string" } },
+        "input": { "type": "array", "uniqueItems": true, "items": { "type": "string" }, "description": "An input `<entity>_id` on an operation over that entity names the row it acts on and is carried as the entity's `key`: that key name is the one the model is shown and the far end enforces. Every other input travels under its own name." },
         "output": { "type": "string", "pattern": "^[a-z][a-z0-9_]*(\\[\\])?$", "description": "The entity returned. `entity[]` is a read of many rows: it takes no key, and must be scoped to the caller by a precondition over the session." },
         "amount_from": { "type": "string", "description": "Where a money amount comes from. Never the conversation." },
         "preconditions": { "$ref": "#/$defs/condition_list" },
@@ -422,6 +430,16 @@
           "description": "Owed, not merely permitted. Without it an omission is invisible to every other check."
         },
         "on_refusal": { "type": "string", "description": "What to offer instead. The reason and the offer, never the wording." },
+        "compensation": {
+          "type": "object",
+          "required": ["kind", "how"],
+          "additionalProperties": false,
+          "properties": {
+            "kind": { "enum": ["undo", "counteract", "none"], "description": "undo: the prior state is restored. counteract: a second action offsets it, and both stay on the record. none: nothing can, stated rather than implied." },
+            "how": { "type": "string", "minLength": 1, "description": "The compensating path in domain terms, or why there is none." }
+          },
+          "description": "AHC-0058, per operation. Required of every write: knowing an action cannot be undone changes whether it should run unattended."
+        },
         "offered": { "type": "boolean", "description": "Absent or true: in the model's tool set. False: never shown to the model, reached only through another operation's `routes_to` or by a person." },
         "routes_to": { "type": "string", "description": "The operation this one leads to when its conditions allow: a request that becomes an action. The target's `authority` decides whether it runs now or waits for a person." }
       }

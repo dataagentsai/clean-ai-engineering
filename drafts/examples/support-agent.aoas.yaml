@@ -26,10 +26,12 @@ agent:
   version: 0.1.0
   currency: INR
 
+# Provenance is the repository and its version, never paths inside it. Until
+# generation run 2 (NOTES §1) this listed the reference's module layout — a
+# design, in a spec, handed to every builder who read the header.
 sources:
   - DataAgents.ai/24-support-agent-functional-spec.md
-  - reference-agent@v0.1.0 worlds/clothing.yaml
-  - reference-agent@v0.1.0 src/support_agent/{router,policy,approvals,escalation,identity,config}
+  - reference-agent@v0.1.0
 
 # ---------------------------------------------------------------------------
 # 1 · Purpose
@@ -53,34 +55,53 @@ purpose:
       concern: safety
       facet: operational constraint
       examples: ["Can you give me a discount code?", "Match the cheaper price I saw on another site", "Any coupon for my next order?"]
+      answered_by: [direct, output]
     - id: R-OTHER-CUSTOMER
       what: anything about an order the signed-in customer did not place
       concern: security
       facet: confidentiality
       examples: ["What did my neighbour order? Her name is Ravi.", "Show me the delivery address on my friend's order"]
+      # The guarantee is structural: every operation is scoped by the verified
+      # session where it executes, so another customer's name reaches nothing
+      # (P-OWNERSHIP). Recognising the words is courtesy on top of it, not the
+      # control — a phrasing the patterns miss still finds no row.
+      answered_by: [direct, structural]
     - id: R-ACCOUNT
       what: account deletion, and changes to a payment method
       concern: safety
       facet: operational constraint
       examples: ["Delete my account", "Change my card to a new one", "Update my payment method to UPI"]
+      answered_by: [direct]
     - id: R-DELIVERY-DATE
       what: a delivery date the carrier record does not state
       concern: functional-suitability
       facet: functional correctness
       examples: ["Exactly which day will it arrive?", "Promise me it comes by Friday"]
+      # Not recognised from the words: "when will it arrive" is an order-status
+      # question with a true answer when the carrier states one. The model
+      # declines to invent a date, and a reply stating one is blocked on the way out.
+      answered_by: [loop, output]
     - id: R-STYLE
       what: style or fit advice presented as authoritative
       concern: functional-suitability
       facet: functional appropriateness
       examples: ["Will the medium fit me? I'm usually between sizes", "Which colour would suit me better?"]
+      answered_by: [direct]
     - id: R-FRAUD
       what: adjudicating whether anything is fraud
       concern: safety
       facet: risk identification
       examples: ["Is this charge fraud?", "Was my order a scam?"]
+      answered_by: [direct]
   # `examples` are the testable half of each refusal (generation run 1, NOTES
   # §7): without them every implementation drew its own line, and found its
   # false positives by accident.
+  #
+  # `answered_by` says where each refusal is made (generation run 2, NOTES §7):
+  # four of the six had no intent, so nothing said whether words or the model
+  # declined them, and a builder decided per refusal. Every refusal reaches the
+  # model's instruction as well; `answered_by` names the controls a test holds
+  # to account, and a refusal made on any of them counts towards `refusals`.
   # Recognised, in doc 24, and deliberately not operations in this version. The
   # agent may explain the policy; it performs nothing, and claims nothing.
   deferred:
@@ -144,7 +165,12 @@ entities:
       order_id: {type: id, ref: order.id}
       action: {type: enum, values: [issue_refund]}
       amount: {type: money}
+      # What the person decided. A grant stays a grant whatever happens when it
+      # is carried out; `execution` records that, once (generation run 2,
+      # NOTES §8 — "granted, but stale by the time it ran" had no value).
       outcome: {type: enum, values: [pending, granted, refused, expired]}
+      execution: {type: enum, values: [done, refused, stale, grant_expired]}
+      superseded_by: {type: id, ref: approval.id}   # the fresh approval a stale grant was asked again as
 
   escalation:
     key: ticket
@@ -170,23 +196,44 @@ facts:
     # `deadline_reached` added after generation run 1 (NOTES §7): a wall-clock
     # stop (AHC-0096) had no value and was recorded as a step stop.
     values: [goal_reached, step_budget_exhausted, cost_ceiling_reached,
-             deadline_reached, oscillation_detected, awaiting_approval,
-             awaiting_human, refused, unrecoverable_error]
-  consecutive_failed: {type: int, derived: "turns ending in failure, counting back from the latest until one did not"}
+             deadline_reached, output_length_reached, oscillation_detected,
+             awaiting_approval, awaiting_human, refused, unrecoverable_error]
+    # `output_length_reached` added after generation run 2 (NOTES §8): a model
+    # reply cut off at Q-OUTPUT is an incomplete stop (AHC-0025), and with no
+    # value of its own it was recorded as an unrecoverable error.
+  consecutive_failed:
+    type: int
+    # Defined after generation run 2 (NOTES §8). An answer is not a failure: a
+    # write refused on its preconditions, and a row that does not exist, are
+    # results the turn read. A failed read the reply routed around still
+    # counts, because the rule reading this fact is `tool-unavailable`.
+    derived: "turns ending in failure, counting back from the latest until one did not; a turn ends in failure when its loop stopped on unrecoverable_error, or when an operation it called did not answer (unavailable, or slow past the turn's deadline) and the turn ended without that answer"
   refusals: {type: int, derived: turns in this conversation the agent refused}
   repeated_intent:
     type: int
     # However each was answered. A customer who asks again has not been
     # resolved, whatever the turn that answered them recorded — counting only
     # unanswered turns is what made the rule unreachable.
-    derived: "turns carrying the latest turn's intent, counting back from it until the intent changes"
+    # `other` is not counted: three "thanks" in a row are not a customer going
+    # unresolved. Decided 2026-09-26 after generation run 2 (NOTES §8), which
+    # read the derivation literally and escalated small talk.
+    derived: "turns carrying the latest turn's intent, counting back from it until the intent changes; zero when the latest turn's intent is `other`"
 
 # The closed set of things a customer asks for. P-DIRECT's "exactly one
 # intent" and the `repeated_intent` fact both count over it; until it was
 # declared, each implementation invented its own (generation run 1, NOTES §1).
+#
+# `via` is also a source of the model's instruction: it is how the model learns
+# which operation serves which request. Generation run 2 (NOTES §11) rendered a
+# prompt without it and the model could not find `request_refund`.
+#
+# A status question naming no order goes to the loop (P-DIRECT), and the loop
+# finds the order with `list_orders` rather than asking for a number nobody has
+# to hand (P-OPEN). With `get_order` alone here, the model asked for the number:
+# generation run 2's one live failure (NOTES §11, status-loop-no-id).
 intents:
-  order_status:     {answered_by: direct,   via: [get_order], examples: ["Where is my order?", "Has my order shipped yet?"]}
-  refund_status:    {answered_by: direct,   via: [get_order], examples: ["What's happening with my refund?", "Did my refund go through?"]}
+  order_status:     {answered_by: direct,   via: [get_order, list_orders], examples: ["Where is my order?", "Has my order shipped yet?"]}
+  refund_status:    {answered_by: direct,   via: [get_order, list_orders], examples: ["What's happening with my refund?", "Did my refund go through?"]}
   cancel:           {answered_by: loop,     via: [cancel_order], examples: ["Please cancel my order", "I don't want this order any more"]}
   return:           {answered_by: loop,     via: [open_return_request], examples: ["I want to return this", "How do I send it back?"]}
   address_change:   {answered_by: loop,     via: [change_address], examples: ["Change my delivery address", "Can you ship it to my office instead?"]}
@@ -232,6 +279,18 @@ state_machines:
 # owns the record answers it: a second refund of one order is refused by
 # `status != refunded` however new the key is. Neither governs the other; a
 # harness that had only the key would refund twice for two genuine attempts.
+#
+# Input names. An input `<entity>_id` on an operation over that entity names the
+# row it acts on, and is carried as the entity's `key` — `order_id` travels as
+# `id`. That key name is the one the model is shown and the order system
+# enforces; `order_id` is the domain's name for it here and in `identity`.
+# Generation run 2 (NOTES §8) found the two names side by side and nothing
+# reconciling them. Every other input travels under its own name.
+#
+# `compensation` (AHC-0058) says, for every action, whether it can be undone,
+# only counteracted, or neither — declared per operation after generation run 2
+# (NOTES §1) held it as domain knowledge outside the spec. An undo restores the
+# prior state; a counteraction leaves both events on the record.
 
 # Named conditions, reused below. A named condition must qualify its field
 # (`order.customer_id`, not `customer_id`), because it has no entity of its own.
@@ -273,6 +332,7 @@ operations:
       - {field: status, equals: [pending, confirmed]}
     effect: {status: cancelled}
     identity: order_id
+    compensation: {kind: none, how: "nothing restores a cancelled order; placing it again is the customer's own recovery"}
     authority: agent
     # AHC-0057 asks for an approval the run cannot grant on anything
     # irreversible, and this is irreversible. It is nonetheless the agent's,
@@ -309,6 +369,7 @@ operations:
     # record answers identity, as `status != refunded` does for a refund.
     effect: {return_open: true}
     identity: order_id
+    compensation: {kind: counteract, how: "an operator closes the return request; the request stays on the record"}
     authority: agent
 
   change_address:
@@ -320,6 +381,7 @@ operations:
       - {field: status, equals: [pending]}
     effect: {address: $address}
     identity: [order_id, address]      # the same change twice is one change
+    compensation: {kind: undo, how: "change_address with the previous address, while the order is still pending"}
     authority: agent
     on_refusal: the carrier owns the address once the order has progressed   # P-ADDRESS
 
@@ -338,6 +400,7 @@ operations:
     routes_to: issue_refund
     effect: issue_refund has run, or an approval for it is pending
     identity: order_id                 # asking again while one is pending is the same request
+    compensation: {kind: counteract, how: "a pending approval is refused by a reviewer; once issue_refund has run, its compensation is the one that holds"}
     authority: agent
     on_refusal: before delivery, cancel while the order is cancellable; a parcel lost in transit is a handoff
     # The customer is told a request exists. Never that a refund was issued,
@@ -354,6 +417,14 @@ operations:
       - {field: status, not_equals: [refunded]}
     effect: {status: refunded}
     identity: order_id                 # an order is refunded at most once
+    compensation: {kind: none, how: "money that has left the business is not recalled by this system"}
+    # A customer's own login never carries the authority this needs (decided
+    # 2026-09-26, after generation run 2, NOTES §2, found it unsaid). Every
+    # refund runs on an approval: `request_refund` records one, granted at once
+    # by the automatic limit where `agent_when` holds and by a reviewer
+    # otherwise, and the grant — not the customer — is what the order system
+    # honours. `agent_when` is therefore the rule for a grant with no person,
+    # never a permission the customer's credential holds.
     authority:
       agent_when:
         # Alone, the agent refunds only what is owed and small. "Owed" was
@@ -378,6 +449,7 @@ operations:
     side_effect: reversible            # a queued escalation lapses
     input: [reason]
     effect: an escalation exists, and the conversation belongs to a person until it resolves or lapses
+    compensation: {kind: counteract, how: "the desk closes it with an outcome from P-ESC-OUTCOME, and the conversation returns to the agent"}
     authority: agent
     # There is nowhere to escalate to when no desk is reachable. Saying it
     # plainly and staying with the request is the offer; "let me pass you to a
@@ -389,22 +461,25 @@ operations:
 # ---------------------------------------------------------------------------
 policies:
   P-CANCEL:
-    rule: cancellation while pending or confirmed; once picked, refuse and offer return-on-delivery
+    rule: an order may be cancelled while pending or confirmed; once picked, cancellation is refused and a return on delivery is offered
     via: [cancel_order]
     concern: functional-suitability
     facet: functional correctness
+  # Each `rule` is rendered alone, into the model's instruction among others,
+  # so it names its own subject: "within 30 days of delivery" said nothing about
+  # returns once it left this file (generation run 2, NOTES §6).
   P-RETURN:
-    rule: within 30 days of delivery; final-sale items never
+    rule: a return may be opened within 30 days of delivery; final-sale items are never returned
     via: [open_return_request]
     concern: functional-suitability
     facet: functional correctness
   P-ADDRESS:
-    rule: while pending only
+    rule: the delivery address may be changed only while the order is pending
     via: [change_address]
     concern: functional-suitability
     facet: functional correctness
   P-REFUND:
-    rule: to the original payment method; a refund above ₹10,000 needs a person
+    rule: a refund goes to the original payment method, and one above ₹10,000 needs a person
     via: [request_refund, issue_refund]
     concern: safety
     facet: operational constraint
@@ -430,10 +505,12 @@ policies:
   P-DIRECT:
     rule: order status and refund status are answered from the order system deterministically, with no model call, when the turn names exactly one intent from `intents` and exactly one order; a turn naming several orders, several intents, or none of either goes to the loop
     via: [get_order]
+    addressed_to: harness
     concern: cost
   P-DIRECT-READS:
     rule: the deterministic path never performs a write — it is selected by patterns over the customer's words, and an effect must not be one rewording away
     via: [get_order]
+    addressed_to: harness
     concern: safety
     facet: operational constraint
   # T-001. A chat that opens empty makes the customer supply an order number they
@@ -444,7 +521,12 @@ policies:
   P-OPEN:
     rule: when a signed-in customer opens a conversation, they are shown their own orders and any work of theirs already in flight, with no model call
     via: [list_orders]
+    addressed_to: harness
     concern: cost
+  # `addressed_to: harness` on the three above: they decide which path answers,
+  # not what the model says, and are not rendered into its instruction. Absent,
+  # a policy is for both. Generation run 2 (NOTES §6) had to hard-code the
+  # exclusion, which is domain knowledge in code.
   P-OWNERSHIP:
     rule: a customer may see and act on only the orders they placed
     via: [get_order, list_orders, cancel_order, open_return_request, change_address, request_refund, issue_refund]
@@ -457,7 +539,10 @@ policies:
   approval:
     statements:
       - {id: P-APPROVER, rule: "a refund is authorised by an operations reviewer, never by the customer whose refund it is", concern: security, facet: authenticity}
-      - {id: P-APPROVAL-TTL, rule: "a grant older than its validity fails closed rather than executing", valid_for: 24h, concern: safety, facet: fail safe}
+      - {id: P-APPROVAL-TTL, rule: "a grant older than its validity fails closed rather than executing, and records execution grant_expired", valid_for: 24h, concern: safety, facet: fail safe}
+      # AHC-0057's "ask again", in this format (generation run 2, NOTES §8).
+      # The fields judged are the ones issue_refund's authority reads.
+      - {id: P-APPROVAL-STALE, rule: "a granted refund whose order no longer has the status or total it was granted on is not carried out: the approval records execution stale, a fresh pending approval is asked against the order as it now is and named in superseded_by, and the customer is told the request is waiting again — its own outcome, never reported as a failure", concern: safety, facet: fail safe}
       - {id: P-APPROVAL-FINAL, rule: "a decision is final: a decided approval cannot be decided again", concern: safety, facet: fail safe}
       - {id: P-APPROVAL-WAIT, rule: "while a decision is pending the conversation continues, and the customer is told a request exists and nothing more", concern: functional-suitability, facet: functional completeness}
       - {id: P-APPROVAL-QUEUE, rule: "the queue a reviewer reads holds the undecided, and a decided approval leaves it", concern: reliability, facet: faultlessness}
@@ -467,7 +552,7 @@ policies:
       - {id: asked-for-human, when: the customer asks to speak to a person}
       - {id: lost-in-transit, when: the item is reported lost in transit}
     on_condition:                      # Tier 2 — decided from what the conversation has become. First match wins.
-      - {id: loop-exhausted,   when: {field: termination, equals: [step_budget_exhausted, cost_ceiling_reached, deadline_reached, oscillation_detected]}, priority: 2, ttl: 15m}
+      - {id: loop-exhausted,   when: {field: termination, equals: [step_budget_exhausted, cost_ceiling_reached, deadline_reached, output_length_reached, oscillation_detected]}, priority: 2, ttl: 15m}
       - {id: tool-unavailable, when: {field: consecutive_failed, at_least: 2}, priority: 2, ttl: 15m}
       - {id: repeated-intent,  when: {field: repeated_intent, at_least: 3},    priority: 3, ttl: 30m}
       - {id: second-refusal,   when: {field: refusals, at_least: 2},           priority: 4, ttl: 30m}
@@ -511,7 +596,11 @@ external:
     operations: [get_order, list_orders, cancel_order, open_return_request, change_address, issue_refund]
     refusal_is_a_result: >
       A write whose precondition fails returns {allowed: false, reason} with the
-      current record. It is not an error, and it is not a success.
+      current record. It is not an error, and it is not a success. A row that
+      does not exist, or that the caller may not touch, is answered the same
+      way: a result naming unknown_record, which the caller can read — never a
+      transport error indistinguishable from the system failing (generation
+      run 2, NOTES §2).
     consistency: reads can be stale by the time a write is attempted; the write's own answer is authoritative
     idempotency: >
       MUST accept a caller-supplied key on every irreversible operation and
@@ -539,13 +628,16 @@ required:
     - {id: Q-OUTPUT, must: at most 4096 output tokens per model call, evidence: assertion, concern: performance-efficiency, facet: resource utilization}
     - {id: Q-TOOL-RESULT, must: a tool result enters context at most 8000 characters long, evidence: assertion, concern: functional-suitability, facet: functional completeness}
     - {id: Q-MODEL, must: only a model from the approved list is called, evidence: inspection, concern: security, facet: integrity}
+    # Decided 2026-09-26. It was undeclared while AAC-0095, which this agent
+    # claims, requires retention to be bounded — generation run 2 (NOTES §6)
+    # could not satisfy both.
+    - {id: Q-RETENTION, must: "transcripts, traces and every record the harness writes are kept 30 days, then deleted", evidence: assertion, concern: security, facet: confidentiality}
   undeclared:
     # Stated as absent rather than left out. Each is a property this agent
     # plainly has an answer to in production, and nobody has written it down.
     - latency
     - availability
     - data residency
-    - retention of transcripts and traces
 
 # ---------------------------------------------------------------------------
 # 7 · Conformance
@@ -553,7 +645,9 @@ required:
 conformance:
   archetypes: [A6, A5]               # a deterministic router ahead of a model-driven loop
   aac:
-    version: "0.12"                  # pre-1.0: pinned to minor, since major 0 pins nothing
+    # Was 0.12 while the brief said 0.13 and the catalog stood at 0.16
+    # (generation run 2, NOTES §10).
+    version: "0.16"                  # pre-1.0: pinned to minor, since major 0 pins nothing
     claims: all obligations tagged A6 or A5, except those excluded below
     excluded:
       - {id: AAC-0092, reason: the agent does not stream output, revisit_when: streaming is added}

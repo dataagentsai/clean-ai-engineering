@@ -10,7 +10,7 @@ a family of six becomes a folder of thirty.
 | Promotion condition | State |
 |---|---|
 | Schema | ✅ [aoas.schema.json](aoas.schema.json) |
-| Validator | ✅ [tools/validate-aoas.js](../tools/validate-aoas.js) — 23 rules, one table-driven case each at least (`npm test`) |
+| Validator | ✅ [tools/validate-aoas.js](../tools/validate-aoas.js) — 27 rules, one table-driven case each at least (`npm test`) |
 | Two worked examples | ✅ 2 of 2 |
 
 **Worked example 1:** the reference support agent —
@@ -22,8 +22,9 @@ record first; the findings are the output.
 [examples/support-agent-hotel.aoas.yaml](examples/support-agent-hotel.aoas.yaml),
 with [its extraction record](examples/support-agent-hotel.extraction.md). A
 different domain, the same shape, and written **from the format rather than from
-an implementation** — the first example lists two of the reference agent's own
-paths under `sources`, and this one lists none. Nine of thirteen sections carried
+an implementation** — the first example listed the reference agent's own
+paths under `sources` until generation run 2 (it now names the repository and
+version only), and this one lists none. Nine of thirteen sections carried
 unchanged; four things resisted, and each loses something machine-readable to a
 workaround.
 
@@ -155,7 +156,11 @@ permanent.
 - **Not a requirements document.** No user stories, no prioritisation, no roadmap.
   It states what is true of the agent, not what someone wants next.
 - **Not a design.** No modules, no sequence diagrams. What, not how.
-- **Not a prompt.** A prompt is generated output; the policies above are its source.
+- **Not a prompt.** A prompt is generated output. Its sources are the policies
+  not marked `addressed_to: harness`, the refusals, and the intent→operation
+  map (`intents[].via`) — which operation serves which request. Generation run 2
+  rendered a prompt from the policies alone and the model could not find the
+  refund operation.
 - **Not universal.** The moment a statement here would hold for any agent, it has
   been written in the wrong document.
 
