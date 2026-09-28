@@ -5,8 +5,8 @@ hand: a brief somebody edited is a brief that can describe an implementation
 instead of a specification, and the whole point of this document is that it
 cannot.*
 
-Built 2026-09-26 · AOAS `0.1.0` ·
-AHC `0.3.0` · AAC `0.13.0` *(the AOAS pins AAC `0.16`)*
+Built 2026-09-28 · AOAS `0.1.0` ·
+AHC `0.3.0` · AAC `0.16.0`
 
 ---
 
@@ -96,7 +96,7 @@ one binds you to:
 
 ## 2 · The capabilities this shape owes
 
-**77 capabilities**, derived from `archetypes: [A6, A5]`.
+**78 capabilities**, derived from `archetypes: [A6, A5]`.
 Each says what the harness must be able to do and names the failure it prevents;
 several carry design decisions the profile answers in section 4.
 
@@ -111,12 +111,12 @@ several carry design decisions the profile answers in section 4.
 | **L7** | AHC-0008, AHC-0018, AHC-0019, AHC-0093, AHC-0094, AHC-0095 |
 | **L8** | AHC-0020, AHC-0021, AHC-0095, AHC-0096, AHC-0097, AHC-0098 |
 | **L9** | AHC-0014, AHC-0022, AHC-0023 |
-| **L10** | AHC-0005, AHC-0017, AHC-0021, AHC-0024, AHC-0025, AHC-0058, AHC-0073, AHC-0074, AHC-0096, AHC-0105, AHC-0110 |
+| **L10** | AHC-0005, AHC-0017, AHC-0021, AHC-0024, AHC-0025, AHC-0053, AHC-0058, AHC-0073, AHC-0074, AHC-0096, AHC-0105, AHC-0110 |
 | **L11** | AHC-0006, AHC-0018, AHC-0019, AHC-0026, AHC-0027, AHC-0029, AHC-0090, AHC-0111, AHC-0112, AHC-0114 |
 | **L12** | AHC-0010, AHC-0022, AHC-0028, AHC-0029, AHC-0090, AHC-0112, AHC-0113, AHC-0114 |
 | **L13** | AHC-0007, AHC-0012, AHC-0024, AHC-0030, AHC-0031, AHC-0075, AHC-0097, AHC-0101, AHC-0111 |
 | **L14** | AHC-0039, AHC-0057, AHC-0058 |
-| **L15** | AHC-0003, AHC-0009, AHC-0032, AHC-0033, AHC-0072, AHC-0092 |
+| **L15** | AHC-0003, AHC-0009, AHC-0032, AHC-0033, AHC-0053, AHC-0072, AHC-0092 |
 | **L16** | AHC-0034, AHC-0035, AHC-0040, AHC-0099, AHC-0113, AHC-0115 |
 
 The text of each is in `ai-harness-catalog/capabilities/<id>.yaml`. For the
@@ -217,6 +217,7 @@ wrong for almost everyone. They are this system's.
 | `oscillation_repeat_threshold` | 3 |
 | `policy_evaluation_timeout_ms` | 500 |
 | `refund_without_a_person_inr` | 10000 |
+| `retention_days` | 30 |
 | `trigger_claim_expiry_seconds` | 600 |
 | `turn_deadline_seconds` | 60 |
 
@@ -257,6 +258,17 @@ seam: >-
   A client built for another vendor's wire format, pointed at the proxy, may not send the parameters
   this route's models take: Anthropic's SDK sends no sampling parameters, so temperature and top_p
   have to travel in the raw body. Use the chat-completions route, or state the seam.
+```
+
+**`model.x_model`**
+
+```yaml
+id: openai/gpt-oss-120b
+provider: groq, through the stack's litellm-proxy
+price_usd_per_mtok:
+  input: 0.15
+  output: 0.75
+priced_from: the agent's own price table, which the cost ceiling is metered against
 ```
 
 **`tool_runtime.x_meta`**
@@ -310,10 +322,6 @@ change_address: orders:write
 issue_refund: refunds:write
 ```
 
-**The model pin.** _None is declared. The profile's `model` binding names no
-model and no price (`x_model`), so the cost ceiling cannot be checked and the
-answer to `AHC-0014/unsettable_parameter` rests on a model nobody named. Pin one,
-with its price and the date the price was read, before any model obligation runs._
 
 ### Design decisions answered
 
@@ -328,32 +336,31 @@ catalog's own resolution was taken as written and recorded rather than assumed.
 - **`AHC-0004/sdk_containment`** → `import-contract` *(chosen)*
 - **`AHC-0009/allow_list_scope`** → `global` *(golden-path)* — One tenant, one list, checked at startup so a typo fails the process rather than a turn.
 - **`AHC-0009/withdrawn_model`** → `fail-at-build` *(chosen)* — A model with no price is a configuration fault raised where the run is configured, not three calls in (AHC-0101).
-- **`AHC-0014/unsettable_parameter`** → `not-arising` *(chosen)* — Temperature is set explicitly (0.0) at the choke point and the configured route accepts it, so no parameter is fixed by the model. Revisit with any change of model pin: moving to a model that rejects temperature makes this the live question, and the variance measurement has to be re-run.
+- **`AHC-0014/unsettable_parameter`** → `not-arising` *(chosen)* — Temperature is set explicitly (0.0) at the choke point and the pinned model (`bindings.model.x_model`, gpt-oss-120b) accepts it, so no parameter is fixed by the model. The answer belongs to the pin, not the harness: generation run 2 pinned a model that rejects temperature and got the opposite answer from the same harness. Revisit with any change of pin, and re-run the variance measurement.
 - **`AHC-0019/eval_path`** → `same-path` *(chosen)* — The eval path exports through the same tracer, so it redacts by construction rather than by remembering to.
 - **`AHC-0019/redaction_point`** → `before-export` *(chosen)* — One redaction function, on the capture path, so no unredacted copy is written anywhere.
 - **`AHC-0019/reversibility`** → `irreversible` *(chosen)* — Card numbers, emails, phones and key-shaped strings are replaced, not tokenised. Reversible redaction is a second secret to hold.
+- **`AHC-0025/output_limit`** → `outcome` *(golden-path)* — Its own termination, output_length_reached. The turn stops, the clipped text or tool calls are never passed on, and loop-exhausted escalates it.
+- **`AHC-0053/claim_scope`** → `verified-caller` *(golden-path)* — A delivery is claimed as customer:key, so another customer presenting the same key starts their own turn and is never handed the first reply (the leak run 2 found here, fixed in 832c38a). The conversation is not part of the name: a resend after a lost reply carries none.
+- **`AHC-0053/occasion_source`** → `caller-supplied` *(golden-path)* — The Idempotency-Key header on /chat, and the Chatwoot message id on the channel. With neither, the turn runs unguarded; an id is never derived from the text and the time.
+- **`AHC-0057/approval_source`** → `harness-approval-records` *(chosen)* — The order system reads the approval the call names from the approval workflow's records, read-only: the agent can ask and read, never write, and the far end checks operation, arguments, customer, grant and expiry.
+- **`AHC-0057/approval_staleness`** → `status-and-total` *(chosen)* — The facts the assessment judged — the order's status and total — are recorded on the approval and read again before a grant is carried out.
 - **`AHC-0057/grant_carriage`** → `approval-on-the-call` *(chosen)* — An elevated call names its approval in `_meta` under `aoas/approval`; the order system loads that approval and refuses unless it matches the operation, the arguments and the customer. The approvals worker's login has no customer, and for that party alone the approval says whose the call is. No scope is ever added to an identity for a grant. The keys are the stack's (open-stack `tool_runtime.x_meta`).
 - **`AHC-0057/irreversible_scope`** → `authority-by-whose` *(chosen)* — Not every irreversible action needs a person here, and the line is not reversibility — it is whose authority the effect needs. Moving money out of the business is the business's decision and `issue_refund` is gated. Cancelling your own unshipped order is yours, and `P-OWNERSHIP` already establishes that only the owner reaches it, so the person whose order it is has authorised it by asking. A gate there would queue the commonest request behind a human with nothing to add, which is the failure the capability's own resolution names. The authority sits in the AOAS as conditions over declared state and is checked where the action executes, so the agent never decides at the time which kind it is looking at. Decided 2026-09-12.
+- **`AHC-0057/stale_grant`** → `ask-again` *(golden-path)* — A grant whose status or total has moved is not carried out; the approval records execution stale and a fresh request is asked against the order as it now is, named in superseded_by (P-APPROVAL-STALE).
 - **`AHC-0074/key_source`** → `run-step-iteration` *(golden-path)* — `run:step:iteration`, and a call still owed a reply keeps the key its first attempt was minted with, so a retry reaches the far end under the same name. An approval stores its key and rebuilds it when the grant is carried out, so a resumed approval cannot refund twice. Not verified: a process that dies mid-turn loses the owed-key map, which lives in memory, and whether the redelivered turn re-derives the same key has no test.
+- **`AHC-0094/output_rule_reading`** → `folded-text` *(chosen)* — Every rule reads the text with look-alike dashes, odd spaces and invisible characters folded and NFKC applied, so an id written with a non-breaking hyphen is still an id. Only the rules' copy is folded; the reply is not.
+- **`AHC-0105/replay_equivalence`** → `messages-tools-sampling` *(chosen)* — A replay matches on the messages, the tool names, max_tokens and temperature; tool schemas may differ. No fence nonce or read stamp enters a request, so neither breaks a recording. An approval id does, inside a tool result: a turn that asked a refund replays only against the same approvals.
+- **`AHC-0107/freshness_scope`** → `rows-an-irreversible-action-depends-on` *(chosen)* — Only a row an irreversible action is about to act on is held to the window; reads that only inform a reply are not re-read.
+- **`AHC-0107/read_stamp`** → `when-asked` *(golden-path)* — Stamped before the call is dispatched. Until it was stamped on arrival, so a slow read looked fresh and the re-read never fired.
+- **`AHC-0108/facts_source`** → `written-as-work-happens` *(golden-path)* — The harness writes what was asked, the rows that reached a tool, what the far end confirmed and what is awaited, when each happens. Nothing is derived from the transcript.
 - **`AHC-0109/summary_provenance`** → `no-summariser` *(chosen)* — There is no summariser. The alternative was argued and rejected on the capability's own grounds: a model-written summary of a window containing fenced material is untrusted output, and getting that wrong launders a planted instruction into the system's own voice. Trimming loses the earliest exchange instead, which is a worse product and a smaller hole.
+- **`AHC-0110/failure_axis`** → `what-a-caller-can-do` *(golden-path)* — Five kinds by the caller's next move — unreachable (wait and retry), refused, malformed, misconfigured, exhausted — and only unreachable is retried.
+- **`AHC-0115/erasure_key`** → `customer-id` *(chosen)* — The domain identifier, not the login: every store the harness writes is keyed or searchable by customer_id, and a login maps to one.
 
 ### Design decisions not answered
 
-Raised by a capability this shape owes, and not answered by the profile. Each is
-yours to answer and record; the catalog's resolution applies only once a
-profile records it, as `golden-path` or otherwise.
-
-- **`AHC-0025/output_limit`** — *unanswered.* Is hitting the output limit an error or an outcome?
-- **`AHC-0057/approval_source`** — *unanswered.* Where does the executing system read an approval from?
-- **`AHC-0057/approval_staleness`** — *unanswered.* Which state has to still hold when a grant is executed?
-- **`AHC-0057/stale_grant`** — *unanswered.* A grant that has gone stale — retry, or ask again?
-- **`AHC-0094/output_rule_reading`** — *unanswered.* What does a rule over the model's text take as a claim or a recital?
-- **`AHC-0105/replay_equivalence`** — *unanswered.* What may change about a request without invalidating the recording?
-- **`AHC-0107/freshness_scope`** — *unanswered.* Which facts need a window — all of them, or the ones an action depends on?
-- **`AHC-0107/read_stamp`** — *unanswered.* Is a read stamped when it was asked, or when it was answered?
-- **`AHC-0108/facts_source`** — *unanswered.* Written as work happens, or derived from the transcript on demand?
-- **`AHC-0110/failure_axis`** — *unanswered.* What are failures classified by — where they came from, or what to do about them?
-- **`AHC-0115/erasure_key`** — *unanswered.* What identifies the person — the login, or the domain identifier?
+_None: every keyed decision the owed capabilities raise is answered above._
 
 ### The reference build's gaps
 
