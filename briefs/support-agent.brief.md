@@ -422,6 +422,44 @@ records at each condition's boundaries (the day a window closes and the day
 after, the limit and one past it). The reference build's own world is not an
 input: a world copied from it would carry its choices into your scenarios.
 
+### The gates, and what your build owes them
+
+Your build is judged from outside by four gates: **behaviour** (a fixed set of
+scenarios you will not see, driven through AgentTwin against your agent),
+**features** (your own suite, read from a JUnit report), **structure** (three
+build checks, and a module for every layer section 2 touches) and **harness**
+(section 2, against your profile). Nothing is diffed against another build. To
+be reachable at all, a build owes four things:
+
+1. **A binding** — one async context manager with the signature
+   `open_subject(live, *, wrap, clock, model)`, yielding AgentTwin's Subject.
+   The shape and its three obligations are in AgentTwin's SPEC, under *One entry
+   point*: tools from the projection of `live` with `wrap` forwarded unread,
+   every model call sent to the endpoint the runner hands you, and the given
+   clock as the only clock.
+2. **A model route whose base URL is configuration**, on the wire section 4
+   names. The gates put a model there that answers from each scenario's script,
+   and serves throttles and outages the way a real provider does; your own
+   provider adapter, retries included, is what meets them.
+3. **Tests that name what they discharge**, machine-readably: each test case in
+   the JUnit report carries a property named `discharges` whose value is the
+   statement ids, comma-separated. A test of an instrument rather than of the
+   agent carries `tooling` = `true`; one of a component the agent never calls
+   carries `unwired` = `true` and counts for nothing.
+4. **A gates file** at the repository root (`apiVersion: gates/v0`): the
+   AOAS agent id as `agent`; paths to the AOAS and to your profile; the
+   binding as `module:attribute`; a `tests` block whose `command` runs
+   the suite, with `{junit}` where the report is to be written; and a
+   `structure` block with `checks` — a command for each of `types`,
+   `imports` and `complexity` — and `layers`, mapping each layer id to the
+   path that realises it, or to `{none: reason}` where every capability that
+   layer owes is an accepted gap.
+
+**Do not run the gates yourself.** The behaviour yardstick lives where the
+rule in your instructions forbids you to read. Drive your binding with your own
+world and scenarios instead — `python -m agenttwin run --binding
+module:attribute your-scenarios/` — which is the same runner the gates use.
+
 ## 6 · Before you start
 
 Some obligations in section 3 are about what the *model* does — accuracy on a
