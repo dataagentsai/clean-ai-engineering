@@ -1,0 +1,345 @@
+# Application Operation Agent Spec — worked example 3: the adversarial shape
+#
+# A nightly, read-only analyst over Spark event logs and Delta table metadata:
+# it finds last run's most expensive applications, works out why each is
+# expensive, and writes a report in which every finding cites its evidence.
+#
+# Written ahead of any implementation (T-013), to test whether the format can
+# describe an agent that is NOT shaped like the support agents: nobody is
+# waiting, a run is one long task rather than a conversation, nothing is
+# written to the systems it reads, and there is no approval and no handoff.
+# Where the format resisted, the place is marked `# FRICTION S<n>`; the record
+# is the TODO item T-022, which fixes these together with the hotel's four.
+#
+# Domain values come from CostIntelligence1 (code/detect.py and code/rule_*.py)
+# where it states one; where it only detects the pattern, the number here is a
+# default marked `# OWNER TO CONFIRM`.
+#
+# Status: draft, worked example for AOAS v0. Not citable.
+# **Pending, and named so the suite skips it** (`*.aoas-pending.yaml`): it fails
+# the validator three times, all `unscoped-collection` — FRICTION S5 enforced.
+# The format requires every read of many rows to be scoped to a session, and a
+# system agent has none. Renamed to `.aoas.yaml` when T-022 settles S5.
+# Validate explicitly: node tools/validate-aoas.js drafts/examples/spark-cost-analyst.aoas-pending.yaml
+
+apiVersion: aoas/v0
+agent:
+  id: spark-cost-analyst
+  version: 0.1.0
+
+sources:
+  - LearnAgenticHarnessFrameworks/11-worked-examples.md (case 2)
+  - CostIntelligence1 (the detection rules and their thresholds)
+
+# ---------------------------------------------------------------------------
+# 1 · Purpose
+# ---------------------------------------------------------------------------
+purpose:
+  # FRICTION S1 — `serves` reads as "who is talking to it". Nobody is: the run
+  # is started by a schedule and its reader arrives hours later. Written as the
+  # reader, which is the only person the agent answers to.
+  serves: >
+    A data platform team, which reads one report each morning about the
+    previous run's Spark applications.
+  does:
+    - rank the run's applications by executor-hours
+    - diagnose why each of the most expensive is expensive
+    - cite the evidence for every diagnosis
+    - suggest a fix for each diagnosis, as a suggestion only
+    - publish the report
+  refuses:
+    # FRICTION S2 — `examples` are "customer words this refusal must meet", and
+    # nobody sends this agent words. What each refusal must meet is a sentence
+    # the agent itself might write into the report, so the examples below are
+    # report text, not requests. The format has no field for that.
+    - id: R-APPLY
+      what: changing any job, table, configuration or file it reads — fixes are suggested, never applied
+      concern: safety
+      answered_by: [structural]
+      examples: ["I have compacted the table", "Repartitioned the job to 200 partitions"]
+    - id: R-MONEY
+      what: stating a cost in money; cost is executor-hours computed from the logs
+      concern: functional-suitability
+      facet: functional correctness
+      answered_by: [output]
+      examples: ["This job cost $412 last night", "Fixing this saves ₹30,000 a month"]
+    - id: R-UNEVIDENCED
+      what: naming a cause no detector result supports
+      concern: functional-suitability
+      facet: functional correctness
+      answered_by: [output]
+      examples: ["This is probably a skew problem", "Likely caused by a bad join"]
+  # Recognised and deliberately not operations in this version.
+  deferred:
+    - {operation: apply_fix, source: worked example 10 — writes and approvals make it another agent}
+    - {operation: price_executor_hours, source: until a price per executor-hour is declared}
+
+# ---------------------------------------------------------------------------
+# 2 · Entities and state
+# ---------------------------------------------------------------------------
+# FRICTION S3 — the entities are read-only facts about a finished run, so there
+# are no state machines: nothing here moves from one state to another because
+# of anything the agent does. The format is fine with that (state_machines is
+# optional), which is the graceful degradation T-013 asked about.
+entities:
+  application:
+    key: id
+    fields:
+      id: {type: id}
+      name: {type: text, untrusted: true}      # set by whoever submitted the job
+      started_at: {type: timestamp}
+      duration_s: {type: int}
+      executor_hours: {type: number}           # the cost measure: sum of executor run time
+      status: {type: enum, values: [succeeded, failed]}
+
+  stage:
+    key: id
+    fields:
+      id: {type: id}
+      application_id: {type: id, ref: application.id}
+      description: {type: text, untrusted: true}   # the call site, written by user code
+      tasks: {type: int}
+      duration_s: {type: int}
+      input_bytes: {type: int}
+      shuffle_read_bytes: {type: int}
+      shuffle_write_bytes: {type: int}
+      spill_bytes: {type: int}
+      max_task_s: {type: number}
+      median_task_s: {type: number}
+      max_partition_rows: {type: int}
+      median_partition_rows: {type: int}
+      plan_nodes: {type: text}                 # physical plan operators, e.g. CartesianProduct, BatchEvalPython
+    invariants:
+      - name: a stage with tasks has a median task time
+        when: {field: tasks, at_least: 1}
+        then: {field: median_task_s, at_least: 0}
+        because: the median of a non-empty set of durations exists
+
+  delta_table:
+    key: id
+    fields:
+      id: {type: id}
+      path: {type: text}
+      files: {type: int}
+      total_bytes: {type: int}
+      avg_file_bytes: {type: int, derived: total_bytes divided by files}
+
+  finding:
+    # FRICTION S4 — a finding is not stored anywhere the agent reads; it is
+    # *computed* from stages and tables by a detector. The format has only
+    # stored entities, so a computed result is declared as an entity with a
+    # `derived` note, and a world cannot project it from rows (AWD has no
+    # "computed from other rows").
+    key: id
+    fields:
+      id: {type: id}
+      application_id: {type: id, ref: application.id}
+      pattern: {type: enum, values: [small_files, heavy_shuffle, cartesian_join, skew, python_udf, too_many_partitions, collect_to_driver]}
+      subject: {type: text, derived: the stage or table the pattern was found in}
+      metric: {type: text}
+      value: {type: number}
+      threshold: {type: number}
+
+  report:
+    key: id
+    fields:
+      id: {type: id}                           # the run date
+      status: {type: enum, of: report_status}
+
+state_machines:
+  report_status:
+    states: [draft, published]
+    terminal: [published]
+    transitions:
+      - {from: draft, to: published, by: publish_report}
+
+# FRICTION S5 — no `session`. Every operation below reads rows that belong to
+# no caller, and the schema says a read of many rows "must be scoped to the
+# caller by a precondition over the session". A system agent has no caller to
+# scope to; the lists below are scoped by the run's time window instead, which
+# the format has no way to name as the scoping rule.
+
+# ---------------------------------------------------------------------------
+# 3 · Operations
+# ---------------------------------------------------------------------------
+operations:
+  list_applications:
+    entity: application
+    side_effect: read
+    input: [since, until]
+    output: application[]
+    authority: agent
+
+  get_application:
+    entity: application
+    side_effect: read
+    input: [application_id]
+    output: application
+    authority: agent
+
+  list_stages:
+    entity: stage
+    side_effect: read
+    input: [application_id]
+    output: stage[]
+    authority: agent
+
+  get_table:
+    entity: delta_table
+    side_effect: read
+    input: [delta_table_id]
+    output: delta_table
+    authority: agent
+
+  detect:
+    # The detection rules are tools, not something the model re-derives each run
+    # (worked example 2: "rule_skew_detection becomes a tool").
+    entity: finding
+    side_effect: read
+    input: [application_id]
+    output: finding[]
+    authority: agent
+
+  publish_report:
+    entity: report
+    side_effect: reversible            # a later run can publish a corrected report
+    input: [report_id, body]
+    preconditions:
+      - {field: status, equals: [draft]}
+    effect: {status: published}
+    identity: report_id                # one report per run date
+    compensation: {kind: undo, how: "publish a corrected report for the same date, which supersedes it"}
+    authority: agent
+
+# ---------------------------------------------------------------------------
+# 4 · Policies
+# ---------------------------------------------------------------------------
+policies:
+  P-RANK:
+    rule: the report covers the five applications with the most executor-hours in the run's window
+    via: [list_applications]
+    concern: functional-suitability
+    addressed_to: harness
+  P-EVIDENCE:
+    rule: every diagnosis names the stage or table it was found in, the metric, its value and the threshold it crossed, all as returned by detect
+    via: [detect, publish_report]
+    concern: functional-suitability
+    facet: functional correctness
+  P-UNEXPLAINED:
+    rule: an expensive application no detector explains is reported as unexplained, with its executor-hours, and no cause is guessed
+    via: [detect, publish_report]
+    concern: functional-suitability
+    facet: functional correctness
+  P-SUGGEST:
+    rule: each diagnosis carries a suggested fix, worded as a suggestion; nothing is changed
+    via: [publish_report]
+    concern: safety
+  # The detection thresholds. Stated here, not in a prompt: a policy expressed
+  # only in a prompt is a preference.
+  P-SMALL-FILES:
+    rule: a Delta table has too many small files when its average file is under 32 MB
+    via: [detect]
+    concern: performance-efficiency
+    addressed_to: harness
+  P-SKEW:
+    rule: a stage is skewed when its slowest task takes more than five times its median task, or its largest partition holds more than ten times the median partition's rows
+    via: [detect]
+    concern: performance-efficiency
+    addressed_to: harness
+  P-CARTESIAN:
+    rule: a stage whose plan contains a CartesianProduct is a cartesian join
+    via: [detect]
+    concern: performance-efficiency
+    addressed_to: harness
+  P-UDF:
+    rule: a stage whose plan evaluates a Python UDF (BatchEvalPython or ArrowEvalPython) is flagged
+    via: [detect]
+    concern: performance-efficiency
+    addressed_to: harness
+  P-SHUFFLE:
+    # OWNER TO CONFIRM — detect.py flags any remote shuffle read; a report needs a bar.
+    rule: a stage shuffles heavily when it reads more shuffle bytes than it read input
+    via: [detect]
+    concern: performance-efficiency
+    addressed_to: harness
+  P-PARTITIONS:
+    # OWNER TO CONFIRM — rule_too_many_partitions.py demonstrates 2000 partitions, with no bar.
+    rule: a stage has too many partitions when it runs more than 2000 tasks averaging under 1 MB of input each
+    via: [detect]
+    concern: performance-efficiency
+    addressed_to: harness
+  P-COLLECT:
+    # OWNER TO CONFIRM — rule_collect_usage.py flags any collect(); a report needs a bar.
+    rule: a collect to the driver is flagged when it returns more than 100,000 rows
+    via: [detect]
+    concern: performance-efficiency
+    addressed_to: harness
+
+# FRICTION S6 — the report's own contract has nowhere to go. "One section per
+# application, in executor-hour order, each with diagnosis, evidence and a
+# suggested fix" is the agent's whole deliverable, and the format can state it
+# only as policy prose (P-EVIDENCE, P-SUGGEST). An A8 artifact producer needs a
+# way to declare the artifact's structure as a contract a reviewer can check.
+
+# ---------------------------------------------------------------------------
+# 5 · External contracts
+# ---------------------------------------------------------------------------
+external:
+  spark_history:
+    owns: [application, stage]
+    operations: [list_applications, get_application, list_stages]
+    consistency: a finished run's logs do not change; an application still running is absent
+    failure_modes: [unavailable, slow, truncated_log, oversized_result]
+  delta_log:
+    owns: [delta_table]
+    operations: [get_table]
+    failure_modes: [unavailable, unknown_record]
+  detectors:
+    # FRICTION S7 — "owns" means "is the system of record for". Findings are
+    # recorded nowhere; this system computes them on request. The format has no
+    # verb for a computing dependency.
+    owns: [finding]
+    operations: [detect]
+    failure_modes: [unavailable, slow, oversized_result]
+  report_store:
+    owns: [report]
+    operations: [publish_report]
+    idempotency: >
+      A report is identified by its run date; publishing the same date again
+      supersedes the earlier one rather than adding a second.
+    failure_modes: [unavailable]
+  # FRICTION S8 — no approval_queue and no escalation_desk, on purpose. The
+  # format can only express that by leaving them out, which reads exactly like
+  # forgetting them. There is no way to declare "no human in the loop, by
+  # design" — the absence T-013 set out to test does not degrade gracefully.
+
+# ---------------------------------------------------------------------------
+# 6 · Required properties
+# ---------------------------------------------------------------------------
+required:
+  properties:
+    - {id: Q-RUN-TIME, must: "a run finishes within 2 hours of starting", evidence: assertion, concern: performance-efficiency, facet: time behaviour}
+    - {id: Q-COST, must: "model spend per run at most USD 2.00", evidence: assertion, concern: cost}
+    - {id: Q-TOOL-RESULT, must: "a tool result enters context at most 8000 characters long; anything larger is stored and referred to, never inlined", evidence: assertion, concern: performance-efficiency, facet: resource utilization}
+    - {id: Q-READ-ONLY, must: "no operation writes to the Spark history, the Delta tables or any job configuration", evidence: inspection, concern: safety}
+    - {id: Q-CITED, must: "every diagnosis in a published report traces to a finding returned by detect in the same run", evidence: scenario, concern: functional-suitability, facet: functional correctness}
+    - {id: Q-MODEL, must: only a model from the approved list is called, evidence: inspection, concern: security, facet: integrity}
+  undeclared:
+    - availability          # a failed run is re-run the next night; nobody has said how often that may happen
+    - data residency
+
+# ---------------------------------------------------------------------------
+# 7 · Conformance
+# ---------------------------------------------------------------------------
+conformance:
+  archetypes: [A6, A8]               # tool-using, and its output is an artifact
+  aac:
+    version: "0.16"
+    claims: all obligations tagged A6 or A8, except those excluded below
+    excluded:
+      - {id: AAC-0092, reason: the agent does not stream output, revisit_when: streaming is added}
+      - {id: AAC-0096, reason: no response cache exists, revisit_when: any response or prompt cache is added}
+      - {id: AAC-0115, reason: nothing records whether a suggested fix was applied, revisit_when: a way to record the team's action on a finding exists}
+  ahc:
+    version: "0.x"
+    claims: all sixteen layers; a layer with no module is a finding

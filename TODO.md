@@ -1537,11 +1537,18 @@ layer above.
 
 ### T-022 · Fix the five AOAS frictions
 
-**Status** Waiting on T-013. Raised 2026-09-16. **Cycle 4.** Repo: `clean-ai-engineering`.
+**Status** Unblocked 2026-09-29 — T-013 is written. Raised 2026-09-16. **Cycle 4.** Repo: `clean-ai-engineering`.
 
 **What.** The four things that resisted in the hotel AOAS (T-011), plus the fifth
 found by T-012: normative blocks with no identifier, so a file cannot cite what
 governs it. The record is `drafts/examples/support-agent-hotel.extraction.md`.
+
+**Now with the Spark analyst's eight (T-013, 2026-09-29)** — fix the union, so
+the format is not fitted to hotels. Two pairs share a root: the hotel's
+far-system precondition (2) and the Spark detectors (S4, S7) are both "the far
+system computes the answer"; the hotel's row-reading trigger (4) and the Spark
+time-window scoping (S5) are both "a condition over something other than the
+caller's session".
 
 **Why wait.** Fixing them against one second domain fits the format to hotels.
 T-013 adds a differently shaped set; fix the union.
@@ -1571,8 +1578,23 @@ falsify the decision:** a hotel agent that has to edit a mechanism module, with
 
 ### T-013 · Write the Spark cost analyst AOAS — the adversarial shape
 
-**Status** Not started. Raised 2026-09-16. **Sibling of T-011, different failure
-mode expected.**
+**Status** ✅ Written 2026-09-29: `drafts/examples/spark-cost-analyst.aoas-pending.yaml`
+(pending-named so the suite skips it; see S5). Eight frictions, marked in the
+file and routed to T-022 beside the hotel's four:
+
+| | Where the format resisted |
+|---|---|
+| S1 | `serves` reads as "who is talking to it"; nobody is — a schedule starts it, a reader arrives hours later |
+| S2 | refusal `examples` are customer words; nobody sends this agent words, so the examples are report sentences |
+| S3 | no state machines on the data it reads — **degrades gracefully** (optional) |
+| S4 | a finding is *computed* from rows, not stored; the format and AWD know only stored entities |
+| S5 | **enforced by the validator**: a read of many rows must be scoped to a session, and a system agent has none — scoped by the run's time window instead, which the format cannot name |
+| S6 | an artifact producer's deliverable (the report's structure) can only be policy prose |
+| S7 | `owns` means system of record; a computing dependency (the detectors) has no verb |
+| S8 | **the T-013 question, answered no**: "no approval, no handoff, by design" can only be said by leaving them out, which reads as forgetting them |
+
+Thresholds are CostIntelligence1's where it states one (32 MB, 5× task time,
+10× partition rows); three are defaults marked `OWNER TO CONFIRM`.
 
 **What is missing.** Evidence that the specification set describes an agent that
 is **not shaped like this one**. T-011 varies the domain and keeps the shape;
