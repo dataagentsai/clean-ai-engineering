@@ -54,7 +54,7 @@ days rather than weeks.
 | 3 · Declare the stack | ◐ **T-033** — `extends` resolves; each stack filled at its cycle · T-067 · T-068 |
 | 4 · Generate | ◐ **T-034** — the brief is generated; the run is next |
 | 5 · Set up AgentTwin | **T-044** · **T-039** · T-041 · T-023 |
-| 6 · Test through the gates | **T-035** · T-040 |
+| 6 · Test through the gates | ✅ T-035 · T-040 |
 | 7 · Route the failures | T-021 · ✅ T-072 — generation run 2 routed, specs and reference |
 | Portability across stacks | **T-048** |
 
@@ -242,7 +242,7 @@ when Tier 2's four machinery items exist.
 
 **Tier 2 · make the cycle repeatable** (in parallel with the items above)
 
-6. **T-035**: the four gates as one command. Every cycle's step 6.
+6. ✅ **T-035**: the four gates as one command — done 28 Sep.
 7. **T-033**: stack profiles that resolve `extends`.
 8. **T-034**: the Generation Brief. Every cycle's step 4.
 9. **T-039** then **T-044**: LangWatch Scenario, and a one-step AgentTwin setup. Every cycle's step 5.
@@ -276,7 +276,7 @@ sharpens T-022 before cycle 4).
 |---|---|---|---|---|
 | **T-033** | ◐ **Stack profiles. `extends` resolves as of 2026-09-25**; filling each stack stays open, at its cycle. The resolver is `ai-harness-catalog/tools/resolve.js` (`npm run resolve`), with the merge rules in its header and two findings that are about the *diff* rather than the merge: an override of a bound port without `x_why` is an error, and restating an inherited value is a warning. The lint resolves before validating. **The first resolution paid for the work**: the reference agent's profile and `open-stack.yaml` disagreed on seven bindings and omitted `workflow` — `approval` still said a Postgres queue although T-028 moved it to Temporal, `eval_task` still said scenario-runner although agenttwin has been the runner for 35 imports' worth of tests, and `recorder` was the stack naming its target as the adapter. Nothing could notice, because nothing had ever compared the two. Left: LangGraph (T-036), Claude Agent SDK, Claude family | clean-ai-engineering, AHC tools, reference-agent | a day | — |
 | **T-034** | ◐ **The Generation Brief — the document exists as of 2026-09-25; the generation run does not.** `tools/brief.js` (`npm run briefs`) assembles one from four sources: the AOAS, the capabilities the declared shape owes, the obligations it will be tested against, and the resolved stack with its thresholds and answered decisions. 72 capabilities, 56 obligations, 15 ports for the support agent. **It is generated, not written, and that is the whole design**: a brief written by somebody who knows the reference agent describes it, and the generated code then matches for a reason the specs cannot claim credit for — so `leaks()` refuses to emit a brief naming a source directory, a module of the reference implementation, or an architectural style, and the brief says in its own words that it will not tell the builder how to lay out the code. **Left: run it.** Hand the brief to a session that has not seen `reference-agent`, build in an isolated worktree, and diff. Every difference is a sentence the specs failed to say, and that list is the deliverable — it is the first list of spec gaps produced by anything other than reading our own code | clean-ai-engineering | days | ◐ T-033 |
-| **T-035** | The four gates as one command: an implementation in, a verdict and a routed failure list out | reference-agent, agenttwin | a day or two | — |
+| **T-035** | ✅ **The four gates as one command — done 2026-09-28.** `uv run tools/gates.py <repo>` (`npm run gates`): the implementation's `gates.yaml` says how to reach it, the yardstick in `gates/<agent>.yaml` says what it is measured against, and out come `reports/gates/verdict.{md,json}` with every failure routed. The reference passes all four (36 scenarios + 1 needing a live customer; 183 statements; 16 of 16 layers; 78 capabilities, 61 tested and 17 accepted gaps). Built on agenttwin's new `Binding`, provider twin and `run` command, and the scripts moved into the scenario files. A negative control — the reference with a false claim appended to every reply — found the suite weak (23 of 36 still passed), which added *every reply is true of the records it names* to every run (2 of 36 now). Found F-060 on the way | reference-agent, agenttwin | a day or two | — |
 | **T-044** | Set up AgentTwin for a new agent in one step: a world scaffold from the AOAS, a scenario template, the three callables | agenttwin | days | T-039 |
 | **T-048** | AHC's ports as a standard: reference existing standards, a conformance suite per port, typed signatures for approval, cost_ledger and policy. Cycles 2 and 3 decide tier 3 | AHC, reference-agent, agenttwin | weeks | T-035 |
 | **T-067** | **Context reduction is a port, and the profile chooses the strategy.** Raised 2026-09-25 by Shalini while learning the loop: the support agent never summarises, which is right for it, but other agents on the roster will need summarising, pinned facts or retrieval. **The rule already exists and the code does not**: AHC-0067 asks for a declared, recorded strategy and AHC-0109 for summaries fenced at their least trusted input, and `harness-profile.yaml` already records `AHC-0109/summary_provenance: no-summariser` — but the loop calls `ctx.assembled` directly (`loop/__init__.py:234`), so another agent has no seam to choose through. **Decided: per agent, in the profile, not per turn.** The evaluation vouches for what was tested, so the choice is configuration; **and the profile declares a list, not one value** (Shalini, the same day): strategies run in order, each only while the window is still over budget, so *trim, then summarise only if trimming was not enough* is `[middle-out, summarise-window]`. Scope: a `ContextStrategy` port (`name`, `assemble(system, history, budget) -> Assembly`), the composition root folding the declared list into one pipeline, today's middle-out moved behind it unchanged as a list of one, the names of the strategies that actually ran on every step span (AHC-0067's *each turn's record states which*), and the profile's value selecting the implementation at the composition root. **Not in scope: the other strategies.** Each is built by the first cycle whose agent needs it and tested there — F-022 and T-057 are what an implementation nobody calls turns into | reference-agent, AHC, stacks | a day | — |
@@ -597,7 +597,27 @@ them step 7 cannot tell which input a failure came from.
 
 ### T-035 · The four gates as one command
 
-**Status** Not started. Step 6 of every cycle. Was G1.2. Repos: `reference-agent`, `agenttwin`.
+**Status** ✅ Done 2026-09-28. Step 6 of every cycle. Was G1.2. Repos: `reference-agent`, `agenttwin`, this one.
+
+**How it is built.** `tools/gates.py` (a uv script) reads the implementation's
+`gates.yaml` — its binding, its test command, its three build checks and its
+module per layer — and the yardstick in `gates/support-agent-clothing.yaml`,
+which no implementation can supply for itself. Behaviour runs the yardstick's
+scenarios through `python -m agenttwin run`: a provider twin serves each
+scenario's `model:` block over the OpenAI-compatible wire, so any agent's own
+provider adapter is on the path. Features reads JUnit `discharges` properties
+against the inventory the reference's suite wrote (`--write-inventory`).
+Harness counts an owed capability met only with a passing test or an accepted
+gap, and every keyed decision answered. Rules tested in `tools/test_gates.py`.
+
+**What the first runs taught.** Overruns (an implementation reaching the model
+more often than the scenario scripted) are reported, and found F-060 the first
+time they were. And a gate that has only ever passed proves nothing: the lying
+reference passed 23 of 36 scenarios because `truthful` asks about one row per
+scenario. Every run now also asks whether each reply is true of every record it
+names. **Still out of reach:** a false claim that names no record (*"that order
+is cancelled"*) — the reference's own output policy catches it, the yardstick
+does not, so a generated agent without that policy would pass on it.
 
 **What.** An implementation behind the agent contract in, and out: a verdict on
 each gate (behaviour, features, structure, harness; see *Rules*) plus the list of
