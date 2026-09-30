@@ -1827,6 +1827,77 @@ comparison dates in a quarter and every vendor disputes it, while a profile an
 adopter can re-run against their own stack does not. Ships with the failures in
 it, like everything else here.
 
+#### G4 · The lab: an agent that runs for weeks, and keeps itself running
+
+Raised 2026-09-30 by Basant. **Every goal so far judges an agent in a run that
+lasts minutes and then resets.** Production is one run that never resets: the
+same customers come back, a colleague is off on Sunday, the carrier has a bad
+week, a fix ships on Tuesday and breaks something on Thursday. G4 is a lab
+where that happens on purpose and nobody has to be there for it: the agent runs
+in *prod*, a simulated world lives around it day after day, and when something
+goes wrong the lab notices, fixes it in *dev*, deploys it, and carries on.
+
+**Who does what.** Four jobs, and only one of them is an AI's.
+
+| Job | Who | Why that one |
+|---|---|---|
+| **The world** — customers, colleagues, the store, the carrier, day 1, day 2, day 3 | AgentTwin, grown into a service that keeps running (T-078) | it already has the world, the actors and the oracle; what it lacks is time that keeps going |
+| **Watching** — noticing something is wrong | deterministic: Prometheus alerts (T-055), the canary (T-056), online scores (T-057), detectors (T-058), and the world's own oracle on every action (T-079) | a watcher that needs judgement to raise an alarm will miss the one at 3 a.m. |
+| **Fixing** — reproduce, find the cause, change the right thing | **headless Claude Code** in dev, one bounded run per incident (T-080) | the only job that needs judgement; the cycle's step 7 applies to it too — route to the spec, never patch the agent alone |
+| **Deploying** — ship it, watch it, roll it back | deterministic: the four gates, then a canary in prod, then promote or roll back on the numbers (T-081) | nothing that can talk itself into a release should hold the key to prod |
+
+A small **supervisor** (T-082) — our code, a state machine, not an agent — owns
+the lifecycle: incident opened → fixer started → PR → gates → canary →
+promoted or rolled back → incident closed. It holds the budgets, the kill switch
+and the day's report.
+
+**Decided: wrap headless Claude Code, do not write one.** Claude Code runs
+without a person (`claude -p` with a prompt, allowed tools, a turn limit and
+JSON output), and the Claude Agent SDK is the same agent as a library. That is
+what it is for. Writing our own coding agent would rebuild the one part we can
+adopt — the project's own rule. MyClaudeCode stays a possible drop-in later,
+behind the same seam: *incident in, PR out*. **Not a Ralph loop:** a Ralph loop
+runs one prompt forever until the work is done, which suits building. An
+operating lab is driven by events: one incident, one bounded run, a budget, and
+the supervisor decides what happens next. **Open:** which account the fixer
+bills to. An unattended loop is metered usage, and whether a personal
+subscription may drive it is a question for the terms in force, not an
+assumption; an API key with a spend cap is the safe default.
+
+**What stops the loop from fooling itself** (T-083). A fixer that can edit the
+test that caught it will. So: the yardstick, the gates and scenario `expect`
+blocks are paths the fixer cannot change; a spec change is a PR a person
+approves (the owner decides specs, as T-076's `on_refusal` was decided); every
+incident becomes a scenario *before* the fix, and the fix must turn it green
+without turning another red; prod is reachable only through the deployer.
+
+| Item | What | Needs |
+|---|---|---|
+| **T-077** | **Two environments.** *prod* — the Open Stack as deployed (Temporal, Keycloak, LiteLLM, Chatwoot, Saleor, Langfuse, Prometheus, Grafana, Alertmanager) with the agent; *dev* — a worktree and a small stack where the fixer works and the gates run. Where prod lives is the first decision: two full stacks do not fit on one laptop beside everything else | T-055, T-054 |
+| **T-078** | **A world that keeps running.** AgentTwin as a service with a clock that goes on: days and nights at a chosen speed; a population instead of hand-written rows (T-073 (3)); customers arriving on a curve, returning, with memory of their last conversation; colleagues and reviewers with shifts, leave and slow days; the store, the carrier and the payment provider with incidents on a calendar (a carrier strike on day 4, a price change on day 9, an outage on day 12) as well as at random. The world is never reset; each day ends with a ledger of what happened | T-073, T-041, T-023 |
+| **T-079** | **The world as a monitor.** The oracle today judges a scenario at its end; here it judges every action as it lands — at most once, one customer's rows never shown to another, every reply true of the records it names, nothing owed left undone — and a violation is an incident with its evidence (trace id, transcript, the world before and after). One incident format for these and for T-055–T-058's alerts, de-duplicated | T-055, T-056, T-058 |
+| **T-080** | **The fixer.** Headless Claude Code in a dev worktree, started per incident with its evidence: write the failing scenario first; decide the route (AOAS · AWD · AHC · AAC · stack · agent); make the change; run the gates; open a PR that says which statement it serves. Turn and spend limits per incident; one retry, then a person | T-035, T-083 |
+| **T-081** | **The deployer.** Gates green on the PR → build → canary on a slice of prod traffic → promote if the SLOs hold for a set time, roll back if not. Every release is a record: what was assessed is what serves (AAC-0107), rollback is one action | T-035, T-056 |
+| **T-082** | **The supervisor.** The lifecycle as a state machine, budgets, the kill switch, an audit log, and a report per simulated day: incidents raised, found by what, fixed how, how long each step took (time to detect, to fix, to deploy) | T-079–T-081 |
+| **T-083** | **The loop cannot mark its own homework.** Protected paths the fixer cannot write (the yardstick, `gates/`, scenario expectations, AAC); a spec change needs a person's approval; the incident's scenario joins the yardstick after review; a second, independent check reads each fix before merge | T-080 |
+
+**Minimum slice.** One day, speeded up, in one environment: the world runs
+day 1 with one planted incident (the carrier marks parcels delivered that never
+arrived), a detector raises it, headless Claude Code writes the failing scenario
+and a fix in a worktree, the gates pass, and a person presses deploy. Then take
+the person out of each step, one step at a time.
+
+**Done when** the lab runs 30 simulated days unattended; every planted incident
+is caught, and most are fixed and deployed with no person except for spec
+decisions; nothing the world forbids happens in prod; and time to detect, fix
+and deploy is reported per incident. The deliverable, as with every goal here,
+is the list of what the specs had to learn to get there.
+
+**Order.** After G1 (a build from the specs that passes the gates is what the
+fixer has to keep producing) and alongside the rest of Tier 1 (T-055–T-058 are
+G4's eyes; T-055 and T-056 are done). Before G2 is fine: a new domain in a lab is easier than a lab in a
+new domain.
+
 ### S4 · AgentTwin
 
 #### T-039 · AgentTwin adopts LangWatch Scenario for the simulated user
