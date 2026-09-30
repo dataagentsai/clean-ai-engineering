@@ -49,6 +49,9 @@ def case(name: str, props: dict[str, str], outcome: str = "") -> str:
 EVIDENCE = [
     ("a passing tagged test", [case("a", {"discharges": "AHC-1,AAC-2"})], {"AHC-1", "AAC-2"}, set()),
     ("the catalog's aac property counts", [case("a", {"aac": "AAC-9"})], {"AAC-9"}, set()),
+    # The catalog's adapter splits on commas or whitespace; generation run 2 used spaces.
+    ("ids separated by spaces", [case("a", {"aac": "AAC-1 AAC-2"})], {"AAC-1", "AAC-2"}, set()),
+    ("an ahc property counts", [case("a", {"ahc": "AHC-3, AHC-4"})], {"AHC-3", "AHC-4"}, set()),
     ("a failing test", [case("a", {"discharges": "AHC-1"}, "<failure/>")], set(), {"AHC-1"}),
     ("an error is a failure", [case("a", {"discharges": "AHC-1"}, "<error/>")], set(), {"AHC-1"}),
     ("a skipped test is not coverage", [case("a", {"discharges": "AHC-1"}, "<skipped/>")], set(), set()),

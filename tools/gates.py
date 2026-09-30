@@ -139,10 +139,12 @@ def owed_capabilities(shapes: list[str]) -> list[dict[str, Any]]:
 def junit_evidence(path: Path) -> tuple[dict[str, set[str]], dict[str, set[str]], int]:
     """`(passed, failed, tests)`: statement id → the tests that exercised it.
 
-    Reads the `discharges` property (comma-separated ids), and `aac` — the
-    assurance catalog's own adapter convention — as the same thing. A test
-    marked `unwired` exercises a component the agent never calls, and counts
-    for nothing."""
+    Reads the `discharges` property, and `aac` and `ahc` — the catalogs' own
+    names for it — as the same thing. Ids are separated by commas or
+    whitespace, as the assurance catalog's junit adapter splits them (generation
+    run 2 used spaces, and every test naming two ids counted for nothing). A
+    test marked `unwired` exercises a component the agent never calls, and
+    counts for nothing."""
     passed: dict[str, set[str]] = {}
     failed: dict[str, set[str]] = {}
     tests = 0
@@ -156,8 +158,8 @@ def junit_evidence(path: Path) -> tuple[dict[str, set[str]], dict[str, set[str]]
             continue
         ids = {
             i.strip()
-            for key in ("discharges", "aac")
-            for i in (props.get(key) or "").split(",")
+            for key in ("discharges", "aac", "ahc")
+            for i in re.split(r"[,\s]+", props.get(key) or "")
             if i.strip()
         }
         if not ids or case.find("skipped") is not None:
