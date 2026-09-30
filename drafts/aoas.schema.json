@@ -63,6 +63,11 @@
           },
           "description": "Normative. What the agent must not do is testable only against an explicit list."
         },
+        "on_refusal": {
+          "type": "string",
+          "minLength": 1,
+          "description": "What every refusal in `refuses` offers instead, as an operation's `on_refusal` does for its own refusals. The offer, never the wording. Absent, a bare no is conformant."
+        },
         "deferred": {
           "type": "array",
           "items": {

@@ -93,6 +93,11 @@ purpose:
       facet: risk identification
       examples: ["Is this charge fraud?", "Was my order a scam?"]
       answered_by: [direct]
+  # Decided by the owner 2026-09-30 (T-076). The reference did this and three
+  # scenarios checked for its sentence, but nothing here said so, and generation
+  # run 2 pointed the customer elsewhere instead ("your account settings on the
+  # website"). A test checks that one of `does` is named, in any words.
+  on_refusal: name at least one thing from `does` the agent can do instead; a bare no, or only a pointer elsewhere, is not enough
   # `examples` are the testable half of each refusal (generation run 1, NOTES
   # §7): without them every implementation drew its own line, and found its
   # false positives by accident.
