@@ -1898,6 +1898,68 @@ fixer has to keep producing) and alongside the rest of Tier 1 (T-055–T-058 are
 G4's eyes; T-055 and T-056 are done). Before G2 is fine: a new domain in a lab is easier than a lab in a
 new domain.
 
+#### G5 · The same lab for a data platform: source to conversation, running itself
+
+Raised 2026-09-30 by Basant. **The claim it has to earn, for clients:** *a data
+platform that keeps itself running* — sources to bronze, silver and gold, a
+semantic layer, dashboards and a conversation UI on top, and when something
+breaks the platform notices, fixes it in dev, deploys it and carries on, with
+the evidence to show for it. G4 builds that lab around one agent; G5 points the
+same lab at a whole platform. The subject changes; the watcher, the fixer, the
+deployer and the supervisor (T-079–T-083) are G4's, reused.
+
+**One world feeds both labs.** The clothing store G4 runs is also G5's source
+system: every order, return and refund the simulated customers make is a row
+the platform ingests. So a carrier strike on day 4 is an incident for the
+support agent *and* a spike in late deliveries on the dashboard, and the two
+labs check each other: the number on the dashboard has to agree with the world.
+
+**Built from what already exists — the rule is reuse first, build the delta.**
+
+| Layer | Start from | Delta |
+|---|---|---|
+| Sources | the clothing world (AgentTwin) and Saleor's database | a change feed out of the world, on the world's clock |
+| Ingestion → bronze | `LakeIngestionFramework` (metadata-driven) | run continuously, not per demo |
+| Silver, gold | `ecomsimpledataplatformusingdatabricks` (the medallion notebooks) | models as code with tests (dbt or the engine's own) |
+| Data quality | `Project3-DQFramework` | rules declared in data contracts (ODCS, adopted, not written) |
+| Semantic layer | `RightArchitectureForConversationUIOnData` — Metric Views on Databricks, Cube Core elsewhere | one set of metric definitions both the dashboard and the conversation UI read |
+| Dashboards | whatever the engine ships (AI/BI, Superset, Grafana) | none — adopt |
+| Conversation UI | `AskSherlock`, and that spec's rule: the model never writes SQL | point it at the semantic layer |
+| Watching | `databricks-ops-copilot`, `Project7` (signals, lineage, DQ), plus G4's world oracle | freshness, volume, schema, DQ and cost checks raised as G4's incident format |
+| Fixing, deploying | `databricks-self-healing-agent` (detect → triage → fix → sandbox → validate → gate → PR → deploy → verify → roll back) and G4's fixer | the same headless Claude Code worker, with data-platform tools |
+
+**The incidents it must meet**, planted on a calendar and at random: a source
+adds or renames a column; a day's data arrives late or twice; a source goes
+dark for six hours; a value goes out of range (a negative refund); volume
+triples on a sale day; a job's cost jumps; a metric's definition changes and
+the dashboard and the conversation UI disagree; the conversation UI answers a
+question with the wrong metric. Each has a detector, an expected fix, and a
+check that the fix held.
+
+| Item | What | Needs |
+|---|---|---|
+| **T-084** | **Choose the engine, once.** Databricks Free Edition (Unity Catalog, Metric Views, AI/BI — what clients run, but quotas and a cloud dependency) or an open local stack (ClickHouse or DuckDB, dbt, Cube Core, Superset — runs anywhere, and CostLens and AskSherlock already sit on ClickHouse). The conversation-UI spec already names both tracks | — |
+| **T-085** | **Sources that never stop.** The world's change feed into bronze on the world's clock, so day 1, day 2, day 3 exist in the lake as they did in the store | T-078 |
+| **T-086** | **The medallion as code, with contracts.** Bronze → silver → gold as tested models; each table's contract (schema, freshness, volume, rules) in ODCS; the contract is what the watcher checks and what the fixer may not quietly loosen | T-084 |
+| **T-087** | **One semantic layer, two readers.** Metrics defined once; the dashboard and the conversation UI both read them; a test that the same question gets the same number from both, and that both agree with the world | T-086 |
+| **T-088** | **The platform's detectors**, in G4's incident format: freshness, volume, schema drift, contract rules, cost, and *the dashboard disagrees with the world* | T-079 |
+| **T-089** | **The fixer's data-platform tools**: read lineage, query a table, run a model in dev, backfill a range — and the same protected paths as T-083, where the protected thing is the contract | T-080, T-083 |
+| **T-090** | **The client evidence.** Per simulated month: incidents by kind, caught by what, time to detect and to fix, how many needed a person and why, freshness and quality SLOs met — the page a client reads, generated from the supervisor's log, never written by hand | T-082 |
+
+**Minimum slice.** One table, one day: orders from the world into bronze →
+silver → one gold metric (orders per day) → one dashboard tile and one question
+in the conversation UI. Plant one incident — the source renames a column. It is
+caught, fixed in dev, deployed, and the tile and the answer are right again.
+
+**Done when** the platform runs 30 simulated days unattended on the same
+world as G4; every planted incident is caught; most are fixed and deployed
+with no person except for contract and metric-definition decisions; the
+dashboard, the conversation UI and the world agree at the end of every day; and
+T-090's page exists with those numbers in it.
+
+**Order.** After G4's minimum slice, because the lab's machinery is built
+there once. Its first piece (T-084, T-085) can start alongside.
+
 ### S4 · AgentTwin
 
 #### T-039 · AgentTwin adopts LangWatch Scenario for the simulated user
