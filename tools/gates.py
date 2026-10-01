@@ -18,7 +18,7 @@ bring its own.
 | **Behaviour** | does it do the right thing in the world | the yardstick scenarios, through `agenttwin run` and the implementation's binding |
 | **Features** | does its own suite exercise everything the reference's does | JUnit `discharges` properties on passing tests, against the inventory |
 | **Structure** | is it built to the blueprint | the three build checks it declares, and a module for every layer it owes |
-| **Harness** | is every capability its shape owes met or knowingly not | the resolved profile's accepted gaps, and passing tests tagged with the capability |
+| **Harness** | is every capability its shape owes met or knowingly not | the resolved profile's accepted gaps and not-applicable entries, and passing tests tagged with the capability |
 
 **Why every failure carries a route.** Step 7 is the point of the cycle: a
 failure with no route gets fixed in the agent, and the spec stays wrong for the
@@ -326,10 +326,27 @@ def harness(
 ) -> Gate:
     gate = Gate("harness")
     gaps = {g["capability"]: g for g in profile.get("accepted_gaps") or []}
+    # A capability that states its condition (`applies_when`) is owed only
+    # where the condition holds; a profile says it does not under
+    # `not_applicable`. Nothing is owed then, so no test and no decision — but
+    # only for a capability that states a condition, or "not applicable" is a
+    # gap with its owner and review date taken off.
+    inapplicable = {n["capability"]: n for n in profile.get("not_applicable") or []}
     decisions = profile.get("decisions") or {}
-    met = gapped = 0
+    met = gapped = skipped = 0
     for cap in owed:
         cid = cap["id"]
+        if cid in inapplicable:
+            if not cap.get("applies_when"):
+                gate.fail(
+                    f"{cid}: marked not applicable, but it states no condition",
+                    "profile (meet it, or accept it as a gap)",
+                )
+            elif not inapplicable[cid].get("reason"):
+                gate.fail(f"{cid}: not applicable without a reason", "profile")
+            else:
+                skipped += 1
+            continue
         if cid in gaps:
             gap = gaps[cid]
             if not (gap.get("reason") and gap.get("owner") and gap.get("review")):
@@ -348,6 +365,7 @@ def harness(
                 gate.fail(f"{cid}/{key} is not answered", "profile")
     gate.summary = (
         f"{len(owed)} owed: {met} evidenced by a passing test, {gapped} accepted gaps"
+        + (f", {skipped} not applicable" if skipped else "")
     )
     return gate
 
@@ -412,7 +430,9 @@ def main(argv: list[str] | None = None) -> int:
         | set((profile.get("subject") or {}).get("archetypes") or [])
     )
     owed = owed_capabilities(shapes)
-    gaps = {g["capability"] for g in profile.get("accepted_gaps") or []}
+    gaps = {g["capability"] for g in profile.get("accepted_gaps") or []} | {
+        n["capability"] for n in profile.get("not_applicable") or []
+    }
 
     gates: list[Gate] = []
     demonstrated: set[str] = set()

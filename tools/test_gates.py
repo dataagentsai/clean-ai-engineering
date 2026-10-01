@@ -99,3 +99,21 @@ HARNESS = [
 def test_the_harness_gate(name, profile, exercised, demonstrated, passes):
     gate = gates.harness(profile, [CAP], {i: {"t"} for i in exercised}, demonstrated)
     assert gate.passed is passes, [f.what for f in gate.failures]
+
+
+CONDITIONAL = {**CAP, "applies_when": "output is streamed"}
+NA = {"capability": "AHC-1", "reason": "nothing is streamed"}
+
+# [name, capability, profile, passes] — nothing tested and nothing decided, in every row
+NOT_APPLICABLE = [
+    ("a conditional capability whose condition does not hold", CONDITIONAL, {"not_applicable": [NA]}, True),
+    ("an unconditional capability marked not applicable", CAP, {"not_applicable": [NA]}, False),
+    ("not applicable with no reason", CONDITIONAL, {"not_applicable": [{"capability": "AHC-1"}]}, False),
+    ("a conditional capability not marked, and not met", CONDITIONAL, {}, False),
+]
+
+
+@pytest.mark.parametrize("name,cap,profile,passes", NOT_APPLICABLE, ids=[n[0] for n in NOT_APPLICABLE])
+def test_not_applicable_needs_a_stated_condition(name, cap, profile, passes):
+    gate = gates.harness(profile, [cap], {}, set())
+    assert gate.passed is passes, [f.what for f in gate.failures]

@@ -198,6 +198,24 @@ function capabilityTable(caps) {
   return ["| Layer | Capabilities |", "|---|---|", ...rows].join("\n");
 }
 
+/*
+ * A capability that states its condition (`applies_when`) is owed only where
+ * the condition holds. Listed with the condition, so a builder decides whether
+ * it holds for this agent instead of building a streaming contract for an
+ * agent that does not stream, or omitting one for an agent that does.
+ */
+function conditionalList(caps) {
+  const cond = caps.filter((c) => c.applies_when);
+  if (!cond.length) return "";
+  return [
+    `**${cond.length} of them are owed only where their condition holds.** Where it does not,`,
+    "the profile lists the capability under `not_applicable` with the reason; that is not a gap.",
+    "",
+    ...cond.map((c) => `- **${c.id}** — owed where ${oneLine(c.applies_when)}`),
+    "",
+  ].join("\n");
+}
+
 function obligationTable(obs) {
   const byDim = new Map();
   for (const o of obs) {
@@ -432,6 +450,7 @@ several carry design decisions the profile answers in section 4.
 
 ${capabilityTable(caps)}
 
+${conditionalList(caps)}
 The text of each is in \`ai-harness-catalog/capabilities/<id>.yaml\`. For the
 collated version by layer, with requirement and failure mode inline:
 \`ai-harness-catalog/blueprints/${shapes[0]}-owes.generated.md\`.
