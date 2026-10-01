@@ -79,8 +79,8 @@ spec changes Tier 1 items forced, which is the cycle working.
 | Spec | Items |
 |---|---|
 | **AOAS** | ✅ reads of many rows (T-001) · ✅ a return is state the order holds (T-050) · T-022 · G2.4 · G2.5 |
-| **AHC** | ✅ `channel` port (T-026) · ✅ metrics, later outcomes, a synthetic run, the evaluation record: AHC-0111 to 0114 · Phase 3 blueprints · Phase 4 realizations (G3.1) · Phase 5 skeletons · G3.3 · T-048 |
-| **AAC** | ✅ watching a deployed system: AAC-0114, 0115, 0116 (0.16.0) · AAC-0084 for judges outside A10 · Phase 1 crosswalks · Phase 3 adapters · **T-075** patterns as portable detection rules |
+| **AHC** | ✅ `channel` port (T-026) · ✅ conditional capabilities, `applies_when` + a profile's `not_applicable` (`f21d662`) · ✅ AHC-0116 consent · ✅ metrics, later outcomes, a synthetic run, the evaluation record: AHC-0111 to 0114 · Phase 3 blueprints · Phase 4 realizations (G3.1) · Phase 5 skeletons · G3.3 · T-048 |
+| **AAC** | ✅ watching a deployed system: AAC-0114, 0115, 0116 (0.16.0) · ✅ AAC-0084 for judges outside A10 (`7b56ba2`: M3/M4 owe the judge cases) · ✅ Phase 1 crosswalks · ◐ Phase 3 adapters (DeepEval done) · **T-075** patterns as portable detection rules |
 | **AgentTwin** | ✅ `authorise` hook (T-002) · ✅ many-reads and `opens` (T-001) · ✅ lasting faults, safe refusals, `forces` (T-050) · ✅ shadow mode (T-042) · ✅ reviewers keep what they saw (T-028) · T-041 · T-073 concurrency and load · **T-074** four agents we did not write |
 | **Bindings** | ✅ `open-stack` mostly current · `langgraph`, `claude-agent-sdk`, `claude-family` filled by their cycles |
 
@@ -387,8 +387,8 @@ sharpens T-022 before cycle 4).
 
 | | Item | Cost |
 |---|---|---|
-| **AAC Phase 1** | Crosswalks: NIST AI RMF, ISO/IEC 42001, EU AI Act. OWASP has shipped | days |
-| **AAC Phase 3** | DeepEval and eval-platform adapters, which T-040 needs | days |
+| ✅ **AAC Phase 1** | Crosswalks: NIST AI RMF, ISO/IEC 42001, EU AI Act — done 1 Oct (`b9bde99`), each external item mapped or recorded unmapped with a reason. A person with a licensed ISO copy should check the ISO short labels and A.7.5 | days |
+| ◐ **AAC Phase 3** | DeepEval adapter done 1 Oct (`993b0cb`); eval-platform exports to go. T-040 needs it | days |
 | **T-075** | **AAC's patterns as portable detection rules: Sigma for agents.** Raised 2026-09-26 by Basant. Security has Sigma — a detection written once, compiled to Splunk or Elastic; agent telemetry has only each vendor's own evaluators, and nothing written for Langfuse runs on LangSmith. We already hold the three halves: AAC's 38 patterns with a `signal` (AACP-0019 to 0056), the online watch's 22 rules in `reference-agent/src/support_agent/watch/rules.py` (T-057), and the window rules in `deploy/prometheus/rules/agent.yml`. **The catch, and the design turns on it:** `rules.py` says its rules are "the rules no product ships, because each knows what *this* agent's tools and statuses mean". So a portable rule is two parts: the **pattern logic**, generic (*a reply claims a state no tool result supports*), and the **agent's vocabulary** — tools, statuses, claims — projected from its AOAS, as T-068 does for the router. A rule that cannot be split that way stays agent-local and is marked so. **Scope:** (1) a rule format (YAML: id, version, pattern, level turn / conversation / window, severity, needs-words, the match) over the **OpenTelemetry GenAI semantic conventions**, pinned to a version because they are still experimental; (2) the 22 rules and the Prometheus ones rewritten in it, `rules.py` becoming their Langfuse compilation, with T-058's ten `NOT_YET` added as each gets a signal; (3) a **second backend** — the OTel Collector or LangSmith — so portability is demonstrated rather than claimed; (4) a **trace corpus**: for every rule, a trace that must fire it and one that must not, taken from AgentTwin runs and T-074's perturbed runs, so the claim "the checks catch what got through" is a test; (5) redaction before any rule reads words (T-030); LLM-judge rules only once calibrated against labels (AAC-0084). **Done when** the same rule file runs on two backends with identical verdicts over the corpus, and the write-up — *what goes wrong with agents in production, and how each shows in telemetry* — is published | AAC, reference-agent, agenttwin | weeks | T-058 for the ten; T-074 for the attack corpus |
 
 **S3 · AOAS**: T-022 and G2.5, in cycle 4, because a new domain is what exercises the format.
@@ -647,7 +647,9 @@ than from a copy of the clothing world.
 
 ### T-048 · AHC's ports as a standard, decided by cycles 2 and 3
 
-**Status** Not started. Decided 2026-09-16 (the user agreed). **Machinery, before
+**Status** ◐ The AHC half of the before-cycle-2 work is done, 2026-10-01. Tier 1 is in six port files (`9be3958`). The criteria are fixed in `ai-harness-catalog/docs/PORTS-AS-A-STANDARD.md` — the mixed-result rule is proposed, **awaiting the owner's confirmation**; the approval, cost_ledger and policy invariants carry `port/key` names, and approval gained three invariants (`dbd2023`). Remaining before cycle 2, in reference-agent and agenttwin: align the three interfaces and schemas to the port operations, write conformance tests for the runnable invariants citing `port/key`, and pin the baseline. Cycles 2 and 3 (T-036, T-037) fill the record table.
+
+Decided 2026-09-16 (the user agreed). **Machinery, before
 cycle 2.** Repos: `ai-harness-catalog`, `reference-agent`, `agenttwin`.
 
 **The question.** Should AHC's 17 ports become an interface standard, the way
@@ -1741,7 +1743,9 @@ fourth costs nothing and the resolution seam decides which runs.
 
 #### T-021 · Findings have to flow back into the catalogs
 
-**Status** Not started. Raised 2026-09-16 by T-012's second follow-up. **Specs, between
+**Status** ◐ Mostly done 2026-10-01. The three files map to A4 capabilities that existed since 0.2.0, now amended (AHC `0d590c2`): F-006 → AHC-0066, F-007 → AHC-0070, the uncapped write → AHC-0067; the AAC halves are applied (`896fc4e`: AAC-0038, 0042, 0043, 0058). They reach the support agent only if it declares A4; today it declares A6, A5 (AOAS) and A6 (profile). **Open, the owner's call: add A4 to both**, which moves the reference agent's harness gate. A fourth defect that lived only in code, consent (F-041, F-061), is now AHC-0116 (`434087c`). F-001…F-061 scanned: most are covered; candidates F-027, F-048, F-051, F-055, F-058, F-046/F-059 recorded with their proposed homes; F-021/F-033 go to the Baseline.
+
+Raised 2026-09-16 by T-012's second follow-up. **Specs, between
 cycles.** Repos: `ai-harness-catalog`, `ai-assurance-catalog`, `clean-ai-engineering`.
 
 **What is missing.** A statement for each defect that produced a file. Three
