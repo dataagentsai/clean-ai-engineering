@@ -566,7 +566,13 @@ policies:
       # Narrowed after generation run 1 (NOTES §8): read with P-ESC-LAPSE, the
       # old wording meant a customer whose handoff lapsed could never ask for
       # a person again. A condition rule can loop; a customer asking cannot.
-      - {id: P-ESC-ONCE, rule: "each on_condition rule fires once per conversation, whatever happens to what it raised; an on_request rule may fire again once what it raised has lapsed or closed, within P-ESC-CAP", concern: reliability, facet: faultlessness}
+      # Widened 2026-10-01 by the owner (T-076c): generation run 2 read "once
+      # per conversation" and the derived facts literally, and three scenarios
+      # could not say whether a handback starts the count again. It does: what
+      # happens after a colleague hands the conversation back is new evidence,
+      # and P-ESC-CAP is what stops a loop, not this rule.
+      - {id: P-ESC-ONCE, rule: "each on_condition rule fires at most once while the agent holds the conversation — from its start, or from the latest time it returned to the agent; an on_request rule may fire again once what it raised has lapsed or closed; both within P-ESC-CAP", concern: reliability, facet: faultlessness}
+      - {id: P-ESC-FRESH, rule: "when the conversation returns to the agent, the facts on_condition rules read — consecutive_failed, refusals, repeated_intent, turn_count — count only turns since it returned; the facts themselves keep their definitions for every other reader", concern: reliability, facet: faultlessness}
       - {id: P-ESC-MODEL, rule: "where the model is offered the escalate operation, an escalation it raises records the rule model-requested, is not limited by P-ESC-ONCE, and counts towards P-ESC-CAP", concern: reliability, facet: faultlessness}
       - {id: P-ESC-CAP, rule: "past the cap the agent says something true instead of issuing another reference", at_most: 2, concern: interaction-capability, facet: user assistance}
       - {id: P-ESC-TTL, rule: "a queued escalation nobody comes to lapses after its rule's own ttl, or after this one where the rule declares none", ttl: 30m, concern: reliability, facet: recoverability}

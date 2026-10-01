@@ -334,7 +334,8 @@ policies:
       - {id: second-refusal,   when: {field: refusals, at_least: 2},           priority: 4, ttl: 30m}
       - {id: turns-exceeded,   when: {field: turn_count, at_least: 10},        priority: 6, ttl: 45m}
     statements:
-      - {id: P-ESC-ONCE, rule: "each rule fires once per conversation, whatever happens to what it raised", concern: reliability, facet: faultlessness}
+      - {id: P-ESC-ONCE, rule: "each on_condition rule fires at most once while the agent holds the conversation — from its start, or from the latest time it returned to the agent; an on_request rule may fire again once what it raised has lapsed or closed; both within P-ESC-CAP", concern: reliability, facet: faultlessness}
+      - {id: P-ESC-FRESH, rule: "when the conversation returns to the agent, the facts on_condition rules read count only turns since it returned; the facts themselves keep their definitions for every other reader", concern: reliability, facet: faultlessness}
       - {id: P-ESC-CAP, rule: "past the cap the agent says something true instead of issuing another reference", at_most: 2, concern: interaction-capability, facet: user assistance}
       - {id: P-ESC-TTL, rule: "a queued escalation nobody comes to lapses", ttl: 30m, concern: reliability, facet: recoverability}
       - {id: P-ESC-LAPSE, rule: "on lapse the conversation returns to the agent, and the guest is told nobody came", concern: reliability, facet: recoverability}
