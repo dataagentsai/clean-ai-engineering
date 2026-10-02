@@ -14,7 +14,7 @@ const test = require("node:test");
 const assert = require("node:assert/strict");
 const fs = require("fs");
 const path = require("path");
-const { brief, leaks, owed, scrub, allowedNames } = require("./brief");
+const { brief, leaks, owed, scrub, allowedNames, statementIds } = require("./brief");
 
 const AHC = path.resolve(__dirname, "../../ai-harness-catalog");
 const haveCatalog = fs.existsSync(path.join(AHC, "capabilities"));
@@ -184,6 +184,24 @@ const RUN2_CASES = [
 for (const [name, over, expected] of RUN2_CASES) {
   test(name, () => {
     assert.match(build(over), expected);
+  });
+}
+
+// Generation run 3: named AOAS elements and the Baseline went untagged. Each
+// row: an AOAS, what the statement-id section must then say.
+const RUN3_CASES = [
+  ["an operation is named op: and its name", { operations: { get_order: {} } }, /`op:get_order`/],
+  ["an escalation rule on request or on condition is named esc:",
+    { policies: { escalation: { on_request: [{ id: "asked-for-human" }], on_condition: [{ id: "turns-exceeded" }] } } },
+    /`esc:asked-for-human` · `esc:turns-exceeded`/],
+  ["an external system is named ext:", { external: { order_system: {} } }, /`ext:order_system`/],
+  ["a fact is named fact:", { facts: { turn_count: {} } }, /`fact:turn_count`/],
+  ["the Baseline is owed, item by item", {}, /\*\*B13\*\* — Every dependency/],
+  ["a kind the AOAS does not have gets no row", {}, /^(?![\s\S]*\| `op:` \|)/],
+];
+for (const [name, aoas, expected] of RUN3_CASES) {
+  test(`statement ids: ${name}`, () => {
+    assert.match(statementIds(aoas), expected);
   });
 }
 

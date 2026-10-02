@@ -40,12 +40,13 @@ import sys
 import xml.etree.ElementTree as ET
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable
 
 import yaml
 
 HERE = Path(__file__).resolve().parent.parent  # clean-ai-engineering
 AHC = HERE.parent / "ai-harness-catalog"
+AAC = HERE.parent / "ai-assurance-catalog"
 GATES = ("behaviour", "features", "structure", "harness")
 
 
@@ -134,6 +135,36 @@ def owed_capabilities(shapes: list[str]) -> list[dict[str, Any]]:
         and c.get("status") != "withdrawn"
         and (c.get("core") or set(c.get("archetypes") or []) & set(shapes))
     ]
+
+
+def catalog_entries() -> dict[str, dict[str, Any]]:
+    """Every AHC capability and AAC obligation, by id."""
+    paths = [*(AHC / "capabilities").glob("*.yaml"), *(AAC / "catalog").glob("*.yaml")]
+    return {d["id"]: d for d in (load_yaml(p) for p in sorted(paths)) if d and "id" in d}
+
+
+def excused(
+    sid: str,
+    catalog: dict[str, dict[str, Any]],
+    shapes: list[str],
+    excluded: set[str],
+    gaps: set[str],
+) -> str | None:
+    """Why an inventory statement is not owed by this build, or None if it is.
+
+    The inventory is what the reference's suite exercised, and the reference
+    tests more than its shape owes. Generation run 3 failed the features gate on
+    A4, A9 and A10 statements its A6 + A5 brief never named, on obligations its
+    own AOAS excludes, and on its declared gaps. The features gate owes what the
+    brief owes, by the brief's own rule, and no more."""
+    if sid in excluded:
+        return "excluded by the AOAS"
+    if sid in gaps:
+        return "an accepted gap or not applicable in the build's profile"
+    entry = catalog.get(sid)
+    if entry and not entry.get("core") and not set(entry.get("archetypes") or []) & set(shapes):
+        return f"owed only by {', '.join(entry.get('archetypes') or []) or 'no shape'}"
+    return None
 
 
 def junit_evidence(path: Path) -> tuple[dict[str, set[str]], dict[str, set[str]], int]:
@@ -226,7 +257,13 @@ def behaviour(repo: Path, cfg: dict, yardstick: dict, out: Path) -> tuple[Gate, 
 
 
 def features(
-    repo: Path, cfg: dict, yardstick: dict, out: Path, skip_tests: bool, write_inventory: bool
+    repo: Path,
+    cfg: dict,
+    yardstick: dict,
+    out: Path,
+    skip_tests: bool,
+    write_inventory: bool,
+    not_owed: Callable[[str], str | None] = lambda _sid: None,
 ) -> tuple[Gate, dict[str, set[str]]]:
     gate = Gate("features")
     junit = out / "junit.xml"
@@ -254,13 +291,18 @@ def features(
             + "\n"
         )
         gate.notes.append(f"inventory written: {len(passed)} statements → {inventory_path.name}")
-    inventory = set(json.loads(inventory_path.read_text())["statements"])
+    listed = set(json.loads(inventory_path.read_text())["statements"])
+    reasons = {sid: r for sid in listed if (r := not_owed(sid))}
+    inventory = listed - set(reasons)
     missing = sorted(inventory - set(passed))
     broken = sorted(failed)
     gate.summary = (
-        f"{count} tests, {len(passed)} statements exercised by passing tests, "
-        f"{len(inventory)} in the inventory"
+        f"{count} tests, {len(inventory & set(passed))} of {len(inventory)} owed "
+        f"inventory statements exercised"
+        + (f" ({len(reasons)} more not owed by this build)" if reasons else "")
     )
+    for sid in sorted(reasons):
+        gate.notes.append(f"{sid} not owed: {reasons[sid]}")
     if count and not passed and not failed:
         gate.fail(
             "no test names a statement it discharges",
@@ -445,8 +487,11 @@ def main(argv: list[str] | None = None) -> int:
         gates.append(Gate("behaviour", ran=False))
     if "features" in wanted:
         print("  features …", flush=True)
+        catalog = catalog_entries()
+        excluded = {e["id"] for e in ((aoas.get("conformance") or {}).get("aac") or {}).get("excluded") or []}
         gate, exercised = features(
-            repo, cfg, yardstick, out, args.skip_tests, args.write_inventory
+            repo, cfg, yardstick, out, args.skip_tests, args.write_inventory,
+            lambda sid: excused(sid, catalog, shapes, excluded, gaps),
         )
         gates.append(gate)
     else:

@@ -5,7 +5,7 @@ hand: a brief somebody edited is a brief that can describe an implementation
 instead of a specification, and the whole point of this document is that it
 cannot.*
 
-Built 2026-10-01 · AOAS `0.1.0` ·
+Built 2026-10-02 · AOAS `0.1.0` ·
 AHC `0.3.0` · AAC `0.16.0`
 
 ---
@@ -226,6 +226,8 @@ wrong for almost everyone. They are this system's.
 | `max_output_tokens` | 4096 |
 | `max_retries_per_call` | 2 |
 | `max_steps_per_task` | 12 |
+| `max_tool_calls_per_step` | 8 |
+| `max_tool_calls_per_turn` | 24 |
 | `max_tool_result_characters` | 8000 |
 | `max_turn_seconds` | 60 |
 | `oscillation_repeat_threshold` | 3 |
@@ -463,6 +465,39 @@ be reachable at all, a build owes four things:
    `imports` and `complexity` — and `layers`, mapping each layer id to the
    path that realises it, or to `{none: reason}` where every capability that
    layer owes is an accepted gap.
+
+### The statement ids a test names
+
+A capability, an obligation and a lettered AOAS item (`P-…`, `R-…`, `Q-…`) is named
+by its id. An AOAS element that has a name rather than an id is named by a
+prefix and its name:
+
+| Prefix | Names | In this AOAS |
+|---|---|---|
+| `op:` | an operation | `op:get_order` · `op:list_orders` · `op:cancel_order` · `op:open_return_request` · `op:change_address` · `op:request_refund` · `op:issue_refund` · `op:escalate` |
+| `esc:` | an escalation rule | `esc:asked-for-human` · `esc:lost-in-transit` · `esc:loop-exhausted` · `esc:tool-unavailable` · `esc:repeated-intent` · `esc:second-refusal` · `esc:turns-exceeded` |
+| `ext:` | an external system | `ext:order_system` · `ext:approval_queue` · `ext:escalation_desk` |
+| `fact:` | a fact | `fact:turn_count` · `fact:termination` · `fact:consecutive_failed` · `fact:refusals` · `fact:repeated_intent` |
+
+**The Baseline** (`BASELINE.md`, *The Agent Baseline Profile*) is owed too: the
+ordinary engineering the agentic parts stand on. A test that shows one names
+its `B` id; most are shown by a build check or a test of configuration.
+
+- **B1** — Dependencies are pinned and recorded
+- **B2** — Configuration is versioned and diffable
+- **B3** — Configuration is separated from code
+- **B4** — An automated test suite runs on every change
+- **B5** — Tests are runnable by one command, offline
+- **B6** — A release process exists, with rollback
+- **B7** — Build artifacts are identified by version
+- **B8** — Structured logging and tracing are in place
+- **B9** — Secrets are outside source and rotatable
+- **B10** — Input validation exists at every external boundary
+- **B11** — Errors are typed and propagated, not swallowed
+- **B12** — The system runs in a reproducible environment
+- **B13** — Every dependency on something the system does not own is an interface, and only the composition root constructs a realisation
+
+A statement no test names is read as not exercised, whatever the code does.
 
 **Do not run the gates yourself.** The behaviour yardstick lives where the
 rule in your instructions forbids you to read. Drive your binding with your own

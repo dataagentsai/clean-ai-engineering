@@ -350,6 +350,60 @@ function gapList(gaps, opts) {
   ].join("\n");
 }
 
+/*
+ * The statement ids a test may name. Generation run 3 tagged every AHC, AAC
+ * and lettered AOAS id it was shown and none of the rest: an AOAS operation,
+ * escalation rule, external system or fact has a name, not an id, and the
+ * Baseline was never mentioned. Both forms are stated here, derived from the
+ * AOAS and BASELINE.md, so tagging them needs nobody's suite to copy from.
+ */
+function baselineItems() {
+  const file = path.join(ROOT, "BASELINE.md");
+  if (!fs.existsSync(file)) return [];
+  return fs
+    .readFileSync(file, "utf8")
+    .split("\n")
+    .map((line) => line.match(/^\| (B\d+) \| ([^|]+) \|/))
+    .filter(Boolean)
+    .map((m) => ({ id: m[1], text: m[2].trim() }));
+}
+
+function statementIds(aoas) {
+  const keys = (x) => (Array.isArray(x) ? x.map((e) => e.id || e.name) : Object.keys(x || {}));
+  const esc = (aoas.policies || {}).escalation || {};
+  const derived = [
+    ["op", "an operation", keys(aoas.operations)],
+    ["esc", "an escalation rule", [...keys(esc.on_request), ...keys(esc.on_condition)]],
+    ["ext", "an external system", keys(aoas.external)],
+    ["fact", "a fact", keys(aoas.facts)],
+  ].filter(([, , names]) => names.length);
+  const baseline = baselineItems();
+  return [
+    "### The statement ids a test names",
+    "",
+    "A capability, an obligation and a lettered AOAS item (`P-…`, `R-…`, `Q-…`) is named",
+    "by its id. An AOAS element that has a name rather than an id is named by a",
+    "prefix and its name:",
+    "",
+    "| Prefix | Names | In this AOAS |",
+    "|---|---|---|",
+    ...derived.map(([p, what, names]) => `| \`${p}:\` | ${what} | ${names.map((n) => `\`${p}:${n}\``).join(" · ")} |`),
+    "",
+    ...(baseline.length
+      ? [
+          "**The Baseline** (`BASELINE.md`, *The Agent Baseline Profile*) is owed too: the",
+          "ordinary engineering the agentic parts stand on. A test that shows one names",
+          "its `B` id; most are shown by a build check or a test of configuration.",
+          "",
+          ...baseline.map((b) => `- **${b.id}** — ${b.text}`),
+          "",
+        ]
+      : []),
+    "A statement no test names is read as not exercised, whatever the code does.",
+    "",
+  ].join("\n");
+}
+
 /* ----------------------------------------------------------------- the brief */
 
 function brief({ aoas, profile, caps, obs, aoasPath, profilePath }) {
@@ -578,6 +632,7 @@ be reachable at all, a build owes four things:
    path that realises it, or to \`{none: reason}\` where every capability that
    layer owes is an accepted gap.
 
+${statementIds(aoas)}
 **Do not run the gates yourself.** The behaviour yardstick lives where the
 rule in your instructions forbids you to read. Drive your binding with your own
 world and scenarios instead — \`python -m agenttwin run --binding
@@ -707,6 +762,6 @@ function main(argv) {
   return 0;
 }
 
-module.exports = { brief, owed, leaks, scrub, allowedNames, profileOf, shapesOf, unansweredDecisions };
+module.exports = { brief, owed, leaks, scrub, allowedNames, profileOf, shapesOf, unansweredDecisions, statementIds };
 
 if (require.main === module) process.exit(main(process.argv.slice(2)));

@@ -73,6 +73,32 @@ def test_junit_evidence(tmp_path, name, cases, passed, failed):
     assert count == len(cases)
 
 
+CATALOG = {
+    "AHC-1": {"id": "AHC-1", "archetypes": ["A6"]},
+    "AHC-2": {"id": "AHC-2", "archetypes": ["A4"]},
+    "AAC-1": {"id": "AAC-1", "core": True},
+    "AAC-2": {"id": "AAC-2", "archetypes": ["A9", "A10"]},
+}
+
+# [name, statement, reason it is not owed (None: owed)] — shapes A6 + A5,
+# AAC-1 excluded by the AOAS, AHC-1 an accepted gap only where the row says so
+EXCUSED = [
+    ("a capability of the build's shape", "AHC-1", set(), None),
+    ("a capability of another shape", "AHC-2", set(), "owed only by A4"),
+    ("an obligation of other shapes", "AAC-2", set(), "owed only by A9, A10"),
+    ("a core obligation the AOAS excludes", "AAC-1", set(), "excluded by the AOAS"),
+    ("a declared gap", "AHC-1", {"AHC-1"}, "an accepted gap or not applicable in the build's profile"),
+    ("an AOAS statement", "op:get_order", set(), None),
+    ("a Baseline item", "B4", set(), None),
+    ("an id no catalog holds", "AHC-9999", set(), None),
+]
+
+
+@pytest.mark.parametrize("name,sid,gaps,reason", EXCUSED, ids=[e[0] for e in EXCUSED])
+def test_what_the_features_gate_does_not_owe(name, sid, gaps, reason):
+    assert gates.excused(sid, CATALOG, ["A5", "A6"], {"AAC-1"}, gaps) == reason
+
+
 CAP = {"id": "AHC-1", "title": "a capability", "design_decisions": [{"key": "choice"}]}
 GAP = {"capability": "AHC-1", "reason": "r", "owner": "o", "review": "2026-12-01"}
 
