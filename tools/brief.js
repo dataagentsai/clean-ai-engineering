@@ -506,8 +506,15 @@ ${capabilityTable(caps)}
 
 ${conditionalList(caps)}
 The text of each is in \`ai-harness-catalog/capabilities/<id>.yaml\`. For the
-collated version by layer, with requirement and failure mode inline:
+collated version by layer, with the requirement and the decisions the catalog
+has settled inline:
 \`ai-harness-catalog/blueprints/${shapes[0]}-owes.generated.md\`.
+
+**A settled decision is part of what is owed, not advice.** Where a capability's
+\`design_decisions\` entry has no \`key\`, the catalog answered it, and its
+\`resolution\` says how the capability is met; an approach the resolution
+rejects does not meet the capability, however well it is built. Only a keyed
+decision is yours to answer, in your profile.
 
 ---
 

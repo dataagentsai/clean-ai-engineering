@@ -133,8 +133,15 @@ the profile lists the capability under `not_applicable` with the reason; that is
 - **AHC-0116** — owed where the specification lets the system act on a resource because the person it serves asked for it
 
 The text of each is in `ai-harness-catalog/capabilities/<id>.yaml`. For the
-collated version by layer, with requirement and failure mode inline:
+collated version by layer, with the requirement and the decisions the catalog
+has settled inline:
 `ai-harness-catalog/blueprints/A6-owes.generated.md`.
+
+**A settled decision is part of what is owed, not advice.** Where a capability's
+`design_decisions` entry has no `key`, the catalog answered it, and its
+`resolution` says how the capability is met; an approach the resolution
+rejects does not meet the capability, however well it is built. Only a keyed
+decision is yours to answer, in your profile.
 
 ---
 
