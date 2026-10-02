@@ -497,6 +497,15 @@ policies:
     # else: there is no refund on this order. Never a date, never an amount.
     rule: refund status is answered from the order's status, deterministically, and never promises a date or an amount
     via: [get_order]
+  P-REFUND-OWED:
+    # Decided by the owner 2026-10-02, after generation run 3 (NOTES) found
+    # `owed_when` saying a refund is owed and nothing saying which path issues
+    # it: P-DIRECT-READS keeps the status answer from writing, and AHC-0116
+    # keeps the loop to what was asked. Both builds already did this.
+    rule: an owed refund is issued when the customer asks for a refund on that order, through request_refund; a question about refund status states the status and issues nothing
+    via: [request_refund, issue_refund]
+    concern: functional-suitability
+    facet: functional completeness
   # Which requests this agent answers without a model, and what that path may do.
   # AHC-0100 requires the specification to state both; the reference answered
   # them in code and neither was written down, so a regeneration would have put
