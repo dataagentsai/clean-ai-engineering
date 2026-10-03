@@ -114,6 +114,7 @@
         "properties": {
           "examples": { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1 }, "description": "Customer words that carry this intent and no other." },
           "answered_by": { "enum": ["direct", "loop", "handoff", "refusal", "deferred"], "description": "direct: from declared data, no model call. loop: the model-driven path. handoff: a Tier-1 escalation. refusal: one of purpose.refuses. deferred: recognised and explained, never acted on." },
+          "means": { "type": "string", "minLength": 1, "description": "What the customer wants, as a goal rather than a list of words: the thing every example has in common. A matcher is judged against the examples and is never a second list of words (T-094: a question about money already owed is a status question whether it says refund, money back, credit or compensation)." },
           "via": { "type": "array", "uniqueItems": true, "items": { "type": "string" }, "description": "The operations that serve it." }
         }
       },

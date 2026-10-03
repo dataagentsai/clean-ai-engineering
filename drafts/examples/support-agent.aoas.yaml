@@ -238,11 +238,22 @@ facts:
 # generation run 2's one live failure (NOTES §11, status-loop-no-id).
 intents:
   order_status:     {answered_by: direct,   via: [get_order, list_orders], examples: ["Where is my order?", "Has my order shipped yet?"]}
-  refund_status:    {answered_by: direct,   via: [get_order, list_orders], examples: ["What's happening with my refund?", "Did my refund go through?"]}
+  # Stated as a goal after a CCA-F case (T-094): misrouting followed the words
+  # "money back", "credit" and "compensation", not what was asked. The
+  # reference routed "where is my money back" to order status.
+  refund_status:
+    answered_by: direct
+    via: [get_order, list_orders]
+    means: asking where money already owed has got to, whatever it is called
+    examples: ["What's happening with my refund?", "Did my refund go through?", "Where is my money back for AB-10003?", "Has my credit come through yet?", "Any news on the compensation for my order?"]
   cancel:           {answered_by: loop,     via: [cancel_order], examples: ["Please cancel my order", "I don't want this order any more"]}
   return:           {answered_by: loop,     via: [open_return_request], examples: ["I want to return this", "How do I send it back?"]}
   address_change:   {answered_by: loop,     via: [change_address], examples: ["Change my delivery address", "Can you ship it to my office instead?"]}
-  refund_request:   {answered_by: loop,     via: [request_refund], examples: ["I want my money back", "Refund my order please"]}
+  refund_request:
+    answered_by: loop
+    via: [request_refund]
+    means: asking for money back that nobody has yet been asked for
+    examples: ["I want my money back", "Refund my order please", "I'd like compensation for this order"]
   human:            {answered_by: handoff,  via: [escalate], examples: ["I want to talk to a person", "Get me a human"]}
   lost_in_transit:  {answered_by: handoff,  via: [escalate], examples: ["My parcel is lost", "Tracking says delivered but I never got it"]}
   discount_request: {answered_by: refusal,  examples: ["Can you give me a discount code?"]}
@@ -506,6 +517,22 @@ policies:
     via: [request_refund, issue_refund]
     concern: functional-suitability
     facet: functional completeness
+  P-CONCERNS:
+    # After a CCA-F case (T-093): customers open with several problems, the
+    # first reply covered one, and the rest never came back — nor reached the
+    # person who later took the conversation.
+    rule: every concern a customer raises is its own item and ends in one of answered, handed to a person with a reference, waiting on a decision, or declined with a reason; a turn that leaves a concern with none of these is not complete, and a concern outside `intents` is handed to a person, never left unmentioned
+    via: [escalate]
+    concern: functional-suitability
+    facet: functional completeness
+  P-REFUND-DECLINED:
+    # After a CCA-F case (T-095): a closed card was retried five times and the
+    # customer told to try tomorrow, because a permanent decline and a timeout
+    # came back as the same error.
+    rule: a refund the original payment method can no longer receive is not retried and not put off — the customer is told it could not go back to that method, and a person is handed it to arrange another way
+    via: [issue_refund, escalate]
+    concern: reliability
+    facet: fault tolerance
   # Which requests this agent answers without a model, and what that path may do.
   # AHC-0100 requires the specification to state both; the reference answered
   # them in code and neither was written down, so a regeneration would have put
@@ -625,7 +652,9 @@ external:
     idempotency: >
       MUST accept a caller-supplied key on every irreversible operation and
       treat a repeated key as the same request.
-    failure_modes: [unavailable, slow, stale_read, unknown_record]
+    # `declined` is a refusal from the payment rail behind the store: the same
+    # answer however often it is asked, never a transient fault (P-REFUND-DECLINED).
+    failure_modes: [unavailable, slow, stale_read, unknown_record, declined]
 
   approval_queue:
     decides: [issue_refund above the automatic limit]
@@ -651,6 +680,11 @@ required:
     # Decided 2026-09-26. It was undeclared while AAC-0095, which this agent
     # claims, requires retention to be bounded — generation run 2 (NOTES §6)
     # could not satisfy both.
+    # After a CCA-F case (T-096): autonomy widened on 96% agreement overall,
+    # over a sample where the decision being automated was 4% and the
+    # disagreements sat exactly on it. The ₹10,000 automatic limit in P-REFUND
+    # has no measurement behind it yet; this says what one has to be.
+    - {id: Q-AUTO-LIMIT, must: "the automatic refund limit is set from reviewers' agreement with the agent on refund decisions alone, sampled by stratum — ambiguous order or amount, and within 10% of the limit — with each stratum's sample size stated; until measured, the limit is an assertion", evidence: acceptance, concern: safety, facet: operational constraint}
     - {id: Q-RETENTION, must: "transcripts, traces and every record the harness writes are kept 30 days, then deleted", evidence: assertion, concern: security, facet: confidentiality}
   undeclared:
     # Stated as absent rather than left out. Each is a property this agent

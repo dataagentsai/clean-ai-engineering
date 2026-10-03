@@ -5,7 +5,7 @@ hand: a brief somebody edited is a brief that can describe an implementation
 instead of a specification, and the whole point of this document is that it
 cannot.*
 
-Built 2026-10-02 · AOAS `0.1.0` ·
+Built 2026-10-03 · AOAS `0.1.0` ·
 AHC `0.3.0` · AAC `0.16.0`
 
 ---
@@ -96,18 +96,18 @@ one binds you to:
 
 ## 2 · The capabilities this shape owes
 
-**79 capabilities**, derived from `archetypes: [A6, A5]`.
+**81 capabilities**, derived from `archetypes: [A6, A5]`.
 Each says what the harness must be able to do and names the failure it prevents;
 several carry design decisions the profile answers in section 4.
 
 | Layer | Capabilities |
 |---|---|
-| **L1** | AHC-0002, AHC-0011, AHC-0012, AHC-0013, AHC-0031, AHC-0035, AHC-0038, AHC-0045, AHC-0103, AHC-0107, AHC-0108, AHC-0109 |
+| **L1** | AHC-0002, AHC-0011, AHC-0012, AHC-0013, AHC-0031, AHC-0035, AHC-0038, AHC-0045, AHC-0103, AHC-0107, AHC-0108, AHC-0109, AHC-0117 |
 | **L2** | AHC-0004, AHC-0009, AHC-0014, AHC-0015, AHC-0027, AHC-0092, AHC-0105 |
 | **L3** | AHC-0036, AHC-0037, AHC-0038, AHC-0039, AHC-0040, AHC-0043, AHC-0100, AHC-0104, AHC-0107 |
 | **L4** | AHC-0041, AHC-0042, AHC-0043, AHC-0044, AHC-0071, AHC-0072, AHC-0074, AHC-0075, AHC-0100, AHC-0104, AHC-0106 |
-| **L5** | AHC-0044, AHC-0045, AHC-0073, AHC-0102, AHC-0108, AHC-0109, AHC-0115 |
-| **L6** | AHC-0001, AHC-0015, AHC-0016, AHC-0017, AHC-0025, AHC-0071, AHC-0094, AHC-0106, AHC-0110 |
+| **L5** | AHC-0044, AHC-0045, AHC-0073, AHC-0102, AHC-0108, AHC-0109, AHC-0115, AHC-0117, AHC-0118 |
+| **L6** | AHC-0001, AHC-0015, AHC-0016, AHC-0017, AHC-0025, AHC-0071, AHC-0094, AHC-0106, AHC-0110, AHC-0117, AHC-0118 |
 | **L7** | AHC-0008, AHC-0018, AHC-0019, AHC-0093, AHC-0094, AHC-0095, AHC-0116 |
 | **L8** | AHC-0020, AHC-0021, AHC-0095, AHC-0096, AHC-0097, AHC-0098 |
 | **L9** | AHC-0014, AHC-0022, AHC-0023 |
@@ -119,7 +119,7 @@ several carry design decisions the profile answers in section 4.
 | **L15** | AHC-0003, AHC-0009, AHC-0032, AHC-0033, AHC-0053, AHC-0072, AHC-0092 |
 | **L16** | AHC-0034, AHC-0035, AHC-0040, AHC-0099, AHC-0113, AHC-0115, AHC-0116 |
 
-**9 of them are owed only where their condition holds.** Where it does not,
+**11 of them are owed only where their condition holds.** Where it does not,
 the profile lists the capability under `not_applicable` with the reason; that is not a gap.
 
 - **AHC-0015** — owed where output is streamed to the caller
@@ -131,6 +131,8 @@ the profile lists the capability under `not_applicable` with the reason; that is
 - **AHC-0105** — owed where provider interactions are recorded for replay
 - **AHC-0109** — owed where the harness reduces context by producing a summary rather than by discarding whole units
 - **AHC-0116** — owed where the specification lets the system act on a resource because the person it serves asked for it
+- **AHC-0117** — owed where work on one subject resumes after a pause, or a reply states the current value of a field the specification gives a freshness window
+- **AHC-0118** — owed where a caller can raise more than one concern in one message
 
 The text of each is in `ai-harness-catalog/capabilities/<id>.yaml`. For the
 collated version by layer, with the requirement and the decisions the catalog
@@ -147,7 +149,7 @@ decision is yours to answer, in your profile.
 
 ## 3 · The obligations it will be tested against
 
-**56 obligations.** These are not capabilities: a capability is
+**57 obligations.** These are not capabilities: a capability is
 something the system can do, an obligation is something a *test* must
 demonstrate. A system that meets every capability and can demonstrate none of
 them has not finished.
@@ -162,7 +164,7 @@ them has not finished.
 | **grounding** | AAC-0029, AAC-0110 |
 | **instruction** | AAC-0003 |
 | **observability** | AAC-0011, AAC-0060, AAC-0100, AAC-0114 |
-| **oversight** | AAC-0094 |
+| **oversight** | AAC-0094, AAC-0118 |
 | **privacy** | AAC-0006, AAC-0095, AAC-0117 |
 | **reliability** | AAC-0009, AAC-0046, AAC-0047, AAC-0055, AAC-0076, AAC-0116 |
 | **robustness** | AAC-0015 |
@@ -374,7 +376,7 @@ catalog's own resolution was taken as written and recorded rather than assumed.
 - **`AHC-0074/key_source`** → `run-step-iteration` *(golden-path)* — `run:step:iteration`, and a call still owed a reply keeps the key its first attempt was minted with, so a retry reaches the far end under the same name. An approval stores its key and rebuilds it when the grant is carried out, so a resumed approval cannot refund twice. Not verified: a process that dies mid-turn loses the owed-key map, which lives in memory, and whether the redelivered turn re-derives the same key has no test — it does not: a re-run turn gets a new run id, so the same change gets a new name. The order system's own record of names is in memory too (`Answered.durable = False`).
 - **`AHC-0094/output_rule_reading`** → `folded-text` *(chosen)* — Every rule reads the text with look-alike dashes, odd spaces and invisible characters folded and NFKC applied, so an id written with a non-breaking hyphen is still an id. Only the rules' copy is folded; the reply is not.
 - **`AHC-0105/replay_equivalence`** → `messages-tools-sampling` *(chosen)* — A replay matches on the messages, the tool names, max_tokens and temperature; tool schemas may differ. No fence nonce or read stamp enters a request, so neither breaks a recording. An approval id does, inside a tool result: a turn that asked a refund replays only against the same approvals.
-- **`AHC-0107/freshness_scope`** → `rows-an-irreversible-action-depends-on` *(chosen)* — Only a row an irreversible action is about to act on is held to the window; reads that only inform a reply are not re-read.
+- **`AHC-0107/freshness_scope`** → `rows-an-irreversible-action-depends-on` *(chosen)* — Only a row an irreversible action is about to act on is held to the window here. A reply is held to it by AHC-0117 instead: every row an earlier turn read is read again before the loop's first ask, and a status the latest read contradicts is not said (`no_superseded_state`). Until 3 Oct this note ended "reads that only inform a reply are not re-read", and a resumed conversation said a delivered order was still on its way.
 - **`AHC-0107/read_stamp`** → `when-asked` *(golden-path)* — Stamped before the call is dispatched. Until it was stamped on arrival, so a slow read looked fresh and the re-read never fired.
 - **`AHC-0108/facts_source`** → `written-as-work-happens` *(golden-path)* — The harness writes what was asked, the rows that reached a tool, what the far end confirmed and what is awaited, when each happens. Nothing is derived from the transcript.
 - **`AHC-0109/summary_provenance`** → `no-summariser` *(chosen)* — There is no summariser. The alternative was argued and rejected on the capability's own grounds: a model-written summary of a window containing fenced material is untrusted output, and getting that wrong launders a planted instruction into the system's own voice. Trimming drops exchanges from the middle instead, keeping the first (which sets the task) and the latest (which is being answered) — a worse product than a good summary, and a smaller hole.
