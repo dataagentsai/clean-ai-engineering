@@ -86,14 +86,20 @@ spec changes Tier 1 items forced, which is the cycle working.
 
 ### What the tiers say about order
 
-- **Tier 1 is nearly there.** 1a's must-haves are adopted (Temporal, Keycloak,
-  LiteLLM, Chatwoot, Saleor). 1b is closed but for small items. 1c is under way:
-  the agent runs against Saleor, 29 of 33 scenarios say the same there as against
-  the world (T-042), and a person is using it (F-042 was the first thing they
-  found, 18 Sep). What is left for the exit: that session to finish, and T-007,
-  reliability measured.
-- **Tier 2 is the bottleneck.** No second agent starts until T-033, T-034, T-035 and
-  T-044 exist, and none of them has.
+*Revised 2026-10-03.*
+
+- **Tier 1 is close, and its gates are red again on purpose.** 1a's must-haves
+  are adopted (Temporal, Keycloak, LiteLLM, Chatwoot, Saleor). 1c is under way:
+  the agent runs against Saleor and a person has used it (F-042). The gates went
+  red on 3 Oct when F-085's scenario joined the yardstick (T-092), so **T-092 is
+  the critical path**; then T-007 (reliability) and T-017's session.
+- **Tier 2 is moving.** T-035 and T-044 are done, T-034's brief is generated and
+  generation run 3 is built, judged and routed (T-076). **Next: run 4**, after
+  the spec halves of the exam-case items below, so it is judged on them once.
+- **An exam case becomes Tier 1 work only if it produces a failing scenario.**
+  Otherwise its spec change lands in Tier 4 and its reference fix waits its turn.
+  A scenario is added with its fix, not before, or the gates never go green. Five
+  cases on 3 Oct (T-092 to T-096) grew 1b by five; only T-092 is on the path.
 - **Tier 1a's remaining adoptions block nothing downstream.** T-030, T-027, T-046
   and T-047 can happen whenever convenient.
 
@@ -232,9 +238,13 @@ when Tier 2's four machinery items exist.
 
 **Tier 1 · finish production grade**
 
+0. **T-092**: a resumed conversation re-reads its records (F-085). The gates are
+   red until it lands. Then the **spec halves** of T-093, T-094 (with T-068),
+   T-095 and T-096 — the parts the brief carries — and **generation run 4**.
+
 1. **T-017**'s last step, **yours** and under way: using the agent against the
    real store. It has already found F-042; each finding is fixed as it comes.
-   **On hold until 2 Oct by the owner**; the rest of the queue moves meanwhile.
+   Was on hold until 2 Oct by the owner; whether it has resumed is the owner's to say.
 2. **T-007**: `pass^k` reliability.
 3. **T-057**'s remainder: the model-graded rubric (Langfuse's evaluator, checked
    against labels first, AAC-0084) and feedback buttons in the chat.
