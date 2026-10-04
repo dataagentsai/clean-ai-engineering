@@ -5,7 +5,7 @@ hand: a brief somebody edited is a brief that can describe an implementation
 instead of a specification, and the whole point of this document is that it
 cannot.*
 
-Built 2026-10-03 · AOAS `0.1.0` ·
+Built 2026-10-04 · AOAS `0.1.0` ·
 AHC `0.3.0` · AAC `0.16.0`
 
 ---
@@ -136,14 +136,17 @@ the profile lists the capability under `not_applicable` with the reason; that is
 
 The text of each is in `ai-harness-catalog/capabilities/<id>.yaml`. For the
 collated version by layer, with the requirement and the decisions the catalog
-has settled inline:
-`ai-harness-catalog/blueprints/A6-owes.generated.md`.
+has settled inline, one per shape this agent owes:
+- `ai-harness-catalog/blueprints/A6-owes.generated.md`
+- `ai-harness-catalog/blueprints/A5-owes.generated.md`
 
 **A settled decision is part of what is owed, not advice.** Where a capability's
-`design_decisions` entry has no `key`, the catalog answered it, and its
-`resolution` says how the capability is met; an approach the resolution
-rejects does not meet the capability, however well it is built. Only a keyed
-decision is yours to answer, in your profile.
+`design_decisions` entry has a `resolution` and no `key`, the catalog
+answered it, and the resolution says how the capability is met; an approach it
+rejects does not meet the capability, however well it is built. A keyed
+decision is yours to answer, in your profile. An entry with neither is open:
+the catalog has not settled it and a profile has nowhere to put it, so decide
+it where your build meets it and write down what you chose and why.
 
 ---
 
@@ -366,14 +369,14 @@ catalog's own resolution was taken as written and recorded rather than assumed.
 - **`AHC-0019/redaction_point`** → `before-export` *(chosen)* — One redaction function, on the capture path, so no unredacted copy is written anywhere.
 - **`AHC-0019/reversibility`** → `irreversible` *(chosen)* — Card numbers, emails, phones and key-shaped strings are replaced, not tokenised. Reversible redaction is a second secret to hold.
 - **`AHC-0025/output_limit`** → `outcome` *(golden-path)* — Its own termination, output_length_reached. The turn stops, the clipped text or tool calls are never passed on, and loop-exhausted escalates it.
-- **`AHC-0053/claim_scope`** → `verified-caller` *(golden-path)* — A delivery is claimed as customer:key, so another customer presenting the same key starts their own turn and is never handed the first reply (the leak run 2 found here, fixed in 832c38a). The conversation is not part of the name: a resend after a lost reply carries none.
+- **`AHC-0053/claim_scope`** → `verified-caller` *(golden-path)* — The conversation is not part of the name: a resend after a lost reply carries none.
 - **`AHC-0053/occasion_source`** → `caller-supplied` *(golden-path)* — The Idempotency-Key header on /chat, and the Chatwoot message id on the channel. With neither, the turn runs unguarded; an id is never derived from the text and the time.
 - **`AHC-0057/approval_source`** → `harness-approval-records` *(chosen)* — The order system reads the approval the call names from the approval workflow's records, read-only: the agent can ask and read, never write, and the far end checks operation, arguments, customer, grant and expiry.
 - **`AHC-0057/approval_staleness`** → `status-and-total` *(chosen)* — The facts the assessment judged — the order's status and total — are recorded on the approval and read again before a grant is carried out.
 - **`AHC-0057/grant_carriage`** → `approval-on-the-call` *(chosen)* — An elevated call names its approval in `_meta` under `aoas/approval`; the order system loads that approval and refuses unless it matches the operation, the arguments and the customer. The approvals worker's login has no customer, and for that party alone the approval says whose the call is. No scope is ever added to an identity for a grant. The keys are the stack's (open-stack `tool_runtime.x_meta`).
 - **`AHC-0057/irreversible_scope`** → `authority-by-whose` *(chosen)* — Not every irreversible action needs a person here, and the line is not reversibility — it is whose authority the effect needs. Moving money out of the business is the business's decision and `issue_refund` is gated. Cancelling your own unshipped order is yours, and `P-OWNERSHIP` already establishes that only the owner reaches it, so the person whose order it is has authorised it by asking. A gate there would queue the commonest request behind a human with nothing to add, which is the failure the capability's own resolution names. The authority sits in the AOAS as conditions over declared state and is checked where the action executes, so the agent never decides at the time which kind it is looking at. Decided 2026-09-12.
 - **`AHC-0057/stale_grant`** → `ask-again` *(golden-path)* — A grant whose status or total has moved is not carried out; the approval records execution stale and a fresh request is asked against the order as it now is, named in superseded_by (P-APPROVAL-STALE).
-- **`AHC-0074/key_source`** → `run-step-iteration` *(golden-path)* — `run:step:iteration`, and a call still owed a reply keeps the key its first attempt was minted with, so a retry reaches the far end under the same name. An approval stores its key and rebuilds it when the grant is carried out, so a resumed approval cannot refund twice. Not verified: a process that dies mid-turn loses the owed-key map, which lives in memory, and whether the redelivered turn re-derives the same key has no test — it does not: a re-run turn gets a new run id, so the same change gets a new name. The order system's own record of names is in memory too (`Answered.durable = False`).
+- **`AHC-0074/key_source`** → `run-step-iteration` *(golden-path)* — `run:step:iteration`, and a call still owed a reply keeps the key its first attempt was minted with, so a retry reaches the far end under the same name. An approval stores its key and rebuilds it when the grant is carried out, so a resumed approval cannot refund twice. Not verified: a process that dies mid-turn loses the owed-key map, which lives in memory, and whether the redelivered turn re-derives the same key has no test — it does not: a re-run turn gets a new run id, so the same change gets a new name.
 - **`AHC-0094/output_rule_reading`** → `folded-text` *(chosen)* — Every rule reads the text with look-alike dashes, odd spaces and invisible characters folded and NFKC applied, so an id written with a non-breaking hyphen is still an id. Only the rules' copy is folded; the reply is not.
 - **`AHC-0105/replay_equivalence`** → `messages-tools-sampling` *(chosen)* — A replay matches on the messages, the tool names, max_tokens and temperature; tool schemas may differ. No fence nonce or read stamp enters a request, so neither breaks a recording. An approval id does, inside a tool result: a turn that asked a refund replays only against the same approvals.
 - **`AHC-0107/freshness_scope`** → `rows-an-irreversible-action-depends-on` *(chosen)* — Only a row an irreversible action is about to act on is held to the window here. A reply is held to it by AHC-0117 instead: every row an earlier turn read is read again before the loop's first ask, and a status the latest read contradicts is not said (`no_superseded_state`). Until 3 Oct this note ended "reads that only inform a reply are not re-read", and a resumed conversation said a delivered order was still on its way.
@@ -395,6 +398,7 @@ pre-accepted for what you build: a capability you also leave unmet goes in your
 own profile's gap list, with a reason that holds for your build, an owner and a
 review date — and where the reason given here does not hold for you, say so.
 
+- **AHC-0118** — Not met. The work record holds one question — the latest — so a message raising three concerns becomes one, and nothing checks that each reached an outcome. Owned by; the scenario lands with the fix. *(reference-agent, review 2026-11-01)*
 - **AHC-0071** — One loop, no graph. There are no nodes to give typed edges to, and building a topology in order to satisfy a capability about topologies is the failure mode this catalog warns about. *(reference-agent, review 2026-12-01)*
 - **AHC-0072** — No graph, so there is no topology to inspect as data. *(reference-agent, review 2026-12-01)*
 - **AHC-0073** — No graph. The trajectory is checkpointed per turn (AHC-0044) and an approval resumes from it, which is the part of this that a single loop owes. *(reference-agent, review 2026-12-01)*

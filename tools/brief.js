@@ -404,6 +404,17 @@ function statementIds(aoas) {
   ].join("\n");
 }
 
+/*
+ * Generation run 4 (NOTES M3) was pointed at the A6 collation alone while owing
+ * A5's capabilities too, and read those five from the raw files.
+ */
+function collations(shapes) {
+  return shapes
+    .filter((s) => fs.existsSync(path.join(AHC, "blueprints", `${s}-owes.generated.md`)))
+    .map((s) => `- \`ai-harness-catalog/blueprints/${s}-owes.generated.md\``)
+    .join("\n");
+}
+
 /* ----------------------------------------------------------------- the brief */
 
 function brief({ aoas, profile, caps, obs, aoasPath, profilePath }) {
@@ -507,14 +518,16 @@ ${capabilityTable(caps)}
 ${conditionalList(caps)}
 The text of each is in \`ai-harness-catalog/capabilities/<id>.yaml\`. For the
 collated version by layer, with the requirement and the decisions the catalog
-has settled inline:
-\`ai-harness-catalog/blueprints/${shapes[0]}-owes.generated.md\`.
+has settled inline, one per shape this agent owes:
+${collations(shapes)}
 
 **A settled decision is part of what is owed, not advice.** Where a capability's
-\`design_decisions\` entry has no \`key\`, the catalog answered it, and its
-\`resolution\` says how the capability is met; an approach the resolution
-rejects does not meet the capability, however well it is built. Only a keyed
-decision is yours to answer, in your profile.
+\`design_decisions\` entry has a \`resolution\` and no \`key\`, the catalog
+answered it, and the resolution says how the capability is met; an approach it
+rejects does not meet the capability, however well it is built. A keyed
+decision is yours to answer, in your profile. An entry with neither is open:
+the catalog has not settled it and a profile has nowhere to put it, so decide
+it where your build meets it and write down what you chose and why.
 
 ---
 
@@ -690,6 +703,11 @@ const FORBIDDEN = [
   /\breference-agent\//,
   /\b[FT]-\d{3}\b/,
   /\bG\d+\.\d+\b/,
+  // Added after generation run 4 (NOTES C2), which read a commit the reference
+  // was fixed in, one of its classes' attributes, and an endpoint it serves.
+  /\b(?:fixed in|commit|landed in)\s+`?[0-9a-f]{7,40}\b/i,
+  /`[A-Z][a-z][A-Za-z]*\.[a-z_]+(?:\s*=[^`]*)?`/,
+  /`\/[a-z][a-z0-9_-]*`/,
   // A symbol: an acronym run into a word (`LLMClient`).
   /\b[A-Z]{2,}[A-Z][a-z]{2,}[A-Za-z]*\b/,
 ];

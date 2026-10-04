@@ -79,6 +79,13 @@ const LEAK_CASES = [
   ["a product a port may name", "the world format is AgentTwin's", false],
   ["an AOAS entity's field", "the amount is `order.total`", false],
   ["a profile key", "the keys are the stack's (`tool_runtime.x_meta`)", false],
+  // Each of these was in the brief generation run 4 read (NOTES C2).
+  ["a commit the reference was fixed in", "the leak run 2 found here, fixed in 832c38a", true],
+  ["a class attribute from the reference", "a lost reply is marked (`Answered.durable = False`)", true],
+  ["an endpoint the reference serves", "a delivery to `/chat` is claimed first", true],
+  ["a capability's id is not a commit", "owed under AHC-0053 since the start", false],
+  ["an AOAS field is not a class attribute", "the amount is `order.total`", false],
+  ["a document name is not a class attribute", "owed too (`BASELINE.md`)", false],
 ];
 
 for (const [name, text, rejected] of LEAK_CASES) {

@@ -504,7 +504,9 @@ policies:
     facet: functional correctness
     # Answered from the order's status — the only refund state the order system
     # holds. refunded: a refund was issued, to the original payment method;
-    # returned: the return arrived and the refund is being processed; anything
+    # returned: the return arrived and a refund is owed, issued when the customer
+    # asks for it (P-REFUND-OWED) — never "being processed", which nothing is
+    # until they ask (generation run 4, NOTES X1); anything
     # else: there is no refund on this order. Never a date, never an amount.
     rule: refund status is answered from the order's status, deterministically, and never promises a date or an amount
     via: [get_order]
