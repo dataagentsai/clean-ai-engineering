@@ -37,12 +37,21 @@ thresholds:
   breaker_failure_threshold: 3          # AHC-0005. Consecutive failures that open it (reference)
   breaker_cooldown_seconds: 10          # AHC-0005. Open this long, then one probe (reference)
   max_concurrent_model_calls: 4         # AHC-0020. Model calls in flight, apart from max_concurrent_reads (AHC-0104) (reference)
+  max_queue_wait_s: 10                  # AHC-0020. How long work waits for a slot before it is shed; generation run 4 found it unnumbered and chose 10
   policy_evaluation_timeout_ms: 500     # AHC-0095. Chosen (run 2); a rule past it fails closed
   max_message_bytes: 8192               # AHC-0016. A customer message larger is refused before a turn (reference)
   content_capture_sample: 1.0           # AHC-0114. Share of turns whose content is captured, redacted. Chosen (run 2)
   trigger_claim_expiry_seconds: 600     # requests-store. A claim older than this may be taken again (reference)
 
 bindings:
+  # Bound after generation run 4 (NOTES M1): AHC-0020, 0021, 0096, 0097 and
+  # 0098 are served by this port and the stack bound nothing to it, so every
+  # build invented its own. Nothing is adopted: bounding is a few lines of the
+  # harness's own, and no product fits better than a semaphore.
+  admission:
+    approach: in-house
+    adapter: harness-semaphores
+    x_status: current
   model:
     approach: gateway
     adapter: litellm-proxy

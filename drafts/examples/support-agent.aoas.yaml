@@ -51,7 +51,9 @@ purpose:
   # against an explicit list of what it must not do.
   refuses:
     - id: R-DISCOUNT
-      what: negotiating price, or offering any discount, voucher or coupon not in a published promotion
+      # No promotion is declared anywhere this agent can read, so every discount
+      # a reply offers is unsupported (generation run 4, NOTES M7).
+      what: negotiating price, or offering any discount, voucher or coupon not in a published promotion — and none is published to this agent
       concern: safety
       facet: operational constraint
       examples: ["Can you give me a discount code?", "Match the cheaper price I saw on another site", "Any coupon for my next order?"]
@@ -73,7 +75,9 @@ purpose:
       examples: ["Delete my account", "Change my card to a new one", "Update my payment method to UPI"]
       answered_by: [direct]
     - id: R-DELIVERY-DATE
-      what: a delivery date the carrier record does not state
+      # The order holds no carrier date, so every date a reply states is
+      # unsupported until one is declared (generation run 4, NOTES M7).
+      what: a delivery date the carrier record does not state — and no carrier date is held on the order
       concern: functional-suitability
       facet: functional correctness
       examples: ["Exactly which day will it arrive?", "Promise me it comes by Friday"]
@@ -108,10 +112,12 @@ purpose:
   # model's instruction as well; `answered_by` names the controls a test holds
   # to account, and a refusal made on any of them counts towards `refusals`.
   # Recognised, in doc 24, and deliberately not operations in this version. The
-  # agent may explain the policy; it performs nothing, and claims nothing.
+  # agent performs nothing and claims nothing. `says` decided by the owner on
+  # 4 Oct after generation runs 3 and 4 had a source they could not read and
+  # no words: decline, and offer what the agent can do instead.
   deferred:
-    - {intent: exchange_request, source: doc 24 P-EXCHANGE}
-    - {intent: damaged_item, source: doc 24 P-DAMAGE}
+    - {intent: exchange_request, source: doc 24 P-EXCHANGE, says: "an exchange cannot be arranged here; a return can be opened if the order is inside its window, or a person can take it"}
+    - {intent: damaged_item, source: doc 24 P-DAMAGE, says: "a damaged item cannot be arranged here; a return can be opened if the order is inside its window, or a person can take it"}
     - {operation: hold_order}
     - {operation: dispatch_replacement}
     - {operation: track_shipment}
@@ -130,7 +136,9 @@ entities:
   order:
     key: id
     fields:
-      id: {type: id}
+      # How an order is named in a customer's words (generation runs 3 and 4 each
+      # invented a pattern). Matched case-blind, with look-alike dashes folded.
+      id: {type: id, pattern: "[A-Z]{1,3}-[0-9]{3,8}"}
       customer_id: {type: id, ref: customer.id}
       # The warehouse and the carrier write this while a conversation is open,
       # which is what `concurrent_writers` below says and what makes a window
@@ -202,7 +210,11 @@ facts:
     # stop (AHC-0096) had no value and was recorded as a step stop.
     values: [goal_reached, step_budget_exhausted, cost_ceiling_reached,
              deadline_reached, output_length_reached, oscillation_detected,
-             awaiting_approval, awaiting_human, refused, unrecoverable_error]
+             awaiting_approval, awaiting_human, awaiting_confirmation, refused,
+             unrecoverable_error]
+    # `awaiting_confirmation` added after generation run 4 (NOTES M13): AHC-0116
+    # stops and asks when the customer's words did not ask for the action, and
+    # that stop had no value of its own.
     # `output_length_reached` added after generation run 2 (NOTES §8): a model
     # reply cut off at Q-OUTPUT is an incomplete stop (AHC-0025), and with no
     # value of its own it was recorded as an unrecoverable error.
@@ -213,7 +225,11 @@ facts:
     # results the turn read. A failed read the reply routed around still
     # counts, because the rule reading this fact is `tool-unavailable`.
     derived: "turns ending in failure, counting back from the latest until one did not; a turn ends in failure when its loop stopped on unrecoverable_error, or when an operation it called did not answer (unavailable, or slow past the turn's deadline) and the turn ended without that answer"
-  refusals: {type: int, derived: turns in this conversation the agent refused}
+  refusals:
+    type: int
+    # The harness's refusals only (generation run 4, NOTES M15): a model's own
+    # decline cannot be counted without classifying its words.
+    derived: "turns in this conversation refused by the harness — on the customer's words or by an output rule — not a model's own decline"
   repeated_intent:
     type: int
     # However each was answered. A customer who asks again has not been
@@ -222,7 +238,8 @@ facts:
     # `other` is not counted: three "thanks" in a row are not a customer going
     # unresolved. Decided 2026-09-26 after generation run 2 (NOTES §8), which
     # read the derivation literally and escalated small talk.
-    derived: "turns carrying the latest turn's intent, counting back from it until the intent changes; zero when the latest turn's intent is `other`"
+    # A turn can carry several intents since P-CONCERNS (generation run 4, NOTES M16).
+    derived: "for each of the latest turn's intents other than `other`, the turns carrying it, counting back until one does not; the largest of those counts, and zero when the latest turn carries only `other`"
 
 # The closed set of things a customer asks for. P-DIRECT's "exactly one
 # intent" and the `repeated_intent` fact both count over it; until it was
@@ -581,7 +598,7 @@ policies:
   # of these is verified in the reference and none of them read as verified.
   approval:
     statements:
-      - {id: P-APPROVER, rule: "a refund is authorised by an operations reviewer, never by the customer whose refund it is", concern: security, facet: authenticity}
+      - {id: P-APPROVER, rule: "a refund is authorised by an operations reviewer, or by the automatic limit operations owns (issue_refund.authority.agent_when), never by the customer whose refund it is", concern: security, facet: authenticity}
       - {id: P-APPROVAL-TTL, rule: "a grant older than its validity fails closed rather than executing, and records execution grant_expired", valid_for: 24h, concern: safety, facet: fail safe}
       # AHC-0057's "ask again", in this format (generation run 2, NOTES §8).
       # The fields judged are the ones issue_refund's authority reads.
@@ -621,7 +638,7 @@ policies:
       # produces is a different thing, and saying nothing when the throughput is
       # unknown is the same rule, not an exception to it. Decided 2026-09-12.
       - {id: P-ESC-TOLD, rule: "the customer is told a reference number, and a wait only when one is measured from queue depth and observed throughput", concern: functional-suitability, facet: functional correctness}
-      - {id: P-ESC-OWNS, rule: "while a person owns the conversation the agent does not answer it, and only the desk that holds it may close it", concern: security, facet: integrity}
+      - {id: P-ESC-OWNS, rule: "while a person owns the conversation the agent does not answer it — a message then gets a fixed notice naming the reference, with no model call and no tool call — and only the desk that holds it may close it", concern: security, facet: integrity}
       - {id: P-ESC-TIER1, rule: "a rule never replaces a handoff the conversation already has: neither an escalation raised from the turn's own words, nor a decision a person is in the middle of making", concern: reliability, facet: faultlessness}
       - {id: P-ESC-QUEUE, rule: "the queue a reviewer reads holds the open escalations, oldest first, and a closed one leaves it; a rule's priority is shown to the desk and does not reorder the queue", concern: reliability, facet: faultlessness}
       - {id: P-ESC-OUTCOME, rule: "closing records an outcome from a declared set, once, and the rule that raised it stays with the record", values: [resolved, agent_could_have, misrouted, customer_gone], concern: maintainability, facet: analysability}
@@ -711,6 +728,10 @@ conformance:
       - {id: AAC-0007, reason: latency is undeclared (see required.undeclared), revisit_when: a latency property is declared}
       - {id: AAC-0014, reason: no production traffic exists, revisit_when: deployed}
       - {id: AAC-0097, reason: residency is undeclared, revisit_when: a residency property is declared}
+      # Decided by the owner 4 Oct after generation run 4 (NOTES X4): the
+      # automatic limit stays while it is measured, and the contradiction is
+      # stated rather than left for the next build to find.
+      - {id: AAC-0118, reason: "the ₹10,000 automatic refund limit predates its measurement; Q-AUTO-LIMIT says it is an assertion until reviewers' agreement is measured by stratum", revisit_when: the stratified measurement exists}
   ahc:
     version: "0.x"
     claims: all sixteen layers; a layer with no module is a finding

@@ -26,10 +26,10 @@ AHC `0.3.0` · AAC `0.16.0`
 
 **It refuses.**
 
-- **R-DISCOUNT** — negotiating price, or offering any discount, voucher or coupon not in a published promotion
+- **R-DISCOUNT** — negotiating price, or offering any discount, voucher or coupon not in a published promotion — and none is published to this agent
 - **R-OTHER-CUSTOMER** — anything about an order the signed-in customer did not place
 - **R-ACCOUNT** — account deletion, and changes to a payment method
-- **R-DELIVERY-DATE** — a delivery date the carrier record does not state
+- **R-DELIVERY-DATE** — a delivery date the carrier record does not state — and no carrier date is held on the order
 - **R-STYLE** — style or fit advice presented as authoritative
 - **R-FRAUD** — adjudicating whether anything is fraud
 
@@ -152,7 +152,7 @@ it where your build meets it and write down what you chose and why.
 
 ## 3 · The obligations it will be tested against
 
-**57 obligations.** These are not capabilities: a capability is
+**56 obligations.** These are not capabilities: a capability is
 something the system can do, an obligation is something a *test* must
 demonstrate. A system that meets every capability and can demonstrate none of
 them has not finished.
@@ -167,7 +167,7 @@ them has not finished.
 | **grounding** | AAC-0029, AAC-0110 |
 | **instruction** | AAC-0003 |
 | **observability** | AAC-0011, AAC-0060, AAC-0100, AAC-0114 |
-| **oversight** | AAC-0094, AAC-0118 |
+| **oversight** | AAC-0094 |
 | **privacy** | AAC-0006, AAC-0095, AAC-0117 |
 | **reliability** | AAC-0009, AAC-0046, AAC-0047, AAC-0055, AAC-0076, AAC-0116 |
 | **robustness** | AAC-0015 |
@@ -185,6 +185,7 @@ not in the table above; a test suite records them as exclusions, not as silence.
 - **AAC-0007** — latency is undeclared (see required.undeclared) *(revisit when a latency property is declared)*
 - **AAC-0014** — no production traffic exists *(revisit when deployed)*
 - **AAC-0097** — residency is undeclared *(revisit when a residency property is declared)*
+- **AAC-0118** — the ₹10,000 automatic refund limit predates its measurement; Q-AUTO-LIMIT says it is an assertion until reviewers' agreement is measured by stratum *(revisit when the stratified measurement exists)*
 
 The text of each is in `ai-assurance-catalog/catalog/<id>.yaml`. Obligations
 marked `gate: true` are release gates — a release with one unmet is a release
@@ -199,6 +200,7 @@ extends. **This is the only place a product may be named.**
 
 | Port | Approach | Adapter |
 |---|---|---|
+| `admission` | in-house | `harness-semaphores` |
 | `approval` | open-source | `temporal-updates` |
 | `channel` | open-source | `chatwoot-agent-bot` |
 | `config` | open-source | `typed-settings` |
@@ -236,6 +238,7 @@ wrong for almost everyone. They are this system's.
 | `max_history_characters` | 32000 |
 | `max_message_bytes` | 8192 |
 | `max_output_tokens` | 4096 |
+| `max_queue_wait_s` | 10 |
 | `max_retries_per_call` | 2 |
 | `max_steps_per_task` | 12 |
 | `max_tool_calls_per_step` | 8 |

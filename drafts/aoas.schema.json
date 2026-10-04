@@ -77,7 +77,8 @@
             "properties": {
               "intent": { "type": "string" },
               "operation": { "type": "string" },
-              "source": { "type": "string" }
+              "source": { "type": "string" },
+              "says": { "type": "string", "minLength": 1, "description": "What the agent tells the customer when it recognises this and does not act on it. Without it a builder has a source it cannot read and no words to say (generation runs 3 and 4)." }
             },
             "oneOf": [{ "required": ["intent"] }, { "required": ["operation"] }]
           },
@@ -300,6 +301,7 @@
         "of": { "type": "string", "description": "An enum whose values are the states of a named state machine." },
         "ref": { "type": "string", "pattern": "^[a-z][a-z0-9_]*\\.[a-z][a-z0-9_]*$" },
         "derived": { "type": "string" },
+        "pattern": { "type": "string", "minLength": 1, "description": "The shape a value of this field takes in a customer's words, as a regular expression, so every implementation recognises the same identifiers (generation runs 3 and 4 each invented one)." },
         "advances": { "enum": ["days"], "description": "A counter that runs with world time, so a window can close while a conversation is still open." },
         "advances_when": { "$ref": "#/$defs/condition", "description": "When the counter runs. Absent means always. Usually the invariant that says when the field may be non-zero, pointed forwards." },
         "pii": { "type": "boolean" },
