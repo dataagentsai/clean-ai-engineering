@@ -5,7 +5,7 @@ hand: a brief somebody edited is a brief that can describe an implementation
 instead of a specification, and the whole point of this document is that it
 cannot.*
 
-Built 2026-10-04 · AOAS `0.1.0` ·
+Built 2026-10-06 · AOAS `0.1.0` ·
 AHC `0.3.0` · AAC `0.16.0`
 
 ---
@@ -491,7 +491,7 @@ prefix and its name:
 | Prefix | Names | In this AOAS |
 |---|---|---|
 | `op:` | an operation | `op:get_order` · `op:list_orders` · `op:cancel_order` · `op:open_return_request` · `op:change_address` · `op:request_refund` · `op:issue_refund` · `op:escalate` |
-| `esc:` | an escalation rule | `esc:asked-for-human` · `esc:lost-in-transit` · `esc:loop-exhausted` · `esc:tool-unavailable` · `esc:repeated-intent` · `esc:second-refusal` · `esc:turns-exceeded` |
+| `esc:` | an escalation rule | `esc:asked-for-human` · `esc:lost-in-transit` · `esc:declined` · `esc:loop-exhausted` · `esc:tool-unavailable` · `esc:repeated-intent` · `esc:second-refusal` · `esc:turns-exceeded` |
 | `ext:` | an external system | `ext:order_system` · `ext:approval_queue` · `ext:escalation_desk` |
 | `fact:` | a fact | `fact:turn_count` · `fact:termination` · `fact:consecutive_failed` · `fact:refusals` · `fact:repeated_intent` |
 
