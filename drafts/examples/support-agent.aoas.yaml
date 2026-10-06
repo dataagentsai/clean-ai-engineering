@@ -276,10 +276,15 @@ intents:
     examples: ["I want my money back", "Refund my order please", "I'd like compensation for this order"]
   human:            {answered_by: handoff,  via: [escalate], examples: ["I want to talk to a person", "Get me a human"]}
   lost_in_transit:  {answered_by: handoff,  via: [escalate], examples: ["My parcel is lost", "Tracking says delivered but I never got it"]}
+  # Concerns this shop has no route for, named so a message raising one is not
+  # left with nothing (P-CONCERNS). Decided by the owner 6 Oct, after a CCA-F
+  # case (T-093): anything the agent cannot handle goes to a person.
+  billing_dispute:  {answered_by: handoff,  via: [escalate], means: "a charge the customer says is wrong", examples: ["I was charged twice for AB-10004", "There's a payment on my card I don't recognise"]}
+  warranty_claim:   {answered_by: handoff,  via: [escalate], means: "whether a product is covered, or a claim under its cover", examples: ["Is my laptop still under warranty?", "Can I claim on the warranty?"]}
   discount_request: {answered_by: refusal,  examples: ["Can you give me a discount code?"]}
   account_change:   {answered_by: refusal,  examples: ["Delete my account"]}
   exchange_request: {answered_by: deferred, examples: ["Can I swap it for a larger size?"]}
-  damaged_item:     {answered_by: deferred, examples: ["It arrived torn"]}
+  damaged_item:     {answered_by: deferred, examples: ["It arrived torn", "The hinge on AB-10003 is cracked"]}
   other:            {answered_by: loop,     examples: ["Hi", "Thanks, that's all"]}
 
 state_machines:
@@ -543,6 +548,7 @@ policies:
     # After a CCA-F case (T-093): customers open with several problems, the
     # first reply covered one, and the rest never came back — nor reached the
     # person who later took the conversation.
+    # Owner, 6 Oct: anything the agent cannot handle goes to a person.
     rule: every concern a customer raises is its own item and ends in one of answered, handed to a person with a reference, waiting on a decision, or declined with a reason; a turn that leaves a concern with none of these is not complete, and a concern outside `intents` is handed to a person, never left unmentioned
     via: [escalate]
     concern: functional-suitability
@@ -614,6 +620,9 @@ policies:
     on_request:                        # Tier 1 — decided from the turn's text alone
       - {id: asked-for-human, when: the customer asks to speak to a person}
       - {id: lost-in-transit, when: the item is reported lost in transit}
+      # P-CONCERNS (owner, 6 Oct): a concern no intent here can answer is a
+      # person's — billing disputes and warranty, and whatever joins them.
+      - {id: outside-scope, when: "the customer raises a concern this agent has no route for: a billing dispute or a warranty claim"}
     on_condition:                      # Tier 2 — decided from what the conversation has become. First match wins.
       # First: a refusal for good is a person's to arrange another way
       # (P-REFUND-DECLINED, T-095), and no other rule should claim the turn.
