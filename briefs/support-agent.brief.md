@@ -401,7 +401,6 @@ pre-accepted for what you build: a capability you also leave unmet goes in your
 own profile's gap list, with a reason that holds for your build, an owner and a
 review date — and where the reason given here does not hold for you, say so.
 
-- **AHC-0118** — Not met. The work record holds one question — the latest — so a message raising three concerns becomes one, and nothing checks that each reached an outcome. Owned by; the scenario lands with the fix. *(reference-agent, review 2026-11-01)*
 - **AHC-0071** — One loop, no graph. There are no nodes to give typed edges to, and building a topology in order to satisfy a capability about topologies is the failure mode this catalog warns about. *(reference-agent, review 2026-12-01)*
 - **AHC-0072** — No graph, so there is no topology to inspect as data. *(reference-agent, review 2026-12-01)*
 - **AHC-0073** — No graph. The trajectory is checkpointed per turn (AHC-0044) and an approval resumes from it, which is the part of this that a single loop owes. *(reference-agent, review 2026-12-01)*

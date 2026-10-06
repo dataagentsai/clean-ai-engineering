@@ -211,7 +211,10 @@ facts:
     values: [goal_reached, step_budget_exhausted, cost_ceiling_reached,
              deadline_reached, output_length_reached, oscillation_detected,
              awaiting_approval, awaiting_human, awaiting_confirmation, refused,
-             declined, unrecoverable_error]
+             declined, concerns_unanswered, unrecoverable_error]
+    # `concerns_unanswered` added 6 Oct (T-093, AHC-0118): the model ended a turn
+    # with a concern the customer raised still not dealt with, after being sent
+    # back once to deal with it; a person takes it (loop-exhausted).
     # `declined` added 6 Oct (T-095): a far end refused an action for good — a
     # refund the original payment method can no longer receive — so the turn
     # stops, typed, rather than leaving the model to say "try again later".
@@ -627,7 +630,7 @@ policies:
       # First: a refusal for good is a person's to arrange another way
       # (P-REFUND-DECLINED, T-095), and no other rule should claim the turn.
       - {id: declined,         when: {field: termination, equals: [declined]}, priority: 1, ttl: 30m}
-      - {id: loop-exhausted,   when: {field: termination, equals: [step_budget_exhausted, cost_ceiling_reached, deadline_reached, output_length_reached, oscillation_detected]}, priority: 2, ttl: 15m}
+      - {id: loop-exhausted,   when: {field: termination, equals: [step_budget_exhausted, cost_ceiling_reached, deadline_reached, output_length_reached, oscillation_detected, concerns_unanswered]}, priority: 2, ttl: 15m}
       - {id: tool-unavailable, when: {field: consecutive_failed, at_least: 2}, priority: 2, ttl: 15m}
       - {id: repeated-intent,  when: {field: repeated_intent, at_least: 3},    priority: 3, ttl: 30m}
       - {id: second-refusal,   when: {field: refusals, at_least: 2},           priority: 4, ttl: 30m}
