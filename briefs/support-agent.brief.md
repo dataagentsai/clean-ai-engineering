@@ -5,7 +5,7 @@ hand: a brief somebody edited is a brief that can describe an implementation
 instead of a specification, and the whole point of this document is that it
 cannot.*
 
-Built 2026-10-06 · AOAS `0.1.0` ·
+Built 2026-10-07 · AOAS `0.1.0` ·
 AHC `0.3.0` · AAC `0.16.0`
 
 ---
@@ -240,6 +240,7 @@ wrong for almost everyone. They are this system's.
 | `max_output_tokens` | 4096 |
 | `max_queue_wait_s` | 10 |
 | `max_retries_per_call` | 2 |
+| `max_retries_per_unit` | 4 |
 | `max_steps_per_task` | 12 |
 | `max_tool_calls_per_step` | 8 |
 | `max_tool_calls_per_turn` | 24 |

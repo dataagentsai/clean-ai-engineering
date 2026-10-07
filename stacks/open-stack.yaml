@@ -34,6 +34,7 @@ decisions: {}
 thresholds:
   turn_deadline_seconds: 60             # AHC-0096. Chosen (run 2); behind the AOAS's deadline_reached
   max_retries_per_call: 2               # AHC-0024. Three attempts in all, the reference's resilience default. A retry repeats a failed call; calls made by design are AHC-0041's
+  max_retries_per_unit: 4               # AHC-0024. Retries across a whole unit of work, every call's together: the per-call bound alone let a twelve-step turn retry twenty-four times (generation run 4, X5)
   breaker_failure_threshold: 3          # AHC-0005. Consecutive failures that open it (reference)
   breaker_cooldown_seconds: 10          # AHC-0005. Open this long, then one probe (reference)
   max_concurrent_model_calls: 4         # AHC-0020. Model calls in flight, apart from max_concurrent_reads (AHC-0104) (reference)
