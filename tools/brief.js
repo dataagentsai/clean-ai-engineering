@@ -373,7 +373,7 @@ function statementIds(aoas) {
   const esc = (aoas.policies || {}).escalation || {};
   const derived = [
     ["op", "an operation", keys(aoas.operations)],
-    ["esc", "an escalation rule", [...keys(esc.on_request), ...keys(esc.on_condition)]],
+    ["esc", "an escalation rule", [...keys(esc.on_request), ...keys(esc.on_reply), ...keys(esc.on_condition)]],
     ["ext", "an external system", keys(aoas.external)],
     ["fact", "a fact", keys(aoas.facts)],
   ].filter(([, , names]) => names.length);

@@ -284,8 +284,8 @@ intents:
   # case (T-093): anything the agent cannot handle goes to a person.
   billing_dispute:  {answered_by: handoff,  via: [escalate], means: "a charge the customer says is wrong", examples: ["I was charged twice for AB-10004", "There's a payment on my card I don't recognise"]}
   warranty_claim:   {answered_by: handoff,  via: [escalate], means: "whether a product is covered, or a claim under its cover", examples: ["Is my laptop still under warranty?", "Can I claim on the warranty?"]}
-  discount_request: {answered_by: refusal,  examples: ["Can you give me a discount code?"]}
-  account_change:   {answered_by: refusal,  examples: ["Delete my account"]}
+  discount_request: {answered_by: refusal,  refusal: R-DISCOUNT, examples: ["Can you give me a discount code?"]}
+  account_change:   {answered_by: refusal,  refusal: R-ACCOUNT, examples: ["Delete my account"]}
   exchange_request: {answered_by: deferred, examples: ["Can I swap it for a larger size?"]}
   damaged_item:     {answered_by: deferred, examples: ["It arrived torn", "The hinge on AB-10003 is cracked"]}
   other:            {answered_by: loop,     examples: ["Hi", "Thanks, that's all"]}
@@ -552,7 +552,7 @@ policies:
     # first reply covered one, and the rest never came back — nor reached the
     # person who later took the conversation.
     # Owner, 6 Oct: anything the agent cannot handle goes to a person.
-    rule: every concern a customer raises is its own item and ends in one of answered, handed to a person with a reference, waiting on a decision, or declined with a reason; a turn that leaves a concern with none of these is not complete, and a concern outside `intents` is handed to a person, never left unmentioned
+    rule: every concern a customer raises is its own item and ends in one of answered, handed to a person with a reference, waiting on a decision, asked back (a question the customer must answer first, such as which order), or declined with a reason; a turn that leaves a concern with none of these is not complete, and a concern outside `intents` is handed to a person, never left unmentioned
     via: [escalate]
     concern: functional-suitability
     facet: functional completeness
@@ -626,6 +626,12 @@ policies:
       # P-CONCERNS (owner, 6 Oct): a concern no intent here can answer is a
       # person's — billing disputes and warranty, and whatever joins them.
       - {id: outside-scope, when: "the customer raises a concern this agent has no route for: a billing dispute or a warranty claim"}
+    on_reply:                          # decided from the agent's reply against what the turn did
+      # AHC-0106: a reply that commits to work nothing in the turn can do —
+      # "let me check on that" with no answer and nothing pending — is made true
+      # by fetching a person. Named after generation run 5 had no id to raise it
+      # under (the reference used a refusal-shaped id).
+      - {id: unbacked-commitment, when: "the reply commits to future work and the turn holds no effect, pending decision or handoff that could produce it"}
     on_condition:                      # Tier 2 — decided from what the conversation has become. First match wins.
       # First: a refusal for good is a person's to arrange another way
       # (P-REFUND-DECLINED, T-095), and no other rule should claim the turn.
@@ -657,7 +663,7 @@ policies:
       # unknown is the same rule, not an exception to it. Decided 2026-09-12.
       - {id: P-ESC-TOLD, rule: "the customer is told a reference number, and a wait only when one is measured from queue depth and observed throughput", concern: functional-suitability, facet: functional correctness}
       - {id: P-ESC-OWNS, rule: "while a person owns the conversation the agent does not answer it — a message then gets a fixed notice naming the reference, with no model call and no tool call — and only the desk that holds it may close it", concern: security, facet: integrity}
-      - {id: P-ESC-TIER1, rule: "a rule never replaces a handoff the conversation already has: neither an escalation raised from the turn's own words, nor a decision a person is in the middle of making", concern: reliability, facet: faultlessness}
+      - {id: P-ESC-TIER1, rule: "a rule never replaces a handoff the conversation already has: neither an escalation raised from the turn's own words, nor a decision a person is in the middle of making — a pending approval is not withdrawn or decided by an escalation, but a rule about the conversation failing (tool-unavailable, loop-exhausted, turns-exceeded) still fires while one is pending, and the escalation names it", concern: reliability, facet: faultlessness}
       - {id: P-ESC-QUEUE, rule: "the queue a reviewer reads holds the open escalations, oldest first, and a closed one leaves it; a rule's priority is shown to the desk and does not reorder the queue", concern: reliability, facet: faultlessness}
       - {id: P-ESC-OUTCOME, rule: "closing records an outcome from a declared set, once, and the rule that raised it stays with the record", values: [resolved, agent_could_have, misrouted, customer_gone], concern: maintainability, facet: analysability}
     deferred_triggers:

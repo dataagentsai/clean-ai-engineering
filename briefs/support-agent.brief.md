@@ -262,6 +262,10 @@ other's code.
 **`channel.x_delivery`**
 
 ```yaml
+identity: >-
+  The webhook acts only for a contact Chatwoot has verified: `conversation.meta.hmac_verified` is
+  true and the `identifier` on the payload's `sender`, the customer id the portal signed, is
+  present. Either missing is an unverified contact, and nothing is done for them.
 signature: >-
   X-Chatwoot-Signature is `sha256=` and the hex HMAC-SHA256 of `<X-Chatwoot-Timestamp>.<raw body>`
   under the bot's secret, compared in constant time. A timestamp more than 300 seconds off is
@@ -491,7 +495,7 @@ prefix and its name:
 | Prefix | Names | In this AOAS |
 |---|---|---|
 | `op:` | an operation | `op:get_order` · `op:list_orders` · `op:cancel_order` · `op:open_return_request` · `op:change_address` · `op:request_refund` · `op:issue_refund` · `op:escalate` |
-| `esc:` | an escalation rule | `esc:asked-for-human` · `esc:lost-in-transit` · `esc:outside-scope` · `esc:declined` · `esc:loop-exhausted` · `esc:tool-unavailable` · `esc:repeated-intent` · `esc:second-refusal` · `esc:turns-exceeded` |
+| `esc:` | an escalation rule | `esc:asked-for-human` · `esc:lost-in-transit` · `esc:outside-scope` · `esc:unbacked-commitment` · `esc:declined` · `esc:loop-exhausted` · `esc:tool-unavailable` · `esc:repeated-intent` · `esc:second-refusal` · `esc:turns-exceeded` |
 | `ext:` | an external system | `ext:order_system` · `ext:approval_queue` · `ext:escalation_desk` |
 | `fact:` | a fact | `fact:turn_count` · `fact:termination` · `fact:consecutive_failed` · `fact:refusals` · `fact:repeated_intent` |
 

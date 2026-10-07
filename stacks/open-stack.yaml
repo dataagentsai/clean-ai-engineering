@@ -144,6 +144,13 @@ bindings:
     # the reference's channel and portal after generation run 2 (NOTES §8)
     # found "portal keeps the login server-side" and nothing more.
     x_delivery:
+      # Where Chatwoot puts who it is (generation run 5 had to guess, and guessed
+      # wrong): the mark is the conversation's, the identifier the sender's.
+      identity: >-
+        The webhook acts only for a contact Chatwoot has verified:
+        `conversation.meta.hmac_verified` is true and the `identifier` on the
+        payload's `sender`, the customer id the portal signed, is present. Either missing is an
+        unverified contact, and nothing is done for them.
       signature: >-
         X-Chatwoot-Signature is `sha256=` and the hex HMAC-SHA256 of
         `<X-Chatwoot-Timestamp>.<raw body>` under the bot's secret, compared in
