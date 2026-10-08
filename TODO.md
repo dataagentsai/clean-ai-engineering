@@ -1608,6 +1608,20 @@ still the literal `support_agent`; 59 re-export stubs at the old paths keep the
 tests unchanged. Follows from the hybrid decision (G0.10, 2026-09-13).
 Repo: `reference-agent`.
 
+**Azure adapters (T-099 phase 2, 2026-10-08,** reference-agent `b7d33a7`,
+`1b713ee`, `19635cf`, `5596ee8`; 1,614 tests, four gates, 15 import contracts).
+In `agent_harness`, all optional (`agent-harness[azure]`), each SDK known by one
+module: `llm/pydantic_ai.py` (PydanticAIClient: Groq, APIM→Groq, Azure OpenAI
+via APIM), `telemetry/azure.py` (Azure Monitor distro when the connection string
+is set; scope and service names now the agent's), `identity/entra.py`
+(EntraOnBehalfOf; `verify_entra` because Entra v2 tokens carry `uti` not `jti`
+and `scp` as a string), `approvals/dbos.py` + `escalation/dbos.py` +
+`state/dbos.py` (durable waits on PostgreSQL with the Temporal adapter's
+semantics; tested against a throwaway local Postgres). **Unverified until
+Phase 4:** a live Entra tenant (and a `customer_id` claim), Azure PostgreSQL
+(TLS, Entra auth), APIM; no Temporal/DBOS parity table; no composition root
+wires them yet (Phase 3).
+
 **What.** The mechanism modules become an installable package; the parameterised
 and per-agent modules stay with the agent. `evals/reuse.py` already classifies
 every module: 46 files are mechanism, 9 parameterised and 5 per-agent as of 16 Sep.
