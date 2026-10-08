@@ -39,7 +39,6 @@ fidelity:
     - which operations are irreversible (withdraw_claim, issue_payout)
     - whole days since each incident, advancing with the world
   not_faithful_about:
-    - the claim a register_claim creates — the stand-in logs the effect on the policy and creates no claim row and no reference
     - documents_missing after a submit_document — the stand-in does not count it down
     - the reporting window inside which a second report of the same incident is the same claim
     - the bank account on a policy, and whether it can receive money — a decline is staged by perturbation, not held in a row

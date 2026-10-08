@@ -5,7 +5,7 @@ hand: a brief somebody edited is a brief that can describe an implementation
 instead of a specification, and the whole point of this document is that it
 cannot.*
 
-Built 2026-10-07 · AOAS `0.1.0` ·
+Built 2026-10-08 · AOAS `0.1.0` ·
 AHC `0.3.0` · AAC `0.16.0`
 
 ---

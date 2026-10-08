@@ -291,7 +291,12 @@ operations:
     preconditions:
       - *owns_policy
       - {field: status, equals: [active]}
-    effect: a claim exists on the policy, status registered, and its reference is returned
+    # T-100: the claim is a row of its own, its reference made from its
+    # pattern and returned; it was prose, so no claim appeared in any world.
+    creates:
+      entity: claim
+      sets: {status: registered, incident_type: $incident_type, incident_days_ago: 0, injuries: false, documents_missing: 0, approved_amount: 0}
+      from_row: {policy_id: id, policyholder_id: policyholder_id}
     # The same incident reported twice is one claim: a policy and incident type
     # with a claim still open (not withdrawn, rejected or paid) is that claim,
     # and its reference is returned again (curation, 8 Oct: "within the

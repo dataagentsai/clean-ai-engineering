@@ -26,6 +26,7 @@
  *   unknown-operation              a transition, policy, system, intent or route names a missing operation
  *   unknown-intent                 a deferred intent is missing from a declared intent set
  *   unknown-input                  an identity or effect names an input the operation lacks
+ *   created-key-set                a created row's key is set by hand rather than made from its pattern
  *   unscoped-collection            a read of many rows (`output: entity[]`) is not scoped to the caller
  *   terminal-exit                  a transition leaves a terminal state
  *   effect-without-transition      an operation sets a state no transition allows it to
@@ -198,6 +199,27 @@ function aoasIssues(doc, opts = {}) {
     if (op.amount_from) {
       const def = resolve(op.amount_from, null, `${at}.amount_from`);
       if (def && def.type !== "money") add("wrong-type", `${at}.amount_from`, `${op.amount_from} is ${def.type}, not money`);
+    }
+    // T-100: an operation that brings a row of another entity into being.
+    if (op.creates) {
+      const made = entities[op.creates.entity];
+      if (!made) {
+        add("unknown-entity", `${at}.creates.entity`, `"${op.creates.entity}" is not a declared entity`);
+      } else {
+        for (const [fn, v] of Object.entries(op.creates.sets || {})) {
+          const def = resolve(fn, op.creates.entity, `${at}.creates.sets.${fn}`);
+          if (fn === made.key) add("created-key-set", `${at}.creates.sets.${fn}`, `the key of a created row is made from its pattern, never set`);
+          if (typeof v === "string" && v.startsWith("$")) {
+            if (!op.input.includes(v.slice(1))) add("unknown-input", `${at}.creates.sets.${fn}`, `"${v}" is not an input of ${on}`);
+          } else if (def) {
+            checkValue(def, v, `${at}.creates.sets.${fn}`, "sets");
+          }
+        }
+        for (const [fn, src] of Object.entries(op.creates.from_row || {})) {
+          resolve(fn, op.creates.entity, `${at}.creates.from_row.${fn}`);
+          resolve(src, op.entity, `${at}.creates.from_row.${fn}`);
+        }
+      }
     }
     if (op.effect && typeof op.effect === "object") {
       for (const [fn, v] of Object.entries(op.effect)) {

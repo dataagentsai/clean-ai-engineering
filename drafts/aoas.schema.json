@@ -423,6 +423,17 @@
             { "type": "object", "minProperties": 1, "description": "Field → new value. `$name` means the input of that name." }
           ]
         },
+        "creates": {
+          "type": "object",
+          "required": ["entity", "sets"],
+          "additionalProperties": false,
+          "description": "A row of another entity this operation brings into being (T-100: registering a claim on a policy creates a claim). Its key is made from the entity's key pattern and returned to the caller.",
+          "properties": {
+            "entity": { "type": "string" },
+            "sets": { "type": "object", "description": "New row's field → value; `$name` means the input of that name." },
+            "from_row": { "type": "object", "description": "New row's field → a field of the row the operation acts on (its key included)." }
+          }
+        },
         "identity": {
           "oneOf": [
             { "type": "string" },

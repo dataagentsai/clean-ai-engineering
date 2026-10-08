@@ -10,10 +10,9 @@
 # The reference has to come from the claims system, not from the model: the
 # scripted model below deliberately names none, so `says: CLM-` passes only if
 # the harness carries the reference from register_claim's answer into the
-# reply. KNOWN RED: the world's stand-in creates no claim row and returns no
-# reference (fidelity.not_faithful_about), so this check fails against every
-# implementation until register_claim can create a row on another entity. It
-# is kept because the statement asks for it; see the gaps in the hand-off.
+# reply. Since T-100 the world creates the claim row and answers with
+# `created: {entity: claim, id: CLM-…}`; until then this check could not pass
+# against any implementation.
 apiVersion: awd-scenario/v0
 scenario: a collision reported on an active policy is registered and given a reference, and nothing is promised
 world: ../worlds/motor-claims-fnol.yaml
