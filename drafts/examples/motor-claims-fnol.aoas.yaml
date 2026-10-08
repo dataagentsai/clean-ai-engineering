@@ -1,0 +1,544 @@
+# Application Operation Agent Spec — motor claims, first notice of loss (FNOL)
+#
+# The claims agent for a motor insurer: a signed-in policyholder reports an
+# incident, follows their claim, sends what the assessor needs, and is paid
+# when a claim is approved. Written ahead of any implementation (cycle 4 of
+# TODO's roster, owner's choice 8 Oct 2026: insurance, on Azure, Pydantic AI).
+#
+# Two axes change at once against the clothing agent: the domain, and the
+# stack. Decided knowingly by the owner; a failure the gates route is read
+# against both before it is fixed.
+#
+# Domain rules marked ASSUMPTION are the author's, not an insurer's, and are
+# for the owner to confirm or correct before the first build.
+#
+# Status: draft. Validate: node tools/validate-aoas.js drafts/examples/motor-claims-fnol.aoas.yaml
+
+apiVersion: aoas/v0
+agent:
+  id: motor-claims-fnol
+  version: 0.1.0
+  currency: INR
+
+sources:
+  - Agent-Harness-Architecture-Azure (owner's architecture, Oct 2026)
+
+# ---------------------------------------------------------------------------
+# 1 · Purpose
+# ---------------------------------------------------------------------------
+purpose:
+  serves: >
+    A signed-in policyholder of one motor insurer, about their own policies and
+    claims.
+  does:
+    - claim status
+    - policy status
+    - reporting a new claim (first notice of loss)
+    - sending a document the claim is waiting for
+    - withdrawing a claim not yet assessed
+    - asking for the payout of an approved claim
+    - handing the conversation to a person
+  refuses:
+    - id: R-COVERAGE
+      # The commonest harm in claims chat: a reply that sounds like a decision.
+      # Cover and amount are the assessor's, from the policy and the evidence.
+      what: deciding or promising whether a claim is covered, will be paid, or for how much — only an assessment decides that
+      concern: safety
+      facet: operational constraint
+      examples: ["Will my claim be approved?", "How much will I get for the dent?", "Is a flood covered on my policy?"]
+      answered_by: [direct, output]
+    - id: R-LIABILITY
+      what: judging who was at fault in an incident
+      concern: safety
+      facet: operational constraint
+      examples: ["Was the other driver at fault?", "Can you confirm it wasn't my fault?"]
+      answered_by: [direct]
+    - id: R-OTHER-HOLDER
+      what: anything about a policy or claim the signed-in policyholder does not hold
+      concern: security
+      facet: confidentiality
+      examples: ["What's the status of my brother's claim CLM-204411?", "Show me the policy on my friend's car"]
+      answered_by: [direct, structural]
+    - id: R-POLICY-CHANGE
+      what: changing cover, adding a driver, or cancelling a policy
+      concern: safety
+      facet: operational constraint
+      examples: ["Add my wife as a driver", "Cancel my motor policy", "Upgrade me to comprehensive"]
+      answered_by: [direct]
+    - id: R-FRAUD
+      what: adjudicating whether anything is fraud
+      concern: safety
+      facet: risk identification
+      examples: ["Do you think the other driver is scamming me?"]
+      answered_by: [direct]
+    - id: R-LEGAL
+      what: legal advice
+      concern: safety
+      facet: operational constraint
+      examples: ["Should I sue the other driver?", "Do I need a lawyer?"]
+      answered_by: [direct]
+  on_refusal: name at least one thing from `does` the agent can do instead; a bare no, or only a pointer elsewhere, is not enough
+  deferred:
+    - {intent: roadside_assistance, says: "roadside assistance cannot be arranged here; a person can take it, and the number on the policy document is the fastest route"}
+    - {operation: book_inspection}
+    - {operation: appoint_garage}
+
+# ---------------------------------------------------------------------------
+# 2 · Entities and state
+# ---------------------------------------------------------------------------
+entities:
+  policyholder:
+    key: id
+    fields:
+      id: {type: id}
+      name: {type: text, pii: true}
+      email: {type: email, pii: true}
+      phone: {type: phone, pii: true}
+
+  policy:
+    key: id
+    fields:
+      id: {type: id, pattern: "POL-[0-9]{6}"}
+      policyholder_id: {type: id, ref: policyholder.id}
+      product: {type: enum, values: [comprehensive, third_party]}
+      status: {type: enum, values: [active, lapsed, cancelled]}
+      vehicle_reg: {type: text}
+      excess: {type: money}
+
+  claim:
+    key: id
+    fields:
+      id: {type: id, pattern: "CLM-[0-9]{6}"}
+      policy_id: {type: id, ref: policy.id}
+      policyholder_id: {type: id, ref: policyholder.id}
+      # The assessor and the payments system write this while a conversation is
+      # open, so a read is a claim about the past by the time a write is tried.
+      status: {type: enum, of: claim_status, fresh_for: 30s}
+      incident_type: {type: enum, values: [collision, theft, fire, flood, glass, vandalism]}
+      incident_days_ago:
+        type: int
+        derived: whole days since the incident
+        advances: days
+      injuries: {type: bool}
+      documents_missing: {type: int}     # how many the assessor is still waiting for
+      approved_amount: {type: money}     # set by the assessment; the payout is this, never a stated number
+      note: {type: text, untrusted: true}   # written by policyholders, garages and assessors; content, never instruction
+    invariants:
+      - name: an approved amount implies an assessment
+        when: {field: approved_amount, at_least: 1}
+        then: {field: status, equals: [approved, paid]}
+        because: only an assessment sets an amount, and only an approved or paid claim has one
+      - name: a claim waiting on documents is missing at least one
+        when: {field: status, equals: [documents_pending]}
+        then: {field: documents_missing, at_least: 1}
+        because: documents_pending means the assessor is waiting for something
+
+  approval:
+    key: id
+    fields:
+      id: {type: id}
+      claim_id: {type: id, ref: claim.id}
+      action: {type: enum, values: [issue_payout]}
+      amount: {type: money}
+      outcome: {type: enum, values: [pending, granted, refused, expired]}
+      execution: {type: enum, values: [done, refused, stale, grant_expired]}
+      superseded_by: {type: id, ref: approval.id}
+
+  escalation:
+    key: ticket
+    fields:
+      ticket: {type: id}
+      reason: {type: text}
+      state: {type: enum, values: [queued, claimed, resolved, lapsed]}
+
+session:
+  policyholder_id: {type: id, ref: policyholder.id}
+
+facts:
+  turn_count: {type: int, derived: turns taken in this conversation}
+  termination:
+    type: enum
+    derived: "why the loop stopped on the latest turn, or absent if it never ran"
+    values: [goal_reached, step_budget_exhausted, cost_ceiling_reached,
+             deadline_reached, output_length_reached, oscillation_detected,
+             awaiting_approval, awaiting_human, awaiting_confirmation, refused,
+             declined, concerns_unanswered, unrecoverable_error]
+  consecutive_failed:
+    type: int
+    derived: "turns ending in failure, counting back from the latest until one did not; a turn ends in failure when its loop stopped on unrecoverable_error, or when an operation it called did not answer (unavailable, or slow past the turn's deadline) and the turn ended without that answer"
+  refusals:
+    type: int
+    derived: "turns in this conversation refused by the harness — on the policyholder's words or by an output rule — not a model's own decline"
+  repeated_intent:
+    type: int
+    derived: "for each of the latest turn's intents other than `other`, the turns carrying it, counting back until one does not; the largest of those counts, and zero when the latest turn carries only `other`"
+
+intents:
+  claim_status:
+    answered_by: direct
+    via: [get_claim, list_claims]
+    means: asking where a claim the policyholder already made has got to
+    examples: ["What's happening with my claim?", "Where is claim CLM-100231?", "Has the assessor looked at my claim yet?"]
+  policy_status:
+    answered_by: direct
+    via: [get_policy, list_policies]
+    means: asking whether a policy is in force, and what it is
+    examples: ["Is my policy POL-310045 active?", "What cover do I have?"]
+  payout_status:
+    answered_by: direct
+    via: [get_claim, list_claims]
+    means: asking where money already approved has got to, whatever it is called
+    examples: ["Has my claim payment been made?", "Where is my settlement for CLM-100231?", "Did the money for my claim come through?"]
+  report_claim:
+    answered_by: loop
+    via: [register_claim]
+    means: reporting a new incident to claim on a policy
+    examples: ["I've had an accident and want to make a claim", "My car was stolen last night", "Someone smashed my windscreen"]
+  send_document:
+    answered_by: loop
+    via: [submit_document]
+    means: sending something the assessor asked for
+    examples: ["I have the police report for my claim", "Here's the repair estimate"]
+  withdraw_claim:
+    answered_by: loop
+    via: [withdraw_claim]
+    means: taking back a claim not yet assessed
+    examples: ["I want to withdraw my claim", "Cancel claim CLM-100231, I'll pay for it myself"]
+  payout_request:
+    answered_by: loop
+    via: [request_payout]
+    means: asking for the payment of a claim that has been approved
+    examples: ["Please pay out my approved claim", "Can you release the payment for CLM-100231?"]
+  human:            {answered_by: handoff, via: [escalate], examples: ["I want to talk to a person", "Get me an agent"]}
+  # ASSUMPTION: anyone hurt goes to a person at once; an agent does not handle
+  # an injury claim, and a policyholder in distress should not be filling in a form.
+  injury:           {answered_by: handoff, via: [escalate], means: "someone was hurt in the incident", examples: ["My passenger was injured in the crash", "I hurt my neck in the accident"]}
+  coverage_question: {answered_by: refusal, refusal: R-COVERAGE, examples: ["Will my claim be approved?"]}
+  liability_question: {answered_by: refusal, refusal: R-LIABILITY, examples: ["Was the other driver at fault?"]}
+  policy_change:    {answered_by: refusal, refusal: R-POLICY-CHANGE, examples: ["Add my wife as a driver"]}
+  roadside_assistance: {answered_by: deferred, examples: ["My car broke down, can you send a tow truck?"]}
+  other:            {answered_by: loop, examples: ["Hi", "Thanks, that's all"]}
+
+state_machines:
+  claim_status:
+    states: [registered, documents_pending, under_assessment, approved, rejected, paid, withdrawn]
+    terminal: [rejected, paid, withdrawn]
+    transitions:
+      - {from: registered, to: documents_pending, by: external}      # the assessor asks for something
+      - {from: [registered, documents_pending], to: under_assessment, by: external}
+      - {from: under_assessment, to: approved, by: external}
+      - {from: under_assessment, to: rejected, by: external}
+      - {from: approved, to: paid, by: issue_payout}
+      - {from: [registered, documents_pending], to: withdrawn, by: withdraw_claim}
+    concurrent_writers: [assessor, payments]
+
+# ---------------------------------------------------------------------------
+# 3 · Operations
+# ---------------------------------------------------------------------------
+conditions:
+  owns_policy: &owns_policy
+    {field: policy.policyholder_id, equals_session: policyholder_id}
+  owns_claim: &owns_claim
+    {field: claim.policyholder_id, equals_session: policyholder_id}
+
+operations:
+  get_policy:
+    entity: policy
+    side_effect: read
+    input: [policy_id]
+    output: policy
+    preconditions: [*owns_policy]
+    authority: agent
+
+  list_policies:
+    entity: policy
+    side_effect: read
+    input: []
+    output: policy[]
+    preconditions: [*owns_policy]
+    authority: agent
+
+  get_claim:
+    entity: claim
+    side_effect: read
+    input: [claim_id]
+    output: claim
+    preconditions: [*owns_claim]
+    authority: agent
+
+  list_claims:
+    entity: claim
+    side_effect: read
+    input: []
+    output: claim[]
+    preconditions: [*owns_claim]
+    authority: agent
+
+  # FNOL. Registers that something happened; decides nothing about cover.
+  register_claim:
+    entity: policy
+    side_effect: reversible
+    input: [policy_id, incident_type, injuries]
+    preconditions:
+      - *owns_policy
+      - {field: status, equals: [active]}
+    effect: a claim exists on the policy, status registered, and its reference is returned
+    # The same incident reported twice is one claim: the claims system answers
+    # identity on the policy and incident type within the reporting window.
+    identity: [policy_id, incident_type]
+    compensation: {kind: counteract, how: "withdraw_claim while it is not yet assessed; the claim stays on the record as withdrawn"}
+    authority: agent
+    on_refusal: a lapsed or cancelled policy cannot take a new claim; a person can look at it
+
+  submit_document:
+    entity: claim
+    side_effect: reversible
+    input: [claim_id, document_type]
+    preconditions:
+      - *owns_claim
+      - {field: status, equals: [registered, documents_pending]}
+    effect: the document is attached to the claim and documents_missing goes down by one
+    identity: [claim_id, document_type]
+    compensation: {kind: counteract, how: "an assessor marks the document superseded; it stays on the record"}
+    authority: agent
+
+  withdraw_claim:
+    entity: claim
+    side_effect: irreversible
+    input: [claim_id]
+    preconditions:
+      - *owns_claim
+      - {field: status, equals: [registered, documents_pending]}
+    effect: {status: withdrawn}
+    identity: claim_id
+    compensation: {kind: none, how: "a withdrawn claim is not reopened by this system; reporting the incident again starts a new claim"}
+    # The policyholder's own claim, withdrawn at their own request: their
+    # authority, as cancelling one's own order is (AHC-0057, settled for the
+    # clothing agent). Once an assessment has started, a person decides.
+    authority: agent
+    on_refusal: once an assessment has started, a person can withdraw it
+
+  request_payout:
+    entity: claim
+    side_effect: reversible
+    input: [claim_id]
+    preconditions:
+      - *owns_claim
+      - {field: status, equals: [approved]}
+    routes_to: issue_payout
+    effect: issue_payout has run, or an approval for it is pending
+    identity: claim_id
+    compensation: {kind: counteract, how: "a pending approval is refused by a claims handler; once issue_payout has run, its compensation is the one that holds"}
+    authority: agent
+    on_refusal: a claim is paid once it is approved; until then its status is what can be told
+
+  issue_payout:
+    entity: claim
+    side_effect: irreversible
+    offered: false
+    input: [claim_id]
+    amount_from: claim.approved_amount   # never from the conversation
+    preconditions:
+      - *owns_claim
+      - {field: status, equals: [approved]}
+    effect: {status: paid}
+    identity: claim_id                   # a claim is paid at most once
+    compensation: {kind: none, how: "money that has left the insurer is not recalled by this system"}
+    authority:
+      agent_when:
+        # ASSUMPTION: approved glass claims and small amounts are paid at once;
+        # anything larger needs a claims handler. ₹25,000 is a placeholder until
+        # Q-AUTO-LIMIT's measurement sets it.
+        - {field: approved_amount, at_most: 25000}
+      otherwise: human_approval
+    owed_when:
+      - {field: status, equals: [approved]}
+
+  escalate:
+    entity: escalation
+    side_effect: reversible
+    input: [reason]
+    effect: an escalation exists, and the conversation belongs to a person until it resolves or lapses
+    compensation: {kind: counteract, how: "the desk closes it with an outcome from P-ESC-OUTCOME, and the conversation returns to the agent"}
+    authority: agent
+    on_refusal: say the handover cannot be made and stay with the request
+
+# ---------------------------------------------------------------------------
+# 4 · Policies
+# ---------------------------------------------------------------------------
+policies:
+  P-NO-PROMISE:
+    rule: a reply never says or implies that a claim is covered, will be approved or paid, or for what amount, unless the claim's own status and approved amount say so
+    via: [get_claim]
+    concern: safety
+    facet: operational constraint
+  P-FNOL:
+    # ASSUMPTION: an active policy may take a claim; lateness is the assessor's
+    # judgement, never a reason this agent refuses one.
+    rule: a new claim is registered on an active policy the policyholder holds, whatever the incident type and however long ago it happened; the policyholder is given the claim reference and told what happens next, and nothing about cover
+    via: [register_claim]
+    concern: functional-suitability
+    facet: functional correctness
+  P-DOCUMENTS:
+    rule: a document is accepted only for a claim that is registered or waiting on documents, and the policyholder is told how many the assessor still needs, from the claim
+    via: [submit_document]
+    concern: functional-suitability
+    facet: functional correctness
+  P-WITHDRAW:
+    rule: a claim may be withdrawn by its policyholder until its assessment starts; after that a person decides
+    via: [withdraw_claim]
+    concern: functional-suitability
+    facet: functional correctness
+  P-PAYOUT:
+    rule: an approved claim is paid its approved amount, to the account on the policy; an amount above ₹25,000 needs a claims handler
+    via: [request_payout, issue_payout]
+    concern: safety
+    facet: operational constraint
+  P-PAYOUT-OWED:
+    rule: an approved claim's payout is issued when the policyholder asks for it, through request_payout; a question about payout status states the status and issues nothing
+    via: [request_payout, issue_payout]
+    concern: functional-suitability
+    facet: functional completeness
+  P-PAYOUT-DECLINED:
+    rule: a payout the policyholder's account can no longer receive is not retried and not put off — the policyholder is told it could not be paid to that account, and a person is handed it to arrange another way
+    via: [issue_payout, escalate]
+    concern: reliability
+    facet: fault tolerance
+  P-CLAIM-STATUS:
+    # Answered from the claim's status, the only state the claims system holds.
+    # documents_pending names how many are missing; approved names the amount;
+    # never a date, never a prediction.
+    rule: claim and payout status are answered from the claim's status, deterministically, and never promise a date or an outcome
+    via: [get_claim]
+    concern: functional-suitability
+    facet: functional correctness
+  P-CONCERNS:
+    rule: every concern a policyholder raises is its own item and ends in one of answered, handed to a person with a reference, waiting on a decision, asked back (a question the policyholder must answer first, such as which claim), or declined with a reason; a turn that leaves a concern with none of these is not complete, and a concern outside `intents` is handed to a person, never left unmentioned
+    via: [escalate]
+    concern: functional-suitability
+    facet: functional completeness
+  P-DIRECT:
+    rule: claim, payout and policy status are answered from the claims system deterministically, with no model call, when the turn names exactly one intent from `intents` and exactly one claim or policy; a turn naming several, or none, goes to the loop
+    via: [get_claim, get_policy]
+    addressed_to: harness
+    concern: cost
+  P-DIRECT-READS:
+    rule: the deterministic path never performs a write — it is selected by patterns over the policyholder's words, and an effect must not be one rewording away
+    via: [get_claim, get_policy]
+    addressed_to: harness
+    concern: safety
+    facet: operational constraint
+  P-OPEN:
+    rule: when a signed-in policyholder opens a conversation, they are shown their own open claims and policies, with no model call
+    via: [list_claims, list_policies]
+    addressed_to: harness
+    concern: cost
+  P-OWNERSHIP:
+    rule: a policyholder may see and act on only the policies they hold and the claims made on them
+    via: [get_policy, list_policies, get_claim, list_claims, register_claim, submit_document, withdraw_claim, request_payout, issue_payout]
+    concern: security
+    facet: confidentiality
+
+  approval:
+    statements:
+      - {id: P-APPROVER, rule: "a payout is authorised by a claims handler, or by the automatic limit claims operations owns (issue_payout.authority.agent_when), never by the policyholder whose claim it is", concern: security, facet: authenticity}
+      - {id: P-APPROVAL-TTL, rule: "a grant older than its validity fails closed rather than executing, and records execution grant_expired", valid_for: 24h, concern: safety, facet: fail safe}
+      - {id: P-APPROVAL-STALE, rule: "a granted payout whose claim no longer has the status or approved amount it was granted on is not carried out: the approval records execution stale, a fresh pending approval is asked against the claim as it now is and named in superseded_by, and the policyholder is told the request is waiting again — its own outcome, never reported as a failure", concern: safety, facet: fail safe}
+      - {id: P-APPROVAL-FINAL, rule: "a decision is final: a decided approval cannot be decided again", concern: safety, facet: fail safe}
+      - {id: P-APPROVAL-WAIT, rule: "while a decision is pending the conversation continues, and the policyholder is told a request exists and nothing more", concern: functional-suitability, facet: functional completeness}
+      - {id: P-APPROVAL-QUEUE, rule: "the queue a claims handler reads holds the undecided, and a decided approval leaves it", concern: reliability, facet: faultlessness}
+
+  escalation:
+    on_request:
+      - {id: asked-for-human, when: the policyholder asks to speak to a person}
+      - {id: injury-reported, when: someone was hurt in the incident}
+      - {id: outside-scope, when: "the policyholder raises a concern this agent has no route for"}
+    on_reply:
+      - {id: unbacked-commitment, when: "the reply commits to future work and the turn holds no effect, pending decision or handoff that could produce it"}
+    on_condition:
+      - {id: declined,         when: {field: termination, equals: [declined]}, priority: 1, ttl: 30m}
+      - {id: loop-exhausted,   when: {field: termination, equals: [step_budget_exhausted, cost_ceiling_reached, deadline_reached, output_length_reached, oscillation_detected, concerns_unanswered]}, priority: 2, ttl: 15m}
+      - {id: tool-unavailable, when: {field: consecutive_failed, at_least: 2}, priority: 2, ttl: 15m}
+      - {id: repeated-intent,  when: {field: repeated_intent, at_least: 3},    priority: 3, ttl: 30m}
+      - {id: second-refusal,   when: {field: refusals, at_least: 2},           priority: 4, ttl: 30m}
+      - {id: turns-exceeded,   when: {field: turn_count, at_least: 10},        priority: 6, ttl: 45m}
+    statements:
+      - {id: P-ESC-ONCE, rule: "each on_condition rule fires at most once while the agent holds the conversation — from its start, or from the latest time it returned to the agent; an on_request rule may fire again once what it raised has lapsed or closed; both within P-ESC-CAP", concern: reliability, facet: faultlessness}
+      - {id: P-ESC-FRESH, rule: "when the conversation returns to the agent, the facts on_condition rules read count only turns since it returned", concern: reliability, facet: faultlessness}
+      - {id: P-ESC-CAP, rule: "past the cap the agent says something true instead of issuing another reference", at_most: 2, concern: interaction-capability, facet: user assistance}
+      - {id: P-ESC-TTL, rule: "a queued escalation nobody comes to lapses after its rule's own ttl, or after this one where the rule declares none", ttl: 30m, concern: reliability, facet: recoverability}
+      - {id: P-ESC-LAPSE, rule: "on lapse the conversation returns to the agent, and the policyholder is told nobody came", concern: reliability, facet: recoverability}
+      - {id: P-ESC-TOLD, rule: "the policyholder is told a reference number, and a wait only when one is measured from queue depth and observed throughput", concern: functional-suitability, facet: functional correctness}
+      - {id: P-ESC-OWNS, rule: "while a person owns the conversation the agent does not answer it — a message then gets a fixed notice naming the reference, with no model call and no tool call — and only the desk that holds it may close it", concern: security, facet: integrity}
+      - {id: P-ESC-TIER1, rule: "a rule never replaces a handoff the conversation already has: a pending approval is not withdrawn or decided by an escalation, but a rule about the conversation failing still fires while one is pending, and the escalation names it", concern: reliability, facet: faultlessness}
+      - {id: P-ESC-QUEUE, rule: "the queue a claims handler reads holds the open escalations, oldest first, and a closed one leaves it", concern: reliability, facet: faultlessness}
+      - {id: P-ESC-OUTCOME, rule: "closing records an outcome from a declared set, once, and the rule that raised it stays with the record", values: [resolved, agent_could_have, misrouted, customer_gone], concern: maintainability, facet: analysability}
+
+  personal_data_in_conversation:
+    - driving licence numbers typed into the chat
+    - bank account numbers typed into the chat
+    - health details of anyone injured
+
+# ---------------------------------------------------------------------------
+# 5 · External contracts
+# ---------------------------------------------------------------------------
+external:
+  claims_system:
+    owns: [policyholder, policy, claim]
+    operations: [get_policy, list_policies, get_claim, list_claims, register_claim, submit_document, withdraw_claim, issue_payout]
+    refusal_is_a_result: >
+      A write whose precondition fails returns {allowed: false, reason, kind}
+      with the current record, where kind is declined (refused for good, the
+      same answer however often it is asked), transient (may clear if asked
+      again) or omitted for a precondition. A row that does not exist, or that
+      the caller may not touch, is answered the same way: a result naming
+      unknown_record, never a transport error.
+    consistency: reads can be stale by the time a write is attempted; the write's own answer is authoritative
+    idempotency: >
+      MUST accept a caller-supplied key on every irreversible operation and
+      treat a repeated key as the same request.
+    failure_modes: [unavailable, slow, stale_read, unknown_record, declined]
+
+  approval_queue:
+    decides: [issue_payout above the automatic limit]
+    latency: asynchronous; may span a process restart; may never be decided
+
+  escalation_desk:
+    receives: [escalation]
+    latency: asynchronous; may never be claimed
+
+# ---------------------------------------------------------------------------
+# 6 · Required properties
+# ---------------------------------------------------------------------------
+required:
+  properties:
+    - {id: Q-COST,  must: "model spend per task (one policyholder turn) at most USD 0.50", evidence: assertion, concern: cost}
+    - {id: Q-STEPS, must: "at most 12 loop steps per task (one policyholder turn)", evidence: assertion, concern: cost}
+    - {id: Q-OUTPUT, must: at most 4096 output tokens per model call, evidence: assertion, concern: performance-efficiency, facet: resource utilization}
+    - {id: Q-TOOL-RESULT, must: a tool result enters context at most 8000 characters long, evidence: assertion, concern: functional-suitability, facet: functional completeness}
+    - {id: Q-MODEL, must: only a model from the approved list is called, evidence: inspection, concern: security, facet: integrity}
+    - {id: Q-AUTO-LIMIT, must: "the automatic payout limit is set from claims handlers' agreement with the agent on payout decisions alone, sampled by stratum — ambiguous claim or amount, and within 10% of the limit — with each stratum's sample size stated; until measured, the limit is an assertion", evidence: acceptance, concern: safety, facet: operational constraint}
+    - {id: Q-RETENTION, must: "transcripts, traces and every record the harness writes are kept 30 days, then deleted", evidence: assertion, concern: security, facet: confidentiality}
+  undeclared:
+    - latency
+    - availability
+    - data residency
+
+# ---------------------------------------------------------------------------
+# 7 · Conformance
+# ---------------------------------------------------------------------------
+conformance:
+  archetypes: [A6, A5]
+  aac:
+    version: "0.17"
+    claims: all obligations tagged A6 or A5, except those excluded below
+    excluded:
+      - {id: AAC-0092, reason: the agent does not stream output, revisit_when: streaming is added}
+      - {id: AAC-0096, reason: no response cache exists, revisit_when: any response or prompt cache is added}
+      - {id: AAC-0007, reason: latency is undeclared (see required.undeclared), revisit_when: a latency property is declared}
+      - {id: AAC-0014, reason: no production traffic exists, revisit_when: deployed}
+      - {id: AAC-0097, reason: residency is undeclared, revisit_when: a residency property is declared}
+      - {id: AAC-0118, reason: "the ₹25,000 automatic payout limit predates its measurement; Q-AUTO-LIMIT says it is an assertion until handlers' agreement is measured by stratum", revisit_when: the stratified measurement exists}
+  ahc:
+    version: "0.x"
+    claims: all sixteen layers; a layer with no module is a finding
