@@ -362,7 +362,7 @@ sharpens T-022 before cycle 4).
 |---|---|---|---|---|
 | **G2.1** | ✅ Hotel AOAS written (T-011) | clean-ai-engineering | — | — |
 | **T-022** | Fix the five AOAS frictions it found | clean-ai-engineering | hours | T-013 |
-| **T-019** | Extract the mechanism library the hotel agent installs | reference-agent | days | — |
+| **T-019** ✅ | Extract the mechanism library the hotel agent installs | reference-agent | days | — |
 | **G2.2** | Hotel world and scenarios | agenttwin | days | T-044 |
 | **G2.3** | Generate the hotel agent, and pass the gates | new repo | weeks | T-019, G2.2, T-034, T-035 |
 | **G2.4** | Fix universal gaps in the spec, then re-run the support agent's suite | all specs | — | G2.3 |
@@ -1590,8 +1590,23 @@ T-013 adds a differently shaped set; fix the union.
 
 ### T-019 · Extract the mechanism library
 
-**Status** Not started. Follows from the hybrid decision (G0.10, 2026-09-13), and
-was in no queue until the merge. **Cycle 4.** Repo: `reference-agent`.
+**Status** ✅ Done 2026-10-08 (reference-agent `5d850fa`, ten green steps). The
+library is the uv workspace member `packages/agent-harness` (`agent_harness`
+0.1.0): 78 files, 14,339 lines. **Measured split (G2.6): 74.2% mechanism**
+against the 74% predicted. The agent keeps 9 parameterised files (2,131 lines)
+and 25 per-agent (2,850). The support agent passes unchanged: 1,558 tests, all
+four gates, 12 import contracts (new: the harness never imports an agent; only
+`agent_harness.llm` imports a provider SDK). Clothing values reach the engine by
+registration at import (`use_intents`, the reading `Vocabulary`,
+`use_default_rules`) or as protocol inputs (`ApprovalTerms`, `HandoffWording`,
+`ModelChoice`, `RunLabels`, `TurnAgent`). `policy.CLAIM_PATTERNS` stayed
+agent-side. **Open:** `entrypoint/__init__` reclassified parameterised (this
+shop's turn; a generic turn runner not yet split out); eight parameterised
+modules not yet split (router, concerns, pending, promise, binding, config,
+watch/checks, watch/canary); telemetry scope names and the service name are
+still the literal `support_agent`; 59 re-export stubs at the old paths keep the
+tests unchanged. Follows from the hybrid decision (G0.10, 2026-09-13).
+Repo: `reference-agent`.
 
 **What.** The mechanism modules become an installable package; the parameterised
 and per-agent modules stay with the agent. `evals/reuse.py` already classifies
