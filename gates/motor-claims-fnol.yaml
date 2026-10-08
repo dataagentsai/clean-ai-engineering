@@ -1,0 +1,10 @@
+# The yardstick every implementation of motor-claims-fnol is gated against (T-099).
+#
+# No reference implementation exists for this agent, so both halves are written
+# from the specification: the scenarios from the AOAS and the world, curated by
+# hand from AgentTwin's scaffold; the inventory from the AOAS's statement ids.
+agent: motor-claims-fnol
+
+scenarios: motor-claims-fnol/scenarios
+
+inventory: motor-claims-fnol.inventory.json

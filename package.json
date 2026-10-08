@@ -8,7 +8,7 @@
   "scripts": {
     "lint": "node tools/validate-aoas.js",
     "brief": "node tools/brief.js",
-    "briefs": "node tools/brief.js drafts/examples/support-agent.aoas.yaml ../reference-agent/harness-profile.yaml -o briefs/support-agent.brief.md",
+    "briefs": "node tools/brief.js drafts/examples/support-agent.aoas.yaml ../reference-agent/harness-profile.yaml -o briefs/support-agent.brief.md && node tools/brief.js drafts/examples/motor-claims-fnol.aoas.yaml ../claims-fnol-azure/harness-profile.yaml -o briefs/motor-claims-fnol.brief.md",
     "test": "node --test 'tools/*.test.js' && npm run lint && uv run --with pytest --with pyyaml pytest -q tools/test_gates.py",
     "gates": "uv run tools/gates.py"
   },

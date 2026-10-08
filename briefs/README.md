@@ -2,7 +2,7 @@
 
 Generated. One per agent, per cycle. **Never edited by hand.**
 
-    npm run briefs      # regenerate every brief in this directory
+    npm run briefs      # regenerate the brief of every agent listed in package.json
 
 ## What a brief is
 

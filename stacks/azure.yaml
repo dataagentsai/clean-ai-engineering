@@ -1,0 +1,69 @@
+# Azure: the Open Stack's harness, bound to Azure services where the group's
+# architecture decided so (~/Agent-Harness-Architecture-Azure.html, executive
+# summary and binding cheat sheet, October 2026).
+#
+# Extends the Open Stack, so its thresholds and every binding it does not name
+# are inherited; each binding named here says why it differs. The loop stays
+# ours, as in the Open Stack — the architecture's decision A. Pydantic AI is the
+# model layer underneath it, never the loop.
+#
+# `x_status: target` throughout: decided, not yet built. T-099 builds it (the
+# motor-claims FNOL agent, the first agent on this stack); T-019 extracts the
+# harness library the adapters live in.
+#
+# `x_dev` is the free-tier development choice where it differs from production
+# (owner, 8 Oct 2026: about $0–5 a month in the first year).
+apiVersion: harness-profile/v1
+
+extends: open-stack.yaml
+
+subject:
+  name: azure
+  description: >-
+    The Open Stack's harness on Azure: our loop and contracts on Container Apps,
+    models only through the APIM AI gateway, state and knowledge in Azure
+    PostgreSQL, identity and secrets in Entra and Key Vault, telemetry into Azure
+    Monitor. Open source where it keeps the exit cheap: Pydantic AI as the model
+    layer, DBOS for durable waits, pgvector, Chatwoot, AgentTwin.
+  archetypes: [A6]
+
+catalog:
+  ahc: "0.3.0"
+
+harness:
+  loop: { owner: in-house, adapter: bounded-react-loop, x_why: "decision A of the architecture: our hand-written loop on Container Apps; the step budget, no-progress check and cost ceiling stay visible" }
+
+decisions: {}
+thresholds: {}
+
+bindings:
+  model:
+    approach: gateway
+    adapter: apim-ai-gateway
+    x_why: "decision B: one door, one identity, one bill — token limits and token metrics at the gateway, not in each agent"
+    x_model_layer: pydantic-ai-direct    # called through Pydantic AI's model requests, inside our LLMClient port; only that module imports pydantic_ai
+    x_backend: foundry-models           # decision C: GPT and Claude deployments; the golden set picks per job
+    x_dev: "APIM in front of Groq (OpenAI-compatible, free); Foundry is a backend change in APIM, not in code"
+    x_status: target
+    x_item: T-099
+  state:        { approach: cloud-native, adapter: azure-postgresql-flexible, x_why: "managed PostgreSQL: the same engine the Open Stack runs, operated by Azure", x_dev: "Flexible Server B1MS, free for 12 months", x_status: target, x_item: T-099 }
+  retrieval:    { approach: open-source, adapter: pgvector, x_why: "knowledge in the same PostgreSQL: one store, one backup, no AI Search bill", x_status: target, x_item: T-099 }
+  workflow:     { approach: open-source, adapter: dbos, x_why: "durable waits as a library on the PostgreSQL we already run: no new infrastructure, plain-Postgres exit (architecture slide 26); Temporal when undo flows grow", x_status: target, x_item: T-099 }
+  approval:     { approach: open-source, adapter: dbos-workflows, x_why: "a payout waits for a handler as a DBOS workflow; the decision is a message our rule validates", x_note: "Teams adaptive cards tell the handler there is work; the decision happens in the system, never by a link", x_status: target, x_item: T-099 }
+  identity:     { approach: cloud-native, adapter: entra-id, x_why: "Entra ID for staff and workloads (managed identity), External ID for policyholders, on-behalf-of exchange to the claims system", x_status: target, x_item: T-099 }
+  secrets:      { approach: cloud-native, adapter: key-vault, x_why: "no secret in configuration: apps read Key Vault through their managed identity", x_status: target, x_item: T-099 }
+  telemetry:    { approach: cloud-native, adapter: azure-monitor-otel, x_why: "Application Insights through the OpenTelemetry distro; our agent.* spans unchanged", x_dev: "Application Insights only (free ingestion allowance); Managed Prometheus and Grafana in production", x_status: target, x_item: T-099 }
+  config:       { approach: cloud-native, adapter: app-configuration, x_why: "thresholds and flags outside the image; Container Apps revisions for canaries", x_dev: "Free tier", x_status: target, x_item: T-099 }
+  # tool_runtime (our MCP servers on Container Apps, behind APIM) and eval_task
+  # (AgentTwin; Foundry evaluation adds generic judges, reporting only until
+  # calibrated, AAC-0084): inherited unchanged.
+  # policy, recorder, cost_ledger, trigger, admission: inherited — they are ours
+  # on every stack. channel: inherited (Chatwoot); Communication Services and
+  # Teams join it in production, not in dev.
+
+accepted_gaps: []
+
+x_hosting: { approach: cloud-native, adapter: azure-container-apps, x_why: "decision D: agents, MCP servers and the desk; revisions give canary releases; AKS only for GPUs, mesh or very large scale", x_dev: "consumption plan, inside the free monthly grant", x_status: target }
+x_registry: { approach: cloud-native, adapter: azure-api-center, x_note: "agent catalogue, with the catalogue in Git", x_dev: "Free plan" }
+x_images: { approach: open-source, adapter: github-container-registry, x_why: "free for public images; Azure Container Registry when images must stay private" }
+x_edge: { approach: cloud-native, adapter: front-door-waf, x_dev: "omitted: Container Apps ingress gives HTTPS; Front Door is a production cost" }
