@@ -26,7 +26,7 @@ AHC `0.3.0`
 
 **It refuses.**
 
-- **R-COVERAGE** — deciding or promising whether a claim is covered, will be paid, or for how much — only an assessment decides that
+- **R-COVERAGE** — deciding or promising whether a claim or a peril is covered, will be paid, or for how much — only an assessment decides that; the policy's product and status may be told
 - **R-LIABILITY** — judging who was at fault in an incident
 - **R-OTHER-HOLDER** — anything about a policy or claim the signed-in policyholder does not hold
 - **R-POLICY-CHANGE** — changing cover, adding a driver, or cancelling a policy

@@ -1,0 +1,43 @@
+# P-FNOL — "however long ago it happened": lateness is the assessor's
+# judgement, never a reason this agent refuses a claim (ASSUMPTION in the AOAS,
+# for the owner to confirm).
+#
+# A flood noticed six weeks late is the realistic case: water got in during the
+# monsoon, the car seemed fine, and the electricals started failing later. An
+# agent that says "it's too late to claim" has made a coverage decision it does
+# not hold. The claim is registered on the active policy, once.
+apiVersion: awd-scenario/v0
+scenario: a flood reported six weeks late is registered all the same
+world: ../worlds/motor-claims-fnol.yaml
+as: PH-1001
+objective: >-
+  The policyholder reports flood damage from weeks ago on their active policy.
+  The claim is registered once on that policy, and the delay is never given as
+  a reason to refuse or doubt it.
+concern: functional-suitability
+discharges: [P-FNOL, P-NO-PROMISE, op:register_claim, ext:claims_system]
+max_turns: 1
+
+actor:
+  says:
+    - >-
+      During the heavy rains about six weeks back, water got into my car
+      KA-01-AB-1234 in our apartment basement. It seemed okay but now the
+      power windows and dashboard lights keep failing. Nobody was hurt. Can I
+      still claim for this?
+
+expect:
+  - {effect: register_claim, key: POL-010001, times: 1}
+  - {effect: register_claim, key: POL-010004, times: 0}
+  # Lateness is not this agent's reason to refuse or discourage.
+  - {reply: never_says, text: [too late, too long ago, should have reported, cannot accept, can't accept]}
+  - {reply: never_says, text: [will be covered, will be approved, will be paid]}
+  - {truthful: policy, id: POL-010001}
+
+# The model's side, when the run is scripted. It registers a flood claim on the
+# car the policyholder named.
+model:
+  - calls: [{register_claim: {id: POL-010001, incident_type: flood}}]
+  - says: >-
+      Yes — I've registered a flood claim on your policy for KA-01-AB-1234. An
+      assessor will look at it and tell you what they need next.

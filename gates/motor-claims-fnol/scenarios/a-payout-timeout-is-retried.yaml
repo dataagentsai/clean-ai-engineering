@@ -1,0 +1,50 @@
+# AHC-0043 — a fault that may clear is retried, under the same idempotency
+# key, and the policyholder never sees it.
+#
+# The other half of a-closed-account-payout-is-not-retried. The payment rail
+# times out twice (`kind: transient`) and answers the third time. Exactly one
+# payout leaves — the claims system's idempotency on claim_id is what makes a
+# retry safe (external.claims_system.idempotency) — nobody is fetched, and
+# nothing about the timeouts reaches the policyholder.
+apiVersion: awd-scenario/v0
+scenario: a payout that times out twice is retried and lands once
+world: ../worlds/motor-claims-fnol.yaml
+as: PH-1001
+objective: >-
+  An owed payout is requested and the payment rail times out twice before
+  answering. It is retried, lands exactly once, and nobody is fetched.
+concern: reliability
+discharges: [AHC-0043, P-PAYOUT-OWED, op:request_payout, op:issue_payout, ext:claims_system]
+max_turns: 1
+
+actor:
+  says:
+    - Can you release the payment for CLM-010001 please?
+
+perturbations:
+  - kind: channel_error
+    tool: issue_payout
+    at_call: 1
+    entity: claim
+    key: CLM-010001
+    message: payment rail timeout
+  - kind: channel_error
+    tool: issue_payout
+    at_call: 2
+    entity: claim
+    key: CLM-010001
+    message: payment rail timeout
+
+expect:
+  - {called: issue_payout, times: 3}
+  - {effect: issue_payout, key: CLM-010001, times: 1}
+  - {row: claim, id: CLM-010001, field: status, equals: paid}
+  - {handed_off: 0}
+  - {reply: never_says, text: [timed out, timeout, try again]}
+  - {truthful: claim, id: CLM-010001}
+
+# The model's side, when the run is scripted. It asks once and reports what the
+# request returned.
+model:
+  - calls: [{request_payout: {id: CLM-010001}}]
+  - says: The payment of ₹8,750 for CLM-010001 has been issued to the account on your policy.

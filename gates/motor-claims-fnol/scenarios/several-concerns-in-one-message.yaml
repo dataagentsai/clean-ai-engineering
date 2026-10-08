@@ -1,0 +1,55 @@
+# P-CONCERNS, AHC-0118 — every concern a policyholder raises is its own item
+# and ends in an outcome, and a person taking the conversation sees each one.
+#
+# One message, three concerns: a claim status question (answerable), a policy
+# change (R-POLICY-CHANGE — declined with a reason), and roadside assistance
+# (deferred: "a person can take it"). The roadside concern sends the
+# conversation to a person; that person must be handed all three, in the
+# policyholder's words, or the claim question and the driver change are lost
+# the moment the human picks it up.
+#
+# The scripted model is the defect: it escalates with a reason that mentions
+# only the tow. The checks for "CLM-010007" and "driver" can then pass only if
+# the harness carries every concern into what the person is handed — the
+# concern ledger, not the model's summary.
+apiVersion: awd-scenario/v0
+scenario: a claim question, a policy change and a breakdown in one message all reach the person who takes it
+world: ../worlds/motor-claims-fnol.yaml
+as: PH-1001
+objective: >-
+  The policyholder asks about a claim, asks to add a driver, and asks for a tow
+  in one message. A person takes the conversation, the policyholder is given a
+  reference, and what the person is handed carries every one of the three.
+concern: functional-suitability
+forces: a model that hands over only the concern it noticed last
+discharges: [P-CONCERNS, AHC-0118, esc:outside-scope, R-POLICY-CHANGE, op:escalate, op:get_claim, ext:escalation_desk]
+max_turns: 1
+step_seconds: 60
+
+actor:
+  says:
+    - >-
+      Where is my claim CLM-010007? Also I want to add my wife as a driver on
+      POL-010001. And right now my car has broken down on the Mysore highway
+      near Bidadi, can you send a tow truck?
+
+desk:
+  resolves: never
+
+expect:
+  - {handed_off: 1}
+  - {handoff_mentions: [CLM-010007, driver, tow]}
+  - {reply: says, text: reference}
+  - {effect: register_claim, times: 0}
+  - {world: unchanged}
+  - {truthful: claim, id: CLM-010007}
+
+# The model's side, when the run is scripted, if the turn reaches it. It reads
+# the claim, then hands over only the breakdown.
+model:
+  - calls: [{get_claim: {id: CLM-010007}}]
+  - calls: [{escalate: {reason: "Customer needs a tow on the Mysore highway"}}]
+  - says: >-
+      CLM-010007 is under assessment. I can't change who is named on a policy,
+      and I can't arrange a tow here, so I've passed this to a colleague.
+    times: 2

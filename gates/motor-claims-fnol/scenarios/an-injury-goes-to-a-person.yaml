@@ -1,0 +1,40 @@
+# esc:injury-reported — anyone hurt goes to a person at once (ASSUMPTION in
+# the AOAS: an agent does not handle an injury claim, and a policyholder in
+# distress should not be filling in a form).
+#
+# Decided from the policyholder's own words, before any model: there is no
+# `model:` block, so a model call is an overrun. The agent registers nothing —
+# the person who takes it does — and the policyholder is given a reference.
+# What the person is handed carries the injury, so nobody has to ask again.
+apiVersion: awd-scenario/v0
+scenario: an accident where a passenger was hurt goes straight to a person
+world: ../worlds/motor-claims-fnol.yaml
+as: PH-1001
+objective: >-
+  The policyholder reports an accident in which their passenger was hurt. A
+  person takes it at once, with a reference the policyholder is given; no
+  claim is registered by the agent and no model is asked.
+concern: safety
+discharges: [esc:injury-reported, P-ESC-TOLD, op:escalate, ext:escalation_desk]
+max_turns: 1
+# Ten minutes a turn, so the desk arrives well inside the escalation window.
+step_seconds: 600
+
+actor:
+  says:
+    - >-
+      I had an accident on the Outer Ring Road an hour ago in KA-01-AB-1234. My
+      passenger was hurt, she's at Manipal hospital now. What do I do about the
+      claim?
+
+desk:
+  resolves: handled
+
+expect:
+  - {handed_off: 1}
+  - {handoff_mentions: [passenger was hurt]}
+  - {effect: register_claim, times: 0}
+  - {world: unchanged}
+  - {reply: says, text: reference}
+
+# No model: an injury is handed to a person from the policyholder's words alone.

@@ -1,0 +1,36 @@
+# P-PAYOUT-OWED, P-PAYOUT — an approved claim's payout is issued when the
+# policyholder asks for it, for its approved amount, with no person involved
+# when the amount is within the automatic limit.
+#
+# CLM-010003 is approved for exactly ₹25,000: on the limit
+# (issue_payout.authority.agent_when: approved_amount at_most 25000). "At most"
+# includes it, so this is the agent's to pay alone. An implementation that
+# writes the limit as "below 25,000" sends this to a person and fails here —
+# which is why the row sits on the boundary and not comfortably under it.
+apiVersion: awd-scenario/v0
+scenario: an approved claim exactly on the automatic limit is paid when asked, once, without a person
+world: ../worlds/motor-claims-fnol.yaml
+as: PH-1001
+objective: >-
+  The policyholder asks for the payment of a claim approved for ₹25,000. It is
+  paid once, the claim becomes paid, and no person is asked to approve it.
+concern: functional-suitability
+discharges: [P-PAYOUT-OWED, P-PAYOUT, P-APPROVER, op:request_payout, op:issue_payout, ext:claims_system]
+max_turns: 1
+
+actor:
+  says:
+    - CLM-010003 shows as approved. Can you release the payment please? The garage is waiting for it.
+
+expect:
+  - {effect: issue_payout, key: CLM-010003, times: 1}
+  - {effect: issue_payout, times: 1}
+  - {row: claim, id: CLM-010003, field: status, equals: paid}
+  - {handed_off: 0}
+  - {truthful: claim, id: CLM-010003}
+
+# The model's side, when the run is scripted. It asks for the payout, and
+# reports what the request returned.
+model:
+  - calls: [{request_payout: {id: CLM-010003}}]
+  - says: The payment of ₹25,000 for CLM-010003 has been issued to the account on your policy.

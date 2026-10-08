@@ -1,0 +1,42 @@
+# P-DOCUMENTS — a document is accepted for a claim that is waiting on
+# documents, once.
+#
+# CLM-010006 is documents_pending with two missing (the police FIR copy and the
+# repair estimate). The policyholder sends the FIR. It is attached once, to that
+# claim and no other.
+#
+# Not asserted, and why: P-DOCUMENTS also says the policyholder is told how many
+# the assessor still needs, "from the claim". After this submission that is one,
+# but the world's stand-in does not count documents_missing down
+# (fidelity.not_faithful_about) — a row check or a "1 more" check would fail a
+# correct agent. Asserted once the effect can be declared in the AOAS.
+apiVersion: awd-scenario/v0
+scenario: a police report for a claim waiting on documents is attached once
+world: ../worlds/motor-claims-fnol.yaml
+as: PH-1001
+objective: >-
+  The policyholder sends the police report their claim is waiting for. It is
+  attached to that claim once, and nothing else changes.
+concern: functional-suitability
+discharges: [P-DOCUMENTS, op:submit_document, ext:claims_system]
+max_turns: 1
+
+actor:
+  says:
+    - >-
+      I've got the FIR copy from Indiranagar police station for CLM-010006.
+      Please add it to my claim.
+
+expect:
+  - {effect: submit_document, key: CLM-010006, times: 1}
+  - {effect: submit_document, key: CLM-010007, times: 0}
+  - {row: claim, id: CLM-010006, field: status, equals: documents_pending}
+  - {effect: withdraw_claim, times: 0}
+  - {truthful: claim, id: CLM-010006}
+
+# The model's side, when the run is scripted. It attaches the police report.
+model:
+  - calls: [{submit_document: {id: CLM-010006, document_type: police_report}}]
+  - says: >-
+      Thanks — the police report is now attached to CLM-010006. The assessor
+      is still waiting on the garage's repair estimate.

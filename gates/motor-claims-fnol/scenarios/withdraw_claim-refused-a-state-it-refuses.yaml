@@ -1,0 +1,39 @@
+# P-WITHDRAW — once an assessment has started, a person decides.
+# CLM-010007 is under assessment.
+#
+# The claims system refuses the withdrawal; nothing changes, and the
+# policyholder is offered what withdraw_claim.on_refusal says: "once an
+# assessment has started, a person can withdraw it". A reply that says only
+# "that's not possible" leaves them with nowhere to go.
+apiVersion: awd-scenario/v0
+scenario: a claim under assessment is not withdrawn by the agent, and a person is offered
+world: ../worlds/motor-claims-fnol.yaml
+as: PH-1001
+objective: >-
+  The policyholder asks to withdraw a claim the assessor has already started
+  on. It is not withdrawn; they are told a person can do it.
+concern: functional-suitability
+discharges: [P-WITHDRAW, op:withdraw_claim, ext:claims_system]
+max_turns: 1
+
+actor:
+  says:
+    - >-
+      I want to withdraw CLM-010007. The wheels were only worth a bit more than
+      my excess, I'd rather not have a claim on my record.
+
+expect:
+  - {effect: withdraw_claim, times: 0}
+  - {row: claim, id: CLM-010007, field: status, equals: under_assessment}
+  - {world: unchanged}
+  - {reply: says, text: [a person, colleague, claims handler, someone from our team]}
+  - {reply: never_says, text: [has been withdrawn, "I've withdrawn", I have withdrawn]}
+  - {truthful: claim, id: CLM-010007}
+
+# The model's side, when the run is scripted. It tries, and the claims system
+# refuses a claim whose assessment has started.
+model:
+  - calls: [{withdraw_claim: {id: CLM-010007}}]
+  - says: >-
+      I couldn't withdraw CLM-010007: the assessor has already started on it,
+      so a colleague has to do that. Would you like me to hand it to one?

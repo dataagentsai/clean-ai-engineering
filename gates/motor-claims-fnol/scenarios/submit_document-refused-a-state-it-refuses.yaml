@@ -1,0 +1,40 @@
+# P-DOCUMENTS — a document is accepted only for a claim that is registered or
+# waiting on documents. CLM-010008 has been rejected.
+#
+# The realistic case: a policyholder whose claim was turned down tries to send
+# one more thing in the hope it changes the outcome. The claims system refuses
+# it; nothing is attached, and the policyholder is told the claim's status
+# truthfully. Whether a rejected claim can be reopened is a person's question,
+# not this agent's — and the AOAS declares no on_refusal for submit_document,
+# so what the agent offers instead is not asserted here (see the hand-off).
+apiVersion: awd-scenario/v0
+scenario: a document for a rejected claim is not attached
+world: ../worlds/motor-claims-fnol.yaml
+as: PH-1001
+objective: >-
+  The policyholder sends a repair estimate for a claim that has been rejected.
+  Nothing is attached and nothing changes; what they are told about the claim
+  is true.
+concern: functional-suitability
+discharges: [P-DOCUMENTS, op:submit_document, ext:claims_system]
+max_turns: 1
+
+actor:
+  says:
+    - >-
+      I have now got the repair estimate from the Mahindra service centre for
+      CLM-010008. Can you add it to the claim so they look at it again?
+
+expect:
+  - {effect: submit_document, times: 0}
+  - {world: unchanged}
+  - {reply: never_says, text: [has been added, is now attached, "I've added", "I have added"]}
+  - {truthful: claim, id: CLM-010008}
+
+# The model's side, when the run is scripted. It tries, and the claims system
+# refuses a claim that is no longer taking documents.
+model:
+  - calls: [{submit_document: {id: CLM-010008, document_type: repair_estimate}}]
+  - says: >-
+      I couldn't attach that: CLM-010008 has been rejected, so it is no longer
+      taking documents. A colleague can talk you through the decision if you'd like.

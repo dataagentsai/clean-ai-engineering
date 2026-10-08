@@ -1,0 +1,29 @@
+# P-DIRECT, P-CLAIM-STATUS — one claim, one intent: answered from the claims
+# system with no model call; documents_pending names how many are missing.
+#
+# The deterministic-first claim, shown from outside: there is no `model:`
+# block, so any model call is an overrun. CLM-010006 is waiting on two
+# documents; the true answer says so, and promises nothing about when or
+# whether it will be approved.
+apiVersion: awd-scenario/v0
+scenario: a claim waiting on documents is answered without a model, with how many are missing
+world: ../worlds/motor-claims-fnol.yaml
+as: PH-1001
+objective: >-
+  The policyholder asks where one claim has got to. They are told it is
+  waiting on two documents, from the claim, with no model call and no date.
+concern: cost
+discharges: [P-DIRECT, P-DIRECT-READS, P-CLAIM-STATUS, op:get_claim, ext:claims_system]
+max_turns: 1
+
+actor:
+  says:
+    - Where is my claim CLM-010006?
+
+expect:
+  - {called: get_claim, at_least: 1}
+  - {world: unchanged}
+  - {reply: says, text: document}
+  - {reply: says, text: ["2", two]}
+  - {reply: never_says, text: [will be approved, working days, by tomorrow, this week]}
+  - {truthful: claim, id: CLM-010006}

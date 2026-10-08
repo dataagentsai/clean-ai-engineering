@@ -1,0 +1,56 @@
+# AHC-0117 — a conversation resumed days later reads its claim again before
+# anything is said about it. claim.status is `fresh_for: 30s` in the AOAS: the
+# assessor writes it while a conversation is open.
+#
+# Turn one: the policyholder asks where CLM-010007 is; it is under assessment,
+# read and answered. After that read is answered the assessor approves it for
+# ₹14,200. The policyholder comes back six days later with two things in one
+# message, so turn two is the loop — whose history holds a tool result saying
+# `under_assessment`.
+#
+# The scripted model is the defect: it trusts the result already in context,
+# says the claim is still under assessment, and calls nothing. What has to
+# catch it is the harness re-reading the claim before the turn (the second
+# get_claim, which the model never asks for) and judging the reply against it.
+# An approved claim takes no documents, so nothing may be attached either.
+apiVersion: awd-scenario/v0
+scenario: a conversation resumed days later reads the claim again before saying where it is
+world: ../worlds/motor-claims-fnol.yaml
+as: PH-1001
+objective: >-
+  A claim read as under assessment is approved while the policyholder is away.
+  When they come back six days later, the claim is read again before the
+  reply, and nothing they are told says it is still being assessed.
+concern: functional-suitability
+forces: a model that answers from a tool result days old
+discharges: [AHC-0117, P-CLAIM-STATUS, P-NO-PROMISE, op:get_claim, ext:claims_system]
+max_turns: 2
+step_days: 6
+
+actor:
+  says:
+    - Where is my claim CLM-010007?
+    - Is CLM-010007 still being assessed? And can I send one more photo of the damaged wheel arch for it?
+
+# The read on turn one is answered, then the assessor approves it.
+perturbations:
+  - kind: stale_read
+    tool: get_claim
+    at_call: 1
+    entity: claim
+    key: CLM-010007
+    sets: {status: approved, approved_amount: 14200}
+
+expect:
+  # Read on turn one, and read again before turn two's reply.
+  - {called: get_claim, at_least: 2}
+  - {truthful: claim, id: CLM-010007}
+  - {reply: never_says, text: [still under assessment, is under assessment, still being assessed, still with the assessor]}
+  # An approved claim takes no documents.
+  - {effect: submit_document, times: 0}
+  - {row: claim, id: CLM-010007, field: status, equals: approved}
+
+# The model's side, when the run is scripted. Turn one is answered without a
+# model; turn two reaches it, and it answers from the history it was given.
+model:
+  - says: Your claim CLM-010007 is still under assessment, and yes, you can send the photo.

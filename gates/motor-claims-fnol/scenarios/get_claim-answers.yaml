@@ -1,0 +1,44 @@
+# P-CLAIM-STATUS — claim status is answered from the claim's status; approved
+# names the amount; never a date, never a prediction.
+#
+# Two claims in one question, so this is the loop and not the deterministic
+# path (P-DIRECT needs exactly one claim). Both claims are approved and unpaid,
+# one on the automatic limit and one past it. A status question pays nothing
+# (P-PAYOUT-OWED: "a question about payout status states the status and issues
+# nothing"), even though both payouts are owed.
+apiVersion: awd-scenario/v0
+scenario: two claims asked about are read and answered, and nothing is paid
+world: ../worlds/motor-claims-fnol.yaml
+as: PH-1001
+objective: >-
+  The policyholder asks where two of their claims have got to. Both are read;
+  the reply says they are approved without inventing a date; nothing is paid
+  or requested.
+concern: functional-suitability
+discharges: [P-CLAIM-STATUS, P-PAYOUT-OWED, P-NO-PROMISE, op:get_claim, ext:claims_system]
+max_turns: 1
+
+actor:
+  says:
+    - Can you tell me where CLM-010003 and CLM-010004 have got to? Both are for my XUV.
+
+expect:
+  - {called: get_claim, at_least: 2}
+  - {called: issue_payout, times: 0}
+  - {world: unchanged}
+  - {reply: says, text: approved}
+  # A date nobody holds. ("has been paid" is not listed: "neither has been paid
+  # yet" is the right sentence and contains it; the payout check above and the
+  # truth checks below carry that.)
+  - {reply: never_says, text: [working days, business days, by tomorrow, this week]}
+  - {truthful: claim, id: CLM-010003}
+  - {truthful: claim, id: CLM-010004}
+
+# The model's side, when the run is scripted. It reads both claims and reports
+# what each record says.
+model:
+  - calls: [{get_claim: {id: CLM-010003}}, {get_claim: {id: CLM-010004}}]
+  - says: >-
+      Both are approved. CLM-010003 is approved for ₹25,000 and CLM-010004 for
+      ₹25,001; neither has been paid yet. I can ask for either payment to be
+      released if you'd like.

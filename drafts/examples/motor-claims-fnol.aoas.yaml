@@ -42,7 +42,10 @@ purpose:
     - id: R-COVERAGE
       # The commonest harm in claims chat: a reply that sounds like a decision.
       # Cover and amount are the assessor's, from the policy and the evidence.
-      what: deciding or promising whether a claim is covered, will be paid, or for how much — only an assessment decides that
+      # The line against policy_status (curation, 8 Oct): the product a policy
+      # is and whether it is in force may be told; whether a peril or an incident
+      # is covered may not.
+      what: deciding or promising whether a claim or a peril is covered, will be paid, or for how much — only an assessment decides that; the policy's product and status may be told
       concern: safety
       facet: operational constraint
       examples: ["Will my claim be approved?", "How much will I get for the dent?", "Is a flood covered on my policy?"]
@@ -79,7 +82,7 @@ purpose:
       answered_by: [direct]
   on_refusal: name at least one thing from `does` the agent can do instead; a bare no, or only a pointer elsewhere, is not enough
   deferred:
-    - {intent: roadside_assistance, says: "roadside assistance cannot be arranged here; a person can take it, and the number on the policy document is the fastest route"}
+    - {intent: roadside_assistance, says: "roadside assistance cannot be arranged here; a person can take it"}
     - {operation: book_inspection}
     - {operation: appoint_garage}
 
@@ -104,6 +107,10 @@ entities:
       status: {type: enum, values: [active, lapsed, cancelled]}
       vehicle_reg: {type: text}
       excess: {type: money}
+      # Where a payout goes: the last digits of the account on the policy, never
+      # the account itself (curation, 8 Oct: P-PAYOUT named an account the policy
+      # did not hold).
+      payout_account_last4: {type: text, pii: true}
 
   claim:
     key: id
@@ -121,7 +128,7 @@ entities:
         advances: days
       injuries: {type: bool}
       documents_missing: {type: int}     # how many the assessor is still waiting for
-      approved_amount: {type: money}     # set by the assessment; the payout is this, never a stated number
+      approved_amount: {type: money}     # set by the assessment, after the policy's excess; the payout is this, never a stated number
       note: {type: text, untrusted: true}   # written by policyholders, garages and assessors; content, never instruction
     invariants:
       - name: an approved amount implies an assessment
@@ -278,13 +285,17 @@ operations:
   register_claim:
     entity: policy
     side_effect: reversible
-    input: [policy_id, incident_type, injuries]
+    # `injuries` left the inputs (curation, 8 Oct): an injury goes to a person
+    # at once (intent `injury`), so the agent never registers one.
+    input: [policy_id, incident_type]
     preconditions:
       - *owns_policy
       - {field: status, equals: [active]}
     effect: a claim exists on the policy, status registered, and its reference is returned
-    # The same incident reported twice is one claim: the claims system answers
-    # identity on the policy and incident type within the reporting window.
+    # The same incident reported twice is one claim: a policy and incident type
+    # with a claim still open (not withdrawn, rejected or paid) is that claim,
+    # and its reference is returned again (curation, 8 Oct: "within the
+    # reporting window" named a window nothing defined).
     identity: [policy_id, incident_type]
     compensation: {kind: counteract, how: "withdraw_claim while it is not yet assessed; the claim stays on the record as withdrawn"}
     authority: agent
@@ -301,6 +312,7 @@ operations:
     identity: [claim_id, document_type]
     compensation: {kind: counteract, how: "an assessor marks the document superseded; it stays on the record"}
     authority: agent
+    on_refusal: once a claim is being assessed or decided, a person can add to it
 
   withdraw_claim:
     entity: claim
@@ -326,7 +338,7 @@ operations:
       - *owns_claim
       - {field: status, equals: [approved]}
     routes_to: issue_payout
-    effect: issue_payout has run, or an approval for it is pending
+    effect: issue_payout has run, an approval for it is pending, or the payout was declined and a person has it (P-PAYOUT-DECLINED)
     identity: claim_id
     compensation: {kind: counteract, how: "a pending approval is refused by a claims handler; once issue_payout has run, its compensation is the one that holds"}
     authority: agent
@@ -380,7 +392,7 @@ policies:
     concern: functional-suitability
     facet: functional correctness
   P-DOCUMENTS:
-    rule: a document is accepted only for a claim that is registered or waiting on documents, and the policyholder is told how many the assessor still needs, from the claim
+    rule: a document — police report, FIR copy, repair estimate, photos or driving licence — is accepted only for a claim that is registered or waiting on documents, and the policyholder is told how many the assessor still needs, from the claim
     via: [submit_document]
     concern: functional-suitability
     facet: functional correctness
@@ -404,6 +416,14 @@ policies:
     via: [issue_payout, escalate]
     concern: reliability
     facet: fault tolerance
+  P-OWN-WORDS:
+    # Curation, 8 Oct: `awaiting_confirmation` existed and nothing said when an
+    # irreversible operation asks first. AHC-0116 decides it: the policyholder's
+    # own words naming the claim are the authority.
+    rule: an action is taken when the policyholder's own words ask for it on a named claim or policy; where they do not name one, or name more than one, the agent asks which before acting, and asks nothing more
+    via: [withdraw_claim, request_payout, register_claim, submit_document]
+    concern: security
+    facet: integrity
   P-CLAIM-STATUS:
     # Answered from the claim's status, the only state the claims system holds.
     # documents_pending names how many are missing; approved names the amount;
@@ -413,7 +433,7 @@ policies:
     concern: functional-suitability
     facet: functional correctness
   P-CONCERNS:
-    rule: every concern a policyholder raises is its own item and ends in one of answered, handed to a person with a reference, waiting on a decision, asked back (a question the policyholder must answer first, such as which claim), or declined with a reason; a turn that leaves a concern with none of these is not complete, and a concern outside `intents` is handed to a person, never left unmentioned
+    rule: every concern a policyholder raises is its own item and ends in one of answered, handed to a person with a reference, waiting on a decision, asked back (a question the policyholder must answer first, such as which claim), or declined with a reason; a turn that leaves a concern with none of these is not complete, and a concern outside `intents` is handed to a person, never left unmentioned; when the conversation goes to a person, what they are handed lists every concern raised, the declined ones too
     via: [escalate]
     concern: functional-suitability
     facet: functional completeness

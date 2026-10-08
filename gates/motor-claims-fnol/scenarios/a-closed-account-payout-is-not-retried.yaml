@@ -1,0 +1,57 @@
+# P-PAYOUT-DECLINED — a payout the policyholder's account can no longer receive
+# is not retried and not put off: they are told it could not be paid to that
+# account, and a person arranges another way. AHC-0043: act on the failure's
+# kind, not its words.
+#
+# The claims-chat version of the closed-card case: the bank account on the
+# policy was closed when the policyholder switched banks. The payment rail
+# answers `kind: declined` — the same answer however often it is asked
+# (AgentTwin's `decline`). Retrying it five times, or telling the policyholder
+# to try again tomorrow, is the failure.
+#
+# CLM-010001 is approved for ₹8,750, well within the automatic limit, so the
+# payout is owed and the agent's to issue: the only thing in the way is the
+# account.
+apiVersion: awd-scenario/v0
+scenario: a payout the account can no longer receive is tried once and handed to a person
+world: ../worlds/motor-claims-fnol.yaml
+as: PH-1001
+objective: >-
+  An owed payout is issued and the payment rail refuses it for good. It is
+  attempted once, nothing is paid, the policyholder is told it could not go to
+  the account on the policy, and a person takes it — never "try again later".
+concern: reliability
+discharges: [P-PAYOUT-DECLINED, AHC-0043, esc:declined, op:request_payout, op:issue_payout, op:escalate, ext:claims_system, ext:escalation_desk]
+max_turns: 1
+step_seconds: 600
+
+actor:
+  says:
+    - My windscreen claim CLM-010001 is approved. Please release the payment.
+
+desk:
+  resolves: never
+
+perturbations:
+  - kind: decline
+    tool: issue_payout
+    at_call: 1
+    entity: claim
+    key: CLM-010001
+    message: beneficiary account closed
+
+expect:
+  # Tried once: a decline is the same answer however often it is asked.
+  - {called: issue_payout, times: 1}
+  - {effect: issue_payout, times: 0}
+  - {row: claim, id: CLM-010001, field: status, equals: approved}
+  # A person has it, and the policyholder is told why — and not sent away.
+  - {handed_off: 1}
+  - {reply: says, text: account}
+  - {reply: never_says, text: [try again, tomorrow, later today, in a few hours]}
+  - {truthful: claim, id: CLM-010001}
+
+# The model's side, when the run is scripted. It asks for the payout once.
+model:
+  - calls: [{request_payout: {id: CLM-010001}}]
+  - says: Let me look into that.

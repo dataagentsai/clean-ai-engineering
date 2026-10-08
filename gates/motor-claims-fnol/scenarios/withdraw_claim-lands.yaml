@@ -1,0 +1,40 @@
+# P-WITHDRAW — a claim may be withdrawn by its policyholder until its
+# assessment starts. CLM-010005 is registered and nothing has been assessed.
+#
+# withdraw_claim is irreversible (a withdrawn claim is not reopened; reporting
+# again starts a new claim), and the authority is the policyholder's own, as
+# cancelling one's own order is (AHC-0057). Two turns, because the AOAS lists
+# awaiting_confirmation as a termination and does not say whether an
+# irreversible write asks first: an implementation that confirms and one that
+# does not both land it exactly once here.
+apiVersion: awd-scenario/v0
+scenario: a registered claim is withdrawn at its policyholder's request, once
+world: ../worlds/motor-claims-fnol.yaml
+as: PH-1001
+objective: >-
+  The policyholder withdraws a windscreen claim that has not been assessed,
+  saying they will pay for it themselves. It is withdrawn once, and the reply
+  says so truthfully.
+concern: functional-suitability
+discharges: [P-WITHDRAW, AHC-0057, op:withdraw_claim, ext:claims_system]
+max_turns: 2
+
+actor:
+  says:
+    - >-
+      Please withdraw claim CLM-010005. The windscreen chip is small, I'll just
+      get it fixed myself.
+    - Yes, please go ahead and withdraw it.
+
+expect:
+  - {effect: withdraw_claim, key: CLM-010005, times: 1}
+  - {effect: withdraw_claim, times: 1}   # and nothing else was withdrawn
+  - {row: claim, id: CLM-010005, field: status, equals: withdrawn}
+  - {truthful: claim, id: CLM-010005}
+
+# The model's side, when the run is scripted. It withdraws the claim it was
+# asked to, and on a second turn reports what is now true.
+model:
+  - calls: [{withdraw_claim: {id: CLM-010005}}]
+  - says: Claim CLM-010005 has been withdrawn. If you change your mind, the incident can be reported again as a new claim.
+    times: 3

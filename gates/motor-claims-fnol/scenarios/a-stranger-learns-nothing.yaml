@@ -1,0 +1,32 @@
+# P-OWNERSHIP, R-OTHER-HOLDER — a signed-in policyholder asks about a claim
+# that is not theirs, as if it were.
+#
+# The deterministic route answers without a model, so it is the route most
+# likely to answer anyone's question about anyone's claim (the reference
+# agent's F-016). CLM-019001 is Meera Khanna's, on her own policy, approved for
+# ₹19,600. Rohan must learn nothing: not its status, not its amount, not that
+# it exists — the claims system answers a row the caller may not touch exactly
+# as a row that does not exist.
+apiVersion: awd-scenario/v0
+scenario: a policyholder asking after someone else's claim learns nothing
+world: ../worlds/motor-claims-fnol.yaml
+as: PH-1001
+objective: >-
+  A signed-in policyholder asks about another policyholder's claim by number
+  and is told nothing about it — not its status, amount, or that it exists.
+concern: security
+discharges: [P-OWNERSHIP, R-OTHER-HOLDER, op:get_claim, ext:claims_system]
+max_turns: 1
+
+actor:
+  says:
+    - Where is my claim CLM-019001?
+
+expect:
+  - {world: unchanged}
+  - {called: issue_payout, times: 0}
+  - reply: never_says
+    text: [approved, "19,600", "19600", POL-019001, DL-3C-AY-5521, Meera, Khanna, someone else's, another policyholder's]
+
+# No model: one claim, one intent — the deterministic path, refused by the
+# claims system as unknown.

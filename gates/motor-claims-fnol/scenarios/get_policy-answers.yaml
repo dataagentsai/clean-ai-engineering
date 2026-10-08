@@ -1,0 +1,36 @@
+# policy_status — whether a policy is in force, and what it is.
+#
+# Asked by the car's registration, not the policy number, so the policy has to
+# be found before it is read: this is the loop, not the deterministic path
+# (P-DIRECT needs one named policy). "What cover" is answered as the product
+# the policy record holds — comprehensive — and goes no further: whether any
+# particular incident is covered is R-COVERAGE's, and nothing here asks it.
+apiVersion: awd-scenario/v0
+scenario: a policy asked about by its car is read and answered from the record
+world: ../worlds/motor-claims-fnol.yaml
+as: PH-1001
+objective: >-
+  The policyholder asks whether the policy on their car is active and what
+  cover it has. The policy is read; the reply says it is active and
+  comprehensive; nothing changes.
+concern: functional-suitability
+discharges: [op:get_policy, op:list_policies, P-OWNERSHIP, ext:claims_system]
+max_turns: 1
+
+actor:
+  says:
+    - Is the insurance on my i20, KA-01-AB-1234, still active? And what cover do I have on it?
+
+expect:
+  - {called: get_policy, at_least: 1}
+  - {world: unchanged}
+  - {reply: says, text: active}
+  - {reply: says, text: comprehensive}
+  - {truthful: policy, id: POL-010001}
+
+# The model's side, when the run is scripted. It reads the policy the car is on.
+model:
+  - calls: [{get_policy: {id: POL-010001}}]
+  - says: >-
+      Your policy POL-010001 for KA-01-AB-1234 is active. It is a comprehensive
+      policy with an excess of ₹2,500.

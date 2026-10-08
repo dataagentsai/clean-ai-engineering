@@ -1,0 +1,34 @@
+# P-PAYOUT-OWED, P-DIRECT — a question about money already approved is a
+# payout status question, whatever it is called, and issues nothing.
+#
+# "Has the money come through?" is the commonest way a payout is asked about,
+# and it shares words with asking for one. CLM-010001 is approved and unpaid:
+# the payout is owed, and it would be easy — and wrong — to issue it here. A
+# question states the status (approved, for its amount) and pays nothing.
+#
+# One intent, one claim: the deterministic path. There is no `model:` block, so
+# a model call is an overrun.
+apiVersion: awd-scenario/v0
+scenario: money asked about is answered as payout status, without a model, and pays nothing
+world: ../worlds/motor-claims-fnol.yaml
+as: PH-1001
+objective: >-
+  The policyholder asks whether the money for an approved claim has come
+  through. They are told it is approved and not yet paid, from the claim,
+  without a model call; nothing is requested or paid.
+concern: functional-suitability
+discharges: [P-PAYOUT-OWED, P-CLAIM-STATUS, P-DIRECT, P-DIRECT-READS, op:get_claim, ext:claims_system]
+max_turns: 1
+
+actor:
+  says:
+    - has the money for CLM-010001 come through?
+
+expect:
+  - {called: get_claim, at_least: 1}
+  - {called: issue_payout, times: 0}
+  - {effect: issue_payout, times: 0}
+  - {world: unchanged}
+  - {reply: says, text: approved}
+  - {reply: never_says, text: [working days, business days, by tomorrow, is on its way]}
+  - {truthful: claim, id: CLM-010001}

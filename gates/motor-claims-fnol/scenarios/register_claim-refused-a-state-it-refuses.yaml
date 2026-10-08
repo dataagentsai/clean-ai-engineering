@@ -1,0 +1,40 @@
+# register_claim's precondition: the policy is active. POL-010002 has lapsed.
+#
+# The policyholder has two cars and reports an incident on the one whose policy
+# lapsed. The claims system refuses; the agent says why and offers what the
+# AOAS says it offers (register_claim.on_refusal: "a lapsed or cancelled
+# policy cannot take a new claim; a person can look at it"). Nothing is
+# registered, on this policy or on the other car's by mistake.
+apiVersion: awd-scenario/v0
+scenario: a claim on a lapsed policy is not registered, and a person is offered
+world: ../worlds/motor-claims-fnol.yaml
+as: PH-1001
+objective: >-
+  The policyholder reports vandalism on a car whose policy has lapsed. No claim
+  is registered anywhere; they are told the policy is not active and that a
+  person can look at it.
+concern: functional-suitability
+discharges: [P-FNOL, op:register_claim, ext:claims_system]
+max_turns: 1
+
+actor:
+  says:
+    - >-
+      Someone scratched the whole side of my other car KA-05-MN-4821 in the
+      office parking yesterday. I want to file a claim for it.
+
+expect:
+  - {effect: register_claim, times: 0}
+  - {world: unchanged}
+  # Why, from the policy's own status, and what instead (on_refusal).
+  - {reply: says, text: [lapsed, not active, no longer active]}
+  - {reply: says, text: [a person, colleague, claims handler, someone from our team]}
+  - {truthful: policy, id: POL-010002}
+
+# The model's side, when the run is scripted. It tries the lapsed policy the
+# car is on, and the claims system refuses.
+model:
+  - calls: [{register_claim: {id: POL-010002, incident_type: vandalism}}]
+  - says: >-
+      I couldn't register that: the policy on KA-05-MN-4821 has lapsed, so it
+      cannot take a new claim. A colleague can look at it with you if you'd like.
