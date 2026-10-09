@@ -43,10 +43,10 @@ bindings:
     x_why: "decision B: one door, one identity, one bill — token limits and token metrics at the gateway, not in each agent"
     x_model_layer: pydantic-ai-direct    # called through Pydantic AI's model requests, inside our LLMClient port; only that module imports pydantic_ai
     x_backend: foundry-models           # decision C: GPT and Claude deployments; the golden set picks per job
-    x_dev: "APIM in front of Groq (OpenAI-compatible, free); Foundry is a backend change in APIM, not in code"
+    x_dev: "APIM Consumption in front of Groq (OpenAI-compatible, free); Foundry is a backend change in APIM, not in code. Consumption has no llm-token-limit or rate-limit-by-key (learn.microsoft.com, 9 Oct 2026): a per-subscription rate-limit plus llm-emit-token-metric in dev; token limits need a v2 tier"
     x_status: target
     x_item: T-099
-  state:        { approach: cloud-native, adapter: azure-postgresql-flexible, x_why: "managed PostgreSQL: the same engine the Open Stack runs, operated by Azure", x_dev: "Flexible Server B1MS, free for 12 months", x_status: target, x_item: T-099 }
+  state:        { approach: cloud-native, adapter: azure-postgresql-flexible, x_why: "managed PostgreSQL: the same engine the Open Stack runs, operated by Azure", x_dev: "Flexible Server B1ms on Pay-As-You-Go (~$0.73/day running, ~$0.14/day stopped, Central India, Retail Prices API 9 Oct 2026); stopped when idle — the 12-month free offer is used up", x_status: target, x_item: T-099 }
   retrieval:    { approach: open-source, adapter: pgvector, x_why: "knowledge in the same PostgreSQL: one store, one backup, no AI Search bill", x_status: target, x_item: T-099 }
   workflow:     { approach: open-source, adapter: dbos, x_why: "durable waits as a library on the PostgreSQL we already run: no new infrastructure, plain-Postgres exit (architecture slide 26); Temporal when undo flows grow", x_status: target, x_item: T-099 }
   approval:     { approach: open-source, adapter: dbos-workflows, x_why: "a payout waits for a handler as a DBOS workflow; the decision is a message our rule validates", x_note: "Teams adaptive cards tell the handler there is work; the decision happens in the system, never by a link", x_status: target, x_item: T-099 }
