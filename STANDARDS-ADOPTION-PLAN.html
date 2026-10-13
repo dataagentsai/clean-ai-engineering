@@ -35,6 +35,55 @@ ul.t{margin:6px 0;padding-left:20px} ul.t li{margin:3px 0}
 
 <div class="note"><b>The rule:</b> cite, don't restate. Every standard below is adopted by reference: we point at its clauses, use its tooling, fill its templates or follow its conventions. We write only two things: <b>what no standard says</b> (agent-specific obligations, capabilities, the behaviour contract, the test world) and <b>the connections between them</b> (crosswalks and traceability). <b>The proof:</b> a third agent is specified this way, and we measure how much was adopted versus written.</div>
 
+<h2>0 · If you are the Architect, BA or Ops: what you actually do</h2>
+<p><b>The problem today:</b> the material is spread across five repos (AAC, AHC, AgentTwin, clean-ai-engineering, stack profiles), and nothing tells a first-liner which part concerns them. <b>The fix:</b> you never open the catalogs. You work in <b>one folder per agent</b>. The catalogs and crosswalks show up there in two forms: as <b>questions in your template</b> and as a <b>to-do list from one status command</b>.</p>
+
+<h3>0.1 Adopt the workflow shell too: GitHub Spec Kit</h3>
+<p>Spec-driven development already has open tooling. <b>GitHub Spec Kit</b> (MIT; works with Claude Code and Copilot) gives each feature a folder and a fixed sequence: <i>constitution → specify → plan → tasks → implement</i>, plus clarify and analyze. <b>AWS Kiro</b> uses the same shape: <code>requirements.md</code> in EARS, <code>design.md</code>, <code>tasks.md</code>. We adopt Spec Kit's folder and commands and plug our pieces into it, rather than invent a workflow:</p>
+<div class="tbl"><table>
+<tr><th>Spec Kit step</th><th>Our piece plugged in</th><th>Who</th></tr>
+<tr><td><b>constitution</b></td><td><b>Generated</b>: the pinned AAC and AHC versions, the four gates, the PROJECT_BIBLE principles, the stack profile. Nobody writes it</td><td>(tool)</td></tr>
+<tr><td><b>specify</b> → <code>requirements.md</code></td><td>Our Agent Requirements template: 29148 headings, EARS rules, Gherkin examples, parameters, risk class</td><td>BA</td></tr>
+<tr><td><b>clarify</b></td><td>Turns the archetype's owed obligations into the questions still unanswered ("a payout agent needs an authority limit: what is it, and who owns it?")</td><td>BA, Arch</td></tr>
+<tr><td>(new step) <b>contract</b> → <code>agent.aoas.yaml</code></td><td>AI-drafted from the requirements; the BA approves a <b>plain-language rendering</b>, not the YAML</td><td>BA approves, Arch checks</td></tr>
+<tr><td><b>plan</b> → <code>design.md</code> + <code>harness-profile.yaml</code></td><td>arc42 template (sections 4–8 generated from AHC); the harness profile extends a stack profile</td><td>Arch</td></tr>
+<tr><td>(new step) <b>operate</b> → <code>ops-profile.yaml</code></td><td>Ops template: SLOs prefilled per archetype, alert routing, runbooks, parameter owners, retention, desk hours</td><td>Ops</td></tr>
+<tr><td><b>tasks</b> → <code>tasks.md</code></td><td><b>Generated</b>: our brief (<code>tools/brief.js</code>), split into tasks</td><td>(tool) → Dev</td></tr>
+<tr><td><b>analyze</b></td><td><b>Our status check</b>: traceability, unanswered obligations, crosswalk gaps, per role</td><td>everyone</td></tr>
+<tr><td><b>implement</b></td><td>The coding agent, then the four gates</td><td>Dev, Tester, PE</td></tr>
+</table></div>
+
+<h3>0.2 The one folder</h3>
+<pre>agents/motor-claims-fnol/
+  .specify/memory/constitution.md   generated   pins AAC, AHC, gates, stack
+  requirements.md                   BA          what the business wants, in EARS + Gherkin
+  agent.aoas.yaml                   BA + Arch   the behaviour contract (AI-drafted, approved)
+  design.md                         Arch        arc42; most sections generated
+  harness-profile.yaml              Arch        extends stacks/azure.yaml; archetypes; accepted gaps
+  ops-profile.yaml                  Ops         SLOs, alerts, runbooks, parameter owners
+  agent.agentspec.yaml              generated   portable definition (Oracle Open Agent Spec)
+  tasks.md                          generated   the build brief, for the developer
+  compliance.html                   generated   each standard clause: met by what, evidence, gaps</pre>
+
+<h3>0.3 Each role, step by step</h3>
+<div class="tbl"><table>
+<tr><th>Role</th><th>Steps</th><th>How the catalogs help, without being read</th></tr>
+<tr><td><b>BA</b></td><td>1. Fill <code>requirements.md</code>: who it serves, what it does, what it refuses; journeys with one Gherkin example each; business rules in EARS; parameters (value, allowed range, owner); real customer wording; KPIs; the EU AI Act risk-class questions.<br>2. Answer the <b>clarify</b> questions.<br>3. Approve the drafted contract in its plain-language view.<br>4. Clear the BA items in <b>status</b>.</td><td>The archetype brings its obligations as <b>questions</b>: "refunds above what amount need a person?", "what happens to a late claim?" You answer the business question; the obligation id is attached for you</td></tr>
+<tr><td><b>Architect</b></td><td>1. Choose archetypes (a short question guide).<br>2. Choose a stack profile (Open Stack, Azure); set thresholds; declare accepted gaps with a reason.<br>3. Choose the build route: our harness, or a declarative runtime (0.4).<br>4. Write <code>design.md</code>'s own sections: context, constraints, decisions, risks.<br>5. Review <code>compliance.html</code>: accept each gap or send it back.</td><td>Choosing an archetype and a stack pulls in ~100 capabilities with their design decisions already made. You only see the ones the stack leaves open, plus the gaps</td></tr>
+<tr><td><b>Ops</b></td><td>1. Fill <code>ops-profile.yaml</code>: confirm the prefilled SLOs; route alerts; one runbook per paging alert; who may change each parameter at runtime (within the contract's range); retention; desk hours for handoffs.<br>2. Review the generated dashboards and alerts.</td><td>Operational obligations (monitoring, kill switch, incident response) arrive as prefilled rows to confirm, not as a blank page</td></tr>
+</table></div>
+
+<h3>0.4 Declarative agent formats: where they fit</h3>
+<p>A family of formats now describes an agent in a file rather than in code: <b>Oracle Open Agent Specification</b> (framework-neutral; Python SDK PyAgentSpec, reference runtime WayFlow, adapters for LangGraph, CrewAI and AutoGen), Microsoft's declarative agents for Copilot and Agent Framework YAML, Google ADK agent config, and CrewAI's YAML. They all answer <b>how the agent is assembled</b>: model, prompt, tools, flow. None says <b>what must be true of it</b>: what it refuses, what it owes, its authority limits, how to judge it by world state. That second part is the AOAS. They are two halves, not competitors:</p>
+<div class="tbl"><table>
+<tr><th></th><th>AOAS (ours)</th><th>Oracle Open Agent Spec (adopted)</th></tr>
+<tr><td>Answers</td><td>What must be true: purpose, refusals, operations with preconditions, authority, owed actions</td><td>How it is assembled: agents, flows, tools, LLM config</td></tr>
+<tr><td>Written by</td><td>BA (approves), Arch (checks)</td><td><b>Generated</b> from the AOAS + harness profile; the Arch owns it</td></tr>
+<tr><td>Used by</td><td>The gates, AgentTwin, the brief, the compliance report</td><td>A runtime: WayFlow, LangGraph and others</td></tr>
+<tr><td>Proof</td><td colspan="2">The same AgentTwin world and the same gates judge the agent <b>whichever way it was built</b>: our harness in Python, or a declarative runtime. This is code-to-interface at the agent level: the build route is an adapter</td></tr>
+</table></div>
+<p><b>Recommendation:</b> generate the Agent Spec file for all three agents (cheap, and it makes them portable), and build agent #3 <b>both ways</b> in Phase 4 if time allows. Whether a declarative runtime can carry approvals, budgets and owed actions as well as our harness does is itself a finding worth publishing.</p>
+
 <h2>1 · The four layers</h2>
 <div class="layers">
 <div class="l1"><b>Layer 1 · Industry standards</b>Adopted as they are: ISO, NIST, OWASP, MITRE, OpenTelemetry, MCP, arc42, EARS, Gherkin, SRE, FinOps FOCUS, regulation</div>
@@ -157,6 +206,7 @@ ul.t{margin:6px 0;padding-left:20px} ul.t li{margin:3px 0}
 
 <div class="phase"><h3>Phase 1 · Templates for each role</h3><div class="when">2 weeks</div>
 <ul class="t">
+<li><b>Adopt GitHub Spec Kit</b> as the workflow shell: our templates replace its specify and plan templates; add the contract and operate steps; generate the constitution</li>
 <li><b>BA:</b> Agent Requirements template (29148 headings; EARS rules; Gherkin acceptance; parameters table with owner and range; journeys; tone; KPIs; risk class) (T-116)</li>
 <li><b>BA + Arch:</b> AOAS gains <code>parameters</code> (T-115) and <code>requirement</code> references on every statement</li>
 <li><b>Arch:</b> arc42 template with each section marked written, generated or cited; the archetype choice guide</li>
@@ -177,6 +227,9 @@ ul.t{margin:6px 0;padding-left:20px} ul.t li{margin:3px 0}
 <li>An EARS linter; Gherkin import and export for AgentTwin scenarios</li>
 <li>Traceability in the features gate: requirement → AOAS statement → test; an orphan on either side fails</li>
 <li>OpenTelemetry convention conformance test; FOCUS cost export</li>
+<li><b>The status check</b> (Spec Kit's analyze): per role, what is unanswered, untraced or a gap</li>
+<li><b>Clarify questions</b>: each owed obligation carries a business-language question for the template</li>
+<li><b>Plain-language rendering</b> of the AOAS for the BA to approve</li>
 <li><b>The brief:</b> each owed obligation shows its standard clauses from the crosswalks; a new Conventions section comes from the stack profile</li>
 <li>Generators: arc42 sections, C4 diagrams (Structurizr), the Open Agent Spec definition, the 29119 test plan and report, and the <b>compliance report</b> per agent from the crosswalks and the Assurance Map</li>
 </ul></div>
@@ -229,6 +282,7 @@ ul.t{margin:6px 0;padding-left:20px} ul.t li{margin:3px 0}
 <h2>Change log</h2>
 <div class="tbl"><table>
 <tr><th>Date</th><th>Change</th></tr>
+<tr><td>13 Oct 2026</td><td>Added §0: the first-liner workflow in one folder per agent, adopting GitHub Spec Kit as the shell; per-role steps; declarative agent formats (Oracle Open Agent Spec and others) as the assembly half beside the AOAS.</td></tr>
 <tr><td>13 Oct 2026</td><td>Corrected: AAC already has four crosswalks (OWASP LLM, NIST AI RMF, ISO 42001, EU AI Act). Added §4b on where each piece lives and how standards reach generated code (through obligations and conventions in the brief).</td></tr>
 <tr><td>13 Oct 2026</td><td>Plan created after the owner asked that a third agent adopt all relevant industry standards, with our work limited to adopting, adding what is missing, and connecting the dots.</td></tr>
 </table></div>
