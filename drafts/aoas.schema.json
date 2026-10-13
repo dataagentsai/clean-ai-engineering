@@ -413,7 +413,7 @@
           "enum": ["read", "reversible", "irreversible"],
           "description": "What repeating it costs. Irreversible means repeating charges someone twice."
         },
-        "input": { "type": "array", "uniqueItems": true, "items": { "type": "string" }, "description": "An input `<entity>_id` on an operation over that entity names the row it acts on and is carried as the entity's `key`: that key name is the one the model is shown and the far end enforces. Every other input travels under its own name." },
+        "input": { "type": "array", "uniqueItems": true, "items": { "type": "string" }, "description": "An input `<entity>_id` on an operation over that entity names the row it acts on and is carried as the entity's `key`: that key name is the one the model is shown and the far end enforces. Every other input travels under its own name, typed by the field it is written into (an `effect` or `creates.sets` value `$name`), or else by the operation's entity's field of that name; an enum field's input takes only its values, and a far end refuses any other (T-113)." },
         "output": { "type": "string", "pattern": "^[a-z][a-z0-9_]*(\\[\\])?$", "description": "The entity returned. `entity[]` is a read of many rows: it takes no key, and must be scoped to the caller by a precondition over the session." },
         "amount_from": { "type": "string", "description": "Where a money amount comes from. Never the conversation." },
         "preconditions": { "$ref": "#/$defs/condition_list" },
@@ -430,7 +430,7 @@
           "description": "A row of another entity this operation brings into being (T-100: registering a claim on a policy creates a claim). Its key is made from the entity's key pattern and returned to the caller.",
           "properties": {
             "entity": { "type": "string" },
-            "sets": { "type": "object", "description": "New row's field → value; `$name` means the input of that name." },
+            "sets": { "type": "object", "description": "New row's field → value; `$name` means the input of that name. A field neither this nor `from_row` names starts at its type's empty value ('' text, 0 int or money, false bool), never null; a field with no empty value (id, enum, date, timestamp, email, phone) is absent until something sets it (T-113)." },
             "from_row": { "type": "object", "description": "New row's field → a field of the row the operation acts on (its key included)." }
           }
         },

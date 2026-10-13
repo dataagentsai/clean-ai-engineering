@@ -96,7 +96,18 @@ question the specification never answered.
 
 For each operation the agent may perform:
 
-- inputs and outputs
+- inputs and outputs. **An input is typed by the field it is written into** —
+  the field an `effect` or a `creates.sets` names it in as `$name` — or else by
+  the field of that name on the operation's entity, and an enum field's input
+  takes only that enum's values. A far end, and any stand-in for one, refuses a
+  value its field could not hold (T-113: a claim of type `''` was registered
+  because the input was typed from the policy, which has no such field)
+- **creates** — a row of another entity the operation brings into being. A field
+  of the new row that neither `sets` nor `from_row` names starts at its type's
+  empty value — `''` for text, `0` for a count or money, `false` for a bool —
+  never null. A field with no empty value (an id, an enum, a date, an email) is
+  absent until something sets it: an approval's `execution` has no value
+  before it is carried out (T-113)
 - **preconditions** — what must be true before it may run
 - **effects** — what changes, and whether the change is reversible
 - **idempotency** — whether repetition is safe, and what the identity key is
