@@ -78,9 +78,9 @@ ul.t{margin:6px 0;padding-left:20px} ul.t li{margin:3px 0}
 <h3>2.4 Governance, risk and regulation (Arch + Compliance)</h3>
 <div class="tbl"><table>
 <tr><th>Standard</th><th>Mode</th><th>Lands in</th><th>Proved applied by</th><th>Today</th></tr>
-<tr><td>NIST AI RMF 1.0 and its Playbook</td><td><span class="pill m">Cite</span></td><td>AAC crosswalk to Govern, Map, Measure and Manage subcategories</td><td>A generated compliance report per agent: each subcategory with its obligations and evidence (from the Assurance Map)</td><td><span class="pill no">No</span></td></tr>
-<tr><td>ISO/IEC 42001 (AI management system) and 23894 (AI risk)</td><td><span class="pill m">Cite</span></td><td>Crosswalk of Annex A controls (organisation-level) and risk process; agent-level evidence only</td><td>Same report, organisation section</td><td><span class="pill no">No</span></td></tr>
-<tr><td>EU AI Act</td><td><span class="pill m">Cite</span></td><td>Risk-class determination in the requirements; article crosswalk for the applicable class</td><td>Report lists applicable articles with evidence or "not applicable" and why</td><td><span class="pill no">No</span></td></tr>
+<tr><td>NIST AI RMF 1.0 and its Playbook</td><td><span class="pill m">Cite</span></td><td>AAC crosswalk to Govern, Map, Measure and Manage subcategories</td><td>A generated compliance report per agent: each subcategory with its obligations and evidence (from the Assurance Map)</td><td><span class="pill part">Crosswalk done (<code>ai-assurance-catalog/crosswalks/nist-ai-rmf.yaml</code>: 29 mapped, 55 out of scope with reasons); report not generated</span></td></tr>
+<tr><td>ISO/IEC 42001 (AI management system) and 23894 (AI risk)</td><td><span class="pill m">Cite</span></td><td>Crosswalk of Annex A controls (organisation-level) and risk process; agent-level evidence only</td><td>Same report, organisation section</td><td><span class="pill part">42001 crosswalk done (6 of 38 Annex A controls mapped, 32 with reasons); 23894 not yet</span></td></tr>
+<tr><td>EU AI Act</td><td><span class="pill m">Cite</span></td><td>Risk-class determination in the requirements; article crosswalk for the applicable class</td><td>Report lists applicable articles with evidence or "not applicable" and why</td><td><span class="pill part">Crosswalk done (18 articles mapped, 22 with reasons); risk-class step not in the requirements yet</span></td></tr>
 <tr><td>Data protection: India DPDP Act, GDPR</td><td><span class="pill m">Cite</span></td><td>Requirements §10 and the AOAS's retention and erasure statements</td><td>Erasure and retention tests; the report</td><td><span class="pill part">Retention and erasure built; no crosswalk</span></td></tr>
 <tr><td>Sector rules (e.g. the insurance regulator for claims)</td><td><span class="pill m">Cite</span></td><td>A <b>domain overlay</b>: a small crosswalk file per sector, reused by every agent in it</td><td>Same report, sector section</td><td><span class="pill no">No</span></td></tr>
 </table></div>
@@ -110,7 +110,7 @@ ul.t{margin:6px 0;padding-left:20px} ul.t li{margin:3px 0}
 <tr><td><b>AOAS</b>: one agent's behaviour contract</td><td>Agent-definition formats (Open Agent Spec, Copilot manifests) say how an agent is built, not what must be true of it</td><td><span class="pill done">Draft v0</span></td></tr>
 <tr><td><b>AgentTwin</b>: spec-built test worlds and state judges</td><td>Testing standards don't cover agents judged by world state</td><td><span class="pill done">Public</span></td></tr>
 <tr><td><b>The four gates</b></td><td>Our definition of done</td><td><span class="pill done">Public</span></td></tr>
-<tr><td><b>The crosswalk register</b>: one machine-readable file joining our ids to every standard's clause ids</td><td>The "connecting the dots" part</td><td><span class="pill no">To build</span></td></tr>
+<tr><td><b>The crosswalk register</b>: one machine-readable file joining our ids to every standard's clause ids</td><td>The "connecting the dots" part</td><td><span class="pill part">Partly: AAC has four crosswalks (OWASP LLM, NIST AI RMF, ISO 42001, EU AI Act); every AHC capability names the obligations it discharges; the rest to build</span></td></tr>
 <tr><td><b>Agent Requirements template</b> (BA), <b>Ops profile</b>, <b>business parameters</b> in the AOAS</td><td>Templates that apply the standards to agents</td><td><span class="pill no">To build</span> (T-115, T-116)</td></tr>
 </table></div>
 
@@ -124,6 +124,27 @@ ul.t{margin:6px 0;padding-left:20px} ul.t li{margin:3px 0}
 <li><b>Upward</b>: an obligation or capability with no standard above it is our addition, and must say why.</li>
 </ul>
 <p>The result is a <b>generated compliance report per agent</b>: for each standard, which clauses are met, by what, with which evidence, and which are gaps. A reviewer, an auditor or a customer reads that, not our code.</p>
+
+<h2>4b · Where each piece lives, and does code generation see it?</h2>
+<p><b>Rule for placement:</b> a mapping goes in the catalog whose ids it maps. Standards about <i>what must be true</i> attach to AAC; standards about <i>what must exist or how it is shaped</i> attach to AHC; templates, profiles and tools that apply them to one agent live in clean-ai-engineering. Nothing new is a separate catalog.</p>
+<div class="tbl"><table>
+<tr><th>Piece</th><th>Lives in</th><th>Reaches generated code?</th></tr>
+<tr><td>Crosswalks: OWASP LLM and agentic, NIST AI RMF, ISO 42001, 23894, 25059, EU AI Act, MITRE ATLAS, DPDP/GDPR</td><td><b>AAC</b> <code>crosswalks/</code> (four exist)</td><td><b>Indirectly.</b> The brief already lists every AAC obligation the agent owes; code meets the obligation, and the crosswalk says which clauses that satisfies. The standard text never needs to reach the coder</td></tr>
+<tr><td>A clause with no obligation (a gap)</td><td>Becomes a <b>new AAC obligation</b></td><td><b>Yes</b>, from the next build: it then appears in the brief like any other</td></tr>
+<tr><td>Crosswalks: OpenTelemetry GenAI, arc42, ISO 42010</td><td><b>AHC</b> <code>crosswalks/</code> (OpenTelemetry planned)</td><td><b>Yes, as conventions.</b> These shape code directly (span names, attribute names), so they go into the capability's design decisions, which the brief carries</td></tr>
+<tr><td>Wire conventions: MCP, OpenAPI, FinOps FOCUS, pinned OpenTelemetry version</td><td><b>Stack profile</b> (<code>stacks/*.yaml</code>)</td><td><b>Yes.</b> The brief's new "Conventions" section lists them with versions</td></tr>
+<tr><td>Business parameters, requirement references (T-115)</td><td><b>AOAS</b> schema (<code>drafts/AOAS.md</code>)</td><td><b>Yes.</b> Parameters become configuration with ranges; requirement ids become test tags</td></tr>
+<tr><td>BA requirements template (29148, EARS, Gherkin) (T-116)</td><td><code>clean-ai-engineering/templates/</code></td><td><b>Through the AOAS</b>, which is drafted from it; Gherkin examples become AgentTwin scenarios</td></tr>
+<tr><td>arc42 template, Ops profile (SLOs, runbooks)</td><td><code>clean-ai-engineering/templates/</code>; the Ops profile next to the harness profile</td><td><b>Ops profile: yes</b> (alerts, dashboards, online checks are generated). arc42: no, it is for people</td></tr>
+<tr><td>Sector overlay (e.g. insurance)</td><td><code>clean-ai-engineering/domains/</code>: extra obligations go to AAC, sector clause mappings stay here</td><td>Through the obligations, as above</td></tr>
+<tr><td>Generators: compliance report, 29119 report, C4, Open Agent Spec; EARS linter; traceability</td><td><code>clean-ai-engineering/tools/</code></td><td>No, they read the code and runs afterwards</td></tr>
+</table></div>
+<p><b>So, will a new agent's generated code honour these standards?</b> Yes, and by design it never reads them. The coding agent gets the brief, which already holds the AOAS, the AHC capabilities and the AAC obligations the agent owes. The standards arrive <b>already translated</b> into obligations and conventions. Two changes to <code>tools/brief.js</code> close the remaining gaps:</p>
+<ol class="t">
+<li>Each owed obligation shows its standard clauses (e.g. "AAC-0057 · NIST MANAGE-2.3 · OWASP LLM06"), read from the crosswalks. The coder doesn't need them, but a reviewer reading the brief sees why each rule is there.</li>
+<li>A "Conventions" section is added from the stack profile, covering the things that shape code directly: OpenTelemetry version, MCP, OpenAPI, FOCUS cost columns.</li>
+</ol>
+<p>The gates then prove the result, without trusting the coder: the features gate checks requirement → statement → test; the compliance report checks clause → obligation → evidence.</p>
 
 <h2>5 · The plan</h2>
 
@@ -144,7 +165,8 @@ ul.t{margin:6px 0;padding-left:20px} ul.t li{margin:3px 0}
 
 <div class="phase"><h3>Phase 2 · Crosswalks</h3><div class="when">3 weeks</div>
 <ul class="t">
-<li>AAC ↔ NIST AI RMF, ISO 42001 Annex A, ISO 23894, EU AI Act, OWASP agentic threats, MITRE ATLAS (loaded from its data), ISO 25059, DPDP and GDPR</li>
+<li><b>Already done in AAC, reused as is:</b> OWASP LLM, NIST AI RMF, ISO 42001 Annex A, EU AI Act</li>
+<li><b>New in AAC:</b> ISO 23894, OWASP agentic threats, MITRE ATLAS (loaded from its data), ISO 25059, DPDP and GDPR</li>
 <li>AHC ↔ arc42 sections, ISO 42010 viewpoints, OpenTelemetry GenAI conventions</li>
 <li>A domain overlay for insurance (the claims agent's sector), as the pattern for others</li>
 <li>Both directions reported: gaps added to AAC or AHC, or declared out of scope; our additions justified</li>
@@ -155,6 +177,7 @@ ul.t{margin:6px 0;padding-left:20px} ul.t li{margin:3px 0}
 <li>An EARS linter; Gherkin import and export for AgentTwin scenarios</li>
 <li>Traceability in the features gate: requirement → AOAS statement → test; an orphan on either side fails</li>
 <li>OpenTelemetry convention conformance test; FOCUS cost export</li>
+<li><b>The brief:</b> each owed obligation shows its standard clauses from the crosswalks; a new Conventions section comes from the stack profile</li>
 <li>Generators: arc42 sections, C4 diagrams (Structurizr), the Open Agent Spec definition, the 29119 test plan and report, and the <b>compliance report</b> per agent from the crosswalks and the Assurance Map</li>
 </ul></div>
 
@@ -172,7 +195,7 @@ ul.t{margin:6px 0;padding-left:20px} ul.t li{margin:3px 0}
 <li>Templates, crosswalks and tools in the public repos, versioned; the agent #3 case study as the worked example</li>
 </ul></div>
 
-<p><b>Total:</b> about 13–14 weeks of work, starting after 28 Oct. <b>Optional before the grant:</b> the NIST AI RMF crosswalk alone (part of Phase 2) strengthens the Foresight application's "independent assessment" track.</p>
+<p><b>Total:</b> about 12–13 weeks of work, starting after 28 Oct (four crosswalks already exist). <b>Optional before the grant:</b> the NIST AI RMF crosswalk already exists; citing it in the Foresight application strengthens its "independent assessment" track at no build cost.</p>
 
 <h2>6 · Who does what</h2>
 <div class="tbl"><table>
@@ -206,6 +229,7 @@ ul.t{margin:6px 0;padding-left:20px} ul.t li{margin:3px 0}
 <h2>Change log</h2>
 <div class="tbl"><table>
 <tr><th>Date</th><th>Change</th></tr>
+<tr><td>13 Oct 2026</td><td>Corrected: AAC already has four crosswalks (OWASP LLM, NIST AI RMF, ISO 42001, EU AI Act). Added §4b on where each piece lives and how standards reach generated code (through obligations and conventions in the brief).</td></tr>
 <tr><td>13 Oct 2026</td><td>Plan created after the owner asked that a third agent adopt all relevant industry standards, with our work limited to adopting, adding what is missing, and connecting the dots.</td></tr>
 </table></div>
 </main>
