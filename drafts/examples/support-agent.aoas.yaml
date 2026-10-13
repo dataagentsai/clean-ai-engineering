@@ -211,7 +211,12 @@ facts:
     values: [goal_reached, step_budget_exhausted, cost_ceiling_reached,
              deadline_reached, output_length_reached, oscillation_detected,
              awaiting_approval, awaiting_human, awaiting_confirmation, refused,
-             declined, concerns_unanswered, unrecoverable_error]
+             declined, concerns_unanswered, model_unavailable,
+             unrecoverable_error]
+    # `model_unavailable` added 13 Oct (T-114): the model could not be reached
+    # for the turn, after the harness's own retries and breaker. It was recorded
+    # as `unrecoverable_error`, which no rule reads before a second failed turn,
+    # so a customer who left after one outage never reached a person.
     # `concerns_unanswered` added 6 Oct (T-093, AHC-0118): the model ended a turn
     # with a concern the customer raised still not dealt with, after being sent
     # back once to deal with it; a person takes it (loop-exhausted).
@@ -230,7 +235,7 @@ facts:
     # write refused on its preconditions, and a row that does not exist, are
     # results the turn read. A failed read the reply routed around still
     # counts, because the rule reading this fact is `tool-unavailable`.
-    derived: "turns ending in failure, counting back from the latest until one did not; a turn ends in failure when its loop stopped on unrecoverable_error, or when an operation it called did not answer (unavailable, or slow past the turn's deadline) and the turn ended without that answer"
+    derived: "turns ending in failure, counting back from the latest until one did not; a turn ends in failure when its loop stopped on model_unavailable or unrecoverable_error, or when an operation it called did not answer (unavailable, or slow past the turn's deadline) and the turn ended without that answer"
   refusals:
     type: int
     # The harness's refusals only (generation run 4, NOTES M15): a model's own
@@ -278,7 +283,16 @@ intents:
     means: asking for money back that nobody has yet been asked for
     examples: ["I want my money back", "Refund my order please", "I'd like compensation for this order"]
   human:            {answered_by: handoff,  via: [escalate], examples: ["I want to talk to a person", "Get me a human"]}
-  lost_in_transit:  {answered_by: handoff,  via: [escalate], examples: ["My parcel is lost", "Tracking says delivered but I never got it"]}
+  # Stated as a meaning, with paraphrases, after a model-played customer (T-114,
+  # AgentTwin 0.12.0 on Groq, 12 Oct) wrote "my jacket is lost need help" and no
+  # person was fetched: the two examples here named only a parcel, so the matcher
+  # judged against them keyed on "parcel/package/order" and "lost in transit".
+  # A customer names the thing they bought, not the shipment.
+  lost_in_transit:
+    answered_by: handoff
+    via: [escalate]
+    means: "an item the customer ordered has not reached them and is reported lost or gone missing on its way, whatever the item is called and however it is put"
+    examples: ["My parcel is lost", "Tracking says delivered but I never got it", "my jacket is lost need help", "The courier lost my package", "My order never arrived", "My parcel has gone missing", "The jeans I ordered went missing in the post"]
   # Concerns this shop has no route for, named so a message raising one is not
   # left with nothing (P-CONCERNS). Decided by the owner 6 Oct, after a CCA-F
   # case (T-093): anything the agent cannot handle goes to a person.
@@ -622,7 +636,9 @@ policies:
   escalation:
     on_request:                        # Tier 1 — decided from the turn's text alone
       - {id: asked-for-human, when: the customer asks to speak to a person}
-      - {id: lost-in-transit, when: the item is reported lost in transit}
+      # Reworded with T-114: "reported lost in transit" was read as the phrase
+      # a customer must use. The intent's `means` and examples are the test set.
+      - {id: lost-in-transit, when: "the customer reports an item lost or gone missing on its way to them, in their own words (intents.lost_in_transit)"}
       # P-CONCERNS (owner, 6 Oct): a concern no intent here can answer is a
       # person's — billing disputes and warranty, and whatever joins them.
       - {id: outside-scope, when: "the customer raises a concern this agent has no route for: a billing dispute or a warranty claim"}
@@ -637,6 +653,15 @@ policies:
       # (P-REFUND-DECLINED, T-095), and no other rule should claim the turn.
       - {id: declined,         when: {field: termination, equals: [declined]}, priority: 1, ttl: 30m}
       - {id: loop-exhausted,   when: {field: termination, equals: [step_budget_exhausted, cost_ceiling_reached, deadline_reached, output_length_reached, oscillation_detected, concerns_unanswered]}, priority: 2, ttl: 15m}
+      # Added 13 Oct (T-114, owner): one turn the model could not answer is
+      # enough. The rule below waited for two, on the reading that one outage is
+      # bad luck — but the harness has already retried inside the turn, and a
+      # customer told only "I am having trouble answering right now" has nothing
+      # that can continue it (AHC-0106: a person reachable is that something).
+      # A model-played customer found it: one turn, three failed calls, nobody
+      # fetched. The operations' own failures keep the two-turn rule: the model
+      # is there to tell the customer the truth about them.
+      - {id: model-unavailable, when: {field: termination, equals: [model_unavailable]}, priority: 2, ttl: 15m}
       - {id: tool-unavailable, when: {field: consecutive_failed, at_least: 2}, priority: 2, ttl: 15m}
       - {id: repeated-intent,  when: {field: repeated_intent, at_least: 3},    priority: 3, ttl: 30m}
       - {id: second-refusal,   when: {field: refusals, at_least: 2},           priority: 4, ttl: 30m}
