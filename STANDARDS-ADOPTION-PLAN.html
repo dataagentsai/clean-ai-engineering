@@ -1,0 +1,213 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Standards Adoption Plan</title>
+<style>
+:root{--bg:#fff;--card:#fff;--ink:#1d1d1f;--muted:#5f6368;--line:#e3e3df;--accent:#0f6cbd;--soft:#eef3fa;--code:#f0f0ec;
+--good:#1a7f37;--good-bg:#e8f5ec;--warn:#b26a00;--warn-bg:#fff4e0;--bad:#c62828;--bad-bg:#fdecea;--violet:#8250df;--violet-bg:#f3ecfd}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15.5px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+main{max-width:1080px;margin:0 auto;padding:28px 16px 90px}
+h1{font-size:29px;margin:0 0 4px} h2{font-size:22px;margin:40px 0 8px;padding-top:10px;border-top:1px solid var(--line)} h3{font-size:17px;margin:20px 0 6px}
+p{margin:7px 0}.muted{color:var(--muted)} code{background:var(--code);padding:1px 5px;border-radius:4px;font-size:13px}
+.note{background:var(--soft);border-left:3px solid var(--accent);padding:10px 14px;border-radius:6px;margin:14px 0}
+.tbl{overflow-x:auto;margin:10px 0} table{border-collapse:collapse;width:100%;font-size:14px}
+th,td{text-align:left;vertical-align:top;padding:7px 8px;border-bottom:1px solid var(--line)}
+th{font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}
+.pill{display:inline-block;font-size:12px;font-weight:600;padding:1px 8px;border-radius:999px;white-space:nowrap}
+.done{color:var(--good);background:var(--good-bg)}.part{color:var(--warn);background:var(--warn-bg)}.no{color:var(--bad);background:var(--bad-bg)}.m{color:var(--violet);background:var(--violet-bg)}
+.layers{display:grid;gap:8px;margin:14px 0}
+.layers div{border:1px solid var(--line);border-radius:10px;padding:10px 14px}
+.layers b{display:inline-block;min-width:210px}
+.l1{background:#f6f8fb}.l2{background:#eef3fa}.l3{background:#fff4e0}.l4{background:#e8f5ec}
+pre{background:var(--code);padding:10px 12px;border-radius:8px;overflow-x:auto;font-size:13px}
+.phase{border:1px solid var(--line);border-radius:12px;padding:12px 16px;margin:12px 0}
+.phase h3{margin:0 0 4px}.phase .when{font-size:13px;color:var(--muted)}
+ul.t{margin:6px 0;padding-left:20px} ul.t li{margin:3px 0}
+</style>
+</head>
+<body>
+<main>
+<h1>Standards Adoption Plan</h1>
+<p class="muted">How a team specifies a new agent by <b>adopting</b> industry standards and our open catalogs, writing only what is genuinely its own, and handing developers, testers and platform engineers generated artefacts. Draft 1, 13 Oct 2026. Owner: Basant. Delivery: after the 28 Oct grant submission.</p>
+
+<div class="note"><b>The rule:</b> cite, don't restate. Every standard below is adopted by reference: we point at its clauses, use its tooling, fill its templates or follow its conventions. We write only two things: <b>what no standard says</b> (agent-specific obligations, capabilities, the behaviour contract, the test world) and <b>the connections between them</b> (crosswalks and traceability). <b>The proof:</b> a third agent is specified this way, and we measure how much was adopted versus written.</div>
+
+<h2>1 · The four layers</h2>
+<div class="layers">
+<div class="l1"><b>Layer 1 · Industry standards</b>Adopted as they are: ISO, NIST, OWASP, MITRE, OpenTelemetry, MCP, arc42, EARS, Gherkin, SRE, FinOps FOCUS, regulation</div>
+<div class="l2"><b>Layer 2 · Agent best practice</b>Adopted as they are: our open catalogs: AAC (what must be true), AHC (what must exist), stack profiles, AgentTwin's world format, the four gates. Each <b>points back</b> to Layer 1</div>
+<div class="l3"><b>Layer 3 · This agent's spec</b>Written by the team, the delta only: requirements, the AOAS, the architecture description, the harness profile, the Ops profile</div>
+<div class="l4"><b>Layer 4 · Generated artefacts</b>Never hand-written: the developer's brief, the test world and scenarios, infrastructure and CI, dashboards and alerts, the compliance report, the portable agent definition</div>
+</div>
+
+<h2>2 · Every standard: how it is adopted, where it lands, how we know it was applied</h2>
+<p><b>Adoption modes:</b> <span class="pill m">Cite</span> crosswalk clause ids to ours · <span class="pill m">Tool</span> use its parser, validator or SDK · <span class="pill m">Template</span> fill its official template · <span class="pill m">Convention</span> name and shape things its way. Paid standards are cited by clause id only; their text is never copied.</p>
+
+<h3>2.1 Requirements and behaviour (BA)</h3>
+<div class="tbl"><table>
+<tr><th>Standard</th><th>Mode</th><th>Lands in</th><th>Proved applied by</th><th>Today</th></tr>
+<tr><td>ISO/IEC/IEEE 29148 (requirements engineering)</td><td><span class="pill m">Cite</span> <span class="pill m">Template</span></td><td>The Agent Requirements template's headings and quality criteria</td><td>The template's section list maps to 29148's clauses</td><td><span class="pill no">No</span></td></tr>
+<tr><td>EARS (rule syntax: "When…, the agent shall…")</td><td><span class="pill m">Convention</span> <span class="pill m">Tool</span></td><td>Every business rule in the requirements</td><td>An EARS linter in CI refuses a rule not in a recognised pattern</td><td><span class="pill no">No</span></td></tr>
+<tr><td>Gherkin (Given / When / Then)</td><td><span class="pill m">Convention</span> <span class="pill m">Tool</span></td><td>Acceptance examples in the requirements; AgentTwin scenarios import from and export to it</td><td>Every journey has at least one Gherkin example; round-trip test</td><td><span class="pill no">No</span></td></tr>
+<tr><td>ISO/IEC 25010 and 25059 (quality, quality of AI systems)</td><td><span class="pill m">Convention</span> <span class="pill m">Cite</span></td><td>The <code>concern</code> and <code>facet</code> tag on every catalog and AOAS statement</td><td>Quality coverage report: every characteristic has statements and tests</td><td><span class="pill part">25010 yes; 25059 no</span></td></tr>
+</table></div>
+
+<h3>2.2 Architecture and interfaces (Arch)</h3>
+<div class="tbl"><table>
+<tr><th>Standard</th><th>Mode</th><th>Lands in</th><th>Proved applied by</th><th>Today</th></tr>
+<tr><td>arc42 (architecture description)</td><td><span class="pill m">Template</span></td><td>The agent's architecture description: sections 1–12, several <b>generated</b> (building blocks from AHC layers, cross-cutting concepts from AHC, quality from AAC, risks from the risk register)</td><td>Each arc42 section is filled or generated; empty ones fail review</td><td><span class="pill no">No</span></td></tr>
+<tr><td>ISO/IEC/IEEE 42010 (architecture description)</td><td><span class="pill m">Cite</span></td><td>Stakeholders, concerns and viewpoints in the arc42 description</td><td>Crosswalk</td><td><span class="pill no">No</span></td></tr>
+<tr><td>C4 model / Structurizr DSL (diagrams as code)</td><td><span class="pill m">Tool</span></td><td>Context, container and component diagrams generated from the harness profile and stack</td><td>Diagrams regenerated in CI; a diagram never drifts from the profile</td><td><span class="pill no">No</span></td></tr>
+<tr><td>MCP (tool protocol)</td><td><span class="pill m">Tool</span></td><td>Every tool interface</td><td>The SDK; AgentTwin's stand-ins are MCP servers</td><td><span class="pill done">Yes</span></td></tr>
+<tr><td>OpenAPI</td><td><span class="pill m">Tool</span></td><td>Every HTTP API (the edge, the desk)</td><td>Generated specs; contract tests</td><td><span class="pill part">Partly</span></td></tr>
+<tr><td>A2A (agent to agent)</td><td><span class="pill m">Tool</span></td><td>Only when agents call each other</td><td>Agent cards generated from the AOAS</td><td><span class="pill no">Not needed yet</span></td></tr>
+<tr><td>Oracle Open Agent Specification</td><td><span class="pill m">Tool</span></td><td>A portable, framework-neutral definition of the agent, <b>generated</b> from the AOAS and harness profile</td><td>The generated spec validates with its SDK; a smoke run on one other runtime</td><td><span class="pill no">No</span></td></tr>
+</table></div>
+
+<h3>2.3 Security (Arch + Security)</h3>
+<div class="tbl"><table>
+<tr><th>Standard</th><th>Mode</th><th>Lands in</th><th>Proved applied by</th><th>Today</th></tr>
+<tr><td>OWASP Top 10 for LLM applications</td><td><span class="pill m">Cite</span></td><td>AAC crosswalk</td><td>Every item maps to obligations, or a stated gap</td><td><span class="pill done">Yes</span></td></tr>
+<tr><td>OWASP agentic AI threats</td><td><span class="pill m">Cite</span></td><td>AAC crosswalk (extended)</td><td>Same</td><td><span class="pill no">No</span></td></tr>
+<tr><td>MITRE ATLAS</td><td><span class="pill m">Tool</span> <span class="pill m">Cite</span></td><td>Its published data file loaded; techniques mapped to obligations and to AgentTwin attack packs</td><td>Coverage report: techniques with an obligation, a test and an attack case</td><td><span class="pill part">Cited, not loaded</span></td></tr>
+</table></div>
+
+<h3>2.4 Governance, risk and regulation (Arch + Compliance)</h3>
+<div class="tbl"><table>
+<tr><th>Standard</th><th>Mode</th><th>Lands in</th><th>Proved applied by</th><th>Today</th></tr>
+<tr><td>NIST AI RMF 1.0 and its Playbook</td><td><span class="pill m">Cite</span></td><td>AAC crosswalk to Govern, Map, Measure and Manage subcategories</td><td>A generated compliance report per agent: each subcategory with its obligations and evidence (from the Assurance Map)</td><td><span class="pill no">No</span></td></tr>
+<tr><td>ISO/IEC 42001 (AI management system) and 23894 (AI risk)</td><td><span class="pill m">Cite</span></td><td>Crosswalk of Annex A controls (organisation-level) and risk process; agent-level evidence only</td><td>Same report, organisation section</td><td><span class="pill no">No</span></td></tr>
+<tr><td>EU AI Act</td><td><span class="pill m">Cite</span></td><td>Risk-class determination in the requirements; article crosswalk for the applicable class</td><td>Report lists applicable articles with evidence or "not applicable" and why</td><td><span class="pill no">No</span></td></tr>
+<tr><td>Data protection: India DPDP Act, GDPR</td><td><span class="pill m">Cite</span></td><td>Requirements §10 and the AOAS's retention and erasure statements</td><td>Erasure and retention tests; the report</td><td><span class="pill part">Retention and erasure built; no crosswalk</span></td></tr>
+<tr><td>Sector rules (e.g. the insurance regulator for claims)</td><td><span class="pill m">Cite</span></td><td>A <b>domain overlay</b>: a small crosswalk file per sector, reused by every agent in it</td><td>Same report, sector section</td><td><span class="pill no">No</span></td></tr>
+</table></div>
+
+<h3>2.5 Operations, observability and cost (Ops)</h3>
+<div class="tbl"><table>
+<tr><th>Standard</th><th>Mode</th><th>Lands in</th><th>Proved applied by</th><th>Today</th></tr>
+<tr><td>SRE practice (SLOs, SLIs, error budgets)</td><td><span class="pill m">Template</span></td><td>The Ops profile's SLO table; alert rules derived from it</td><td>Every SLO has an SLI query and an alert; burn-rate alerts generated</td><td><span class="pill part">Alerts exist; no SLO table</span></td></tr>
+<tr><td>OpenTelemetry GenAI semantic conventions</td><td><span class="pill m">Convention</span> <span class="pill m">Tool</span></td><td>Every trace span; pinned convention version</td><td>A conformance test validates spans against the published registry</td><td><span class="pill part">Used; not validated against the registry</span></td></tr>
+<tr><td>ITIL-style incident and problem management</td><td><span class="pill m">Template</span></td><td>Runbooks in the Ops profile; the lab's incident record maps to it</td><td>Every page-level alert has a runbook</td><td><span class="pill no">No</span></td></tr>
+<tr><td>FinOps FOCUS (cost and usage data format)</td><td><span class="pill m">Convention</span></td><td>Cost records exported in FOCUS columns, so any FinOps tool reads them</td><td>A validation test against the FOCUS column list</td><td><span class="pill no">No</span></td></tr>
+</table></div>
+
+<h3>2.6 Testing (Tester)</h3>
+<div class="tbl"><table>
+<tr><th>Standard</th><th>Mode</th><th>Lands in</th><th>Proved applied by</th><th>Today</th></tr>
+<tr><td>ISO/IEC/IEEE 29119 (software testing)</td><td><span class="pill m">Cite</span> <span class="pill m">Template</span></td><td>A test plan and test report <b>generated</b> from the gates and AgentTwin runs, with 29119's headings</td><td>Generated per release</td><td><span class="pill no">No</span></td></tr>
+<tr><td>JUnit XML</td><td><span class="pill m">Convention</span></td><td>Every test run, with statement ids as properties</td><td>The features gate reads it</td><td><span class="pill done">Yes</span></td></tr>
+<tr><td>pass^k (from τ-bench)</td><td><span class="pill m">Convention</span></td><td>Every run with a model in the loop</td><td>Reports</td><td><span class="pill done">Yes</span></td></tr>
+</table></div>
+
+<h2>3 · What is genuinely ours (the "adding missing" part)</h2>
+<div class="tbl"><table>
+<tr><th>Artefact</th><th>Why no standard covers it</th><th>Status</th></tr>
+<tr><td><b>AAC</b>: 118 testable obligations for AI applications, by archetype</td><td>Standards say "manage risk"; none says "a payout above a limit must wait for a person, and here is the test"</td><td><span class="pill done">Public</span></td></tr>
+<tr><td><b>AHC</b>: 118 harness capabilities with design decisions</td><td>No standard lists what must exist around a model call</td><td><span class="pill done">Public</span></td></tr>
+<tr><td><b>AOAS</b>: one agent's behaviour contract</td><td>Agent-definition formats (Open Agent Spec, Copilot manifests) say how an agent is built, not what must be true of it</td><td><span class="pill done">Draft v0</span></td></tr>
+<tr><td><b>AgentTwin</b>: spec-built test worlds and state judges</td><td>Testing standards don't cover agents judged by world state</td><td><span class="pill done">Public</span></td></tr>
+<tr><td><b>The four gates</b></td><td>Our definition of done</td><td><span class="pill done">Public</span></td></tr>
+<tr><td><b>The crosswalk register</b>: one machine-readable file joining our ids to every standard's clause ids</td><td>The "connecting the dots" part</td><td><span class="pill no">To build</span></td></tr>
+<tr><td><b>Agent Requirements template</b> (BA), <b>Ops profile</b>, <b>business parameters</b> in the AOAS</td><td>Templates that apply the standards to agents</td><td><span class="pill no">To build</span> (T-115, T-116)</td></tr>
+</table></div>
+
+<h2>4 · Connecting the dots: one chain from standard to evidence</h2>
+<pre>Standard clause ─▶ AAC obligation / AHC capability ─▶ AOAS statement ─▶ test / scenario ─▶ evidence in a run
+ NIST MANAGE-2.3      AAC-0057 (a person decides         issue_payout            approval scenarios     the gates' verdict
+ OWASP LLM06          above a limit)                     authority + parameter   + table tests          + run records</pre>
+<p>Every link is an id, stored once. Two directions are checked:</p>
+<ul class="t">
+<li><b>Downward</b>: a standard clause with nothing below it is either a gap to add to AAC or AHC, or declared out of scope with a reason.</li>
+<li><b>Upward</b>: an obligation or capability with no standard above it is our addition, and must say why.</li>
+</ul>
+<p>The result is a <b>generated compliance report per agent</b>: for each standard, which clauses are met, by what, with which evidence, and which are gaps. A reviewer, an auditor or a customer reads that, not our code.</p>
+
+<h2>5 · The plan</h2>
+
+<div class="phase"><h3>Phase 0 · Foundations</h3><div class="when">1 week · after 28 Oct</div>
+<ul class="t">
+<li>The adoption policy: the four modes; version pinning; paid standards cited by clause id only; an owner role per standard</li>
+<li>The crosswalk register format: one YAML per standard (standard, version, clause id, title, maps to [our ids], status: met, partial, gap, out of scope, reason), with a validator</li>
+<li>Decide which paid standards to buy (ISO 29148, 29119, 25059, 42001, 23894) or to cite from public summaries only</li>
+</ul></div>
+
+<div class="phase"><h3>Phase 1 · Templates for each role</h3><div class="when">2 weeks</div>
+<ul class="t">
+<li><b>BA:</b> Agent Requirements template (29148 headings; EARS rules; Gherkin acceptance; parameters table with owner and range; journeys; tone; KPIs; risk class) (T-116)</li>
+<li><b>BA + Arch:</b> AOAS gains <code>parameters</code> (T-115) and <code>requirement</code> references on every statement</li>
+<li><b>Arch:</b> arc42 template with each section marked written, generated or cited; the archetype choice guide</li>
+<li><b>Ops:</b> Ops profile template: SLOs and error budgets, alert policy, runbooks, parameter owners, retention, desk staffing</li>
+</ul></div>
+
+<div class="phase"><h3>Phase 2 · Crosswalks</h3><div class="when">3 weeks</div>
+<ul class="t">
+<li>AAC ↔ NIST AI RMF, ISO 42001 Annex A, ISO 23894, EU AI Act, OWASP agentic threats, MITRE ATLAS (loaded from its data), ISO 25059, DPDP and GDPR</li>
+<li>AHC ↔ arc42 sections, ISO 42010 viewpoints, OpenTelemetry GenAI conventions</li>
+<li>A domain overlay for insurance (the claims agent's sector), as the pattern for others</li>
+<li>Both directions reported: gaps added to AAC or AHC, or declared out of scope; our additions justified</li>
+</ul></div>
+
+<div class="phase"><h3>Phase 3 · Tooling and gates</h3><div class="when">3 weeks</div>
+<ul class="t">
+<li>An EARS linter; Gherkin import and export for AgentTwin scenarios</li>
+<li>Traceability in the features gate: requirement → AOAS statement → test; an orphan on either side fails</li>
+<li>OpenTelemetry convention conformance test; FOCUS cost export</li>
+<li>Generators: arc42 sections, C4 diagrams (Structurizr), the Open Agent Spec definition, the 29119 test plan and report, and the <b>compliance report</b> per agent from the crosswalks and the Assurance Map</li>
+</ul></div>
+
+<div class="phase"><h3>Phase 4 · The proof: agent #3, from zero</h3><div class="when">3–4 weeks</div>
+<ul class="t">
+<li>Pick a third agent in a new domain (candidates: hotel guest support, which already has an AOAS draft; insurance underwriting intake; an internal IT help desk)</li>
+<li>Arch, BA and Ops follow the playbook with no help from the authors; dev, tester and PE receive only generated artefacts</li>
+<li>Measure: hours per role; lines written vs adopted vs generated; standards clauses covered; gaps found in the templates; the four gates and the compliance report at the end</li>
+<li>Everything found goes back into the templates and catalogs, as the generation runs did</li>
+</ul></div>
+
+<div class="phase"><h3>Phase 5 · Publish</h3><div class="when">1 week</div>
+<ul class="t">
+<li>The <b>Agent Spec Playbook</b>: one page per role (adopt these, write this, you will receive that)</li>
+<li>Templates, crosswalks and tools in the public repos, versioned; the agent #3 case study as the worked example</li>
+</ul></div>
+
+<p><b>Total:</b> about 13–14 weeks of work, starting after 28 Oct. <b>Optional before the grant:</b> the NIST AI RMF crosswalk alone (part of Phase 2) strengthens the Foresight application's "independent assessment" track.</p>
+
+<h2>6 · Who does what</h2>
+<div class="tbl"><table>
+<tr><th>Role</th><th>Adopts (reads, cites)</th><th>Writes for the agent</th><th>Receives</th></tr>
+<tr><td><b>BA</b></td><td>29148, EARS, Gherkin, 25010/25059, AAC, sector overlay</td><td>Agent Requirements; approves the AOAS</td><td>An AI-drafted AOAS; the traceability report</td></tr>
+<tr><td><b>Architect</b></td><td>arc42, 42010, C4, MCP, OpenAPI, A2A, Open Agent Spec, OWASP, ATLAS, NIST, 42001, EU AI Act, AHC, stack profiles</td><td>Archetype; harness profile; the written arc42 sections; decision records</td><td>Generated arc42 sections, C4 diagrams, the compliance report</td></tr>
+<tr><td><b>Ops</b></td><td>SRE, OpenTelemetry, ITIL, FOCUS, AAC's operational obligations</td><td>Ops profile</td><td>Generated dashboards, alerts, online checks</td></tr>
+<tr><td><b>Developer</b></td><td>The stack's adapters, the harness library</td><td>The agent's own parts only</td><td>The build brief</td></tr>
+<tr><td><b>Tester</b></td><td>29119, Gherkin, AgentTwin</td><td>Customer wording; extra scenarios</td><td>Test world, draft scenarios, coverage report, the gates, the 29119 plan and report</td></tr>
+<tr><td><b>Platform engineer</b></td><td>The stack profile, IaC, CI</td><td>Environment specifics</td><td>Infrastructure and CI with the gates</td></tr>
+</table></div>
+
+<h2>7 · Success measures</h2>
+<ul class="t">
+<li>Agent #3's spec: the share of statements adopted or generated versus written (target set after Phase 0, measured in Phase 4)</li>
+<li>Every adopted standard has a crosswalk with no unexplained gaps in either direction</li>
+<li>A compliance report is generated for all three agents, from evidence, with no hand-editing</li>
+<li>Hours per role for agent #3, compared with what the first two agents took</li>
+<li>All four gates pass for agent #3 at the first full build</li>
+</ul>
+
+<h2>8 · Risks</h2>
+<div class="tbl"><table>
+<tr><th>Risk</th><th>Mitigation</th></tr>
+<tr><td>Paid ISO standards: cost, and licence limits on copying</td><td>Cite by clause id only; buy the few that matter; public summaries are not a substitute for compliance claims</td></tr>
+<tr><td>Crosswalks are judgement calls and go stale</td><td>Each mapping has a reviewer and a reason; pinned versions; re-review on a standard's new version</td></tr>
+<tr><td>Too much documentation, which nobody reads</td><td>Generate wherever possible; every template section either feeds a generator or a gate, or it is dropped</td></tr>
+<tr><td>Agent #3 is built by people who already know the system</td><td>Phase 4 uses people who did not author the catalogs, and records every question they ask</td></tr>
+</table></div>
+
+<h2>Change log</h2>
+<div class="tbl"><table>
+<tr><th>Date</th><th>Change</th></tr>
+<tr><td>13 Oct 2026</td><td>Plan created after the owner asked that a third agent adopt all relevant industry standards, with our work limited to adopting, adding what is missing, and connecting the dots.</td></tr>
+</table></div>
+</main>
+</body>
+</html>
