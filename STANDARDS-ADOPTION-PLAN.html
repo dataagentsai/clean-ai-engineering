@@ -31,39 +31,100 @@ ul.t{margin:6px 0;padding-left:20px} ul.t li{margin:3px 0}
 <body>
 <main>
 <h1>Standards Adoption Plan</h1>
+<p class="muted"><b>Read in order:</b> A (how the industry does it) → 0 (what you do) → 1–4 (standards and how they connect) → 5 (the plan).</p>
 <p class="muted">How a team specifies a new agent by <b>adopting</b> industry standards and our open catalogs, writing only what is genuinely its own, and handing developers, testers and platform engineers generated artefacts. Draft 1, 13 Oct 2026. Owner: Basant. Delivery: after the 28 Oct grant submission.</p>
 
 <div class="note"><b>The rule:</b> cite, don't restate. Every standard below is adopted by reference: we point at its clauses, use its tooling, fill its templates or follow its conventions. We write only two things: <b>what no standard says</b> (agent-specific obligations, capabilities, the behaviour contract, the test world) and <b>the connections between them</b> (crosswalks and traceability). <b>The proof:</b> a third agent is specified this way, and we measure how much was adopted versus written.</div>
 
+<h2>A · Learn first: how the industry does spec-driven development</h2>
+<p class="muted">Summary of a survey made on 13 Oct 2026. Full report with sources: <code>research/SDD-SURVEY-2026-10.md</code>.</p>
+
+<h3>A.1 The three levels (Böckeler, martinfowler.com)</h3>
+<div class="tbl"><table>
+<tr><th>Level</th><th>What it means</th><th>Who is there</th></tr>
+<tr><td><b>Spec-first</b></td><td>Write a spec, build from it, then the spec goes stale</td><td>Most tools in practice: Spec Kit (per branch), Kiro, plan modes</td></tr>
+<tr><td><b>Spec-anchored</b></td><td>The spec is kept as the source of truth and changed first whenever behaviour changes</td><td>OpenSpec, Thoughtworks' SPDD, BDD living documentation, Pact contracts. <b>And us</b>: the AOAS drives the gates on every build</td></tr>
+<tr><td><b>Spec-as-source</b></td><td>People edit only the spec; code is fully generated</td><td>Tessl (closed beta). Critics: inherits the downsides of both model-driven development and LLMs</td></tr>
+</table></div>
+
+<h3>A.2 The tools</h3>
+<div class="tbl"><table>
+<tr><th>Tool</th><th>Files</th><th>Roles</th><th>Keeps the spec alive?</th><th>Verdict for us</th></tr>
+<tr><td><b>GitHub Spec Kit</b> (MIT, ~141k stars)</td><td>constitution; per feature: spec, plan, data-model, contracts, tasks</td><td>Light (PM, architect, maintainers)</td><td>Intended, but specs live per branch</td><td><span class="pill part">Borrow</span> the constitution and the clarify markers</td></tr>
+<tr><td><b>OpenSpec</b> (MIT, ~72k stars)</td><td><code>specs/</code> = source of truth; <code>changes/&lt;name&gt;/</code> = proposal, delta specs, design, tasks; merged into truth when archived</td><td>None</td><td><b>Yes</b>, by design</td><td><span class="pill done">Adopt</span> as the folder and change workflow</td></tr>
+<tr><td><b>AWS Kiro</b> (proprietary)</td><td>requirements (EARS), design, tasks; steering files</td><td>None</td><td>Mostly no</td><td><span class="pill part">Borrow</span> EARS, and its idea of turning requirements into property-based tests</td></tr>
+<tr><td><b>BMAD Method</b> (MIT)</td><td>brief, PRD, architecture, stories</td><td><b>Most explicit:</b> Analyst, PM, Architect, Scrum Master, Dev, QA</td><td>Partly</td><td><span class="pill part">Borrow</span> its role split as the model for ours</td></tr>
+<tr><td><b>SPDD</b> (Thoughtworks method)</td><td>story, analysis, a canvas, tests</td><td>PO/BA writes; developer reviews</td><td>Yes: "when reality diverges, fix the prompt first"</td><td><span class="pill done">Adopt</span> the rule; we already route every failure to the spec</td></tr>
+<tr><td><b>Tessl</b></td><td>a spec per code file</td><td>None</td><td>Spec-as-source</td><td><span class="pill no">Drop</span>: closed beta, wrong level for us</td></tr>
+<tr><td><b>Agent OS, plan modes, AGENTS.md</b></td><td>standards, plans, instruction files</td><td>None</td><td>Instructions only, not enforced</td><td><span class="pill part">Borrow</span> AGENTS.md as the coding agent's entry file</td></tr>
+</table></div>
+<p><b>What most of them share:</b> (1) a lasting project layer (constitution, steering, standards); (2) per change, the trio <i>requirements → design → tasks</i>; (3) a person approves between steps; (4) acceptance criteria are the bridge to tests.</p>
+
+<h3>A.3 What the critics say, and what we take from it</h3>
+<div class="tbl"><table>
+<tr><th>Criticism</th><th>Source</th><th>Our answer</th></tr>
+<tr><td>Overkill: a small bug became 4 stories and 16 criteria</td><td>Böckeler</td><td><b>Tier rigour by risk</b>, as aviation (DO-178C levels A–E) and medical software do: a low-risk FAQ agent gets a short spec, a payout agent the full one. The archetype and the risk class choose the tier</td></tr>
+<tr><td>Too many markdown files to review</td><td>Böckeler, Thoughtworks Radar</td><td>Generate everything that can be generated; people review only what they wrote, plus the status list</td></tr>
+<tr><td>Waterfall comes back</td><td>Kent Beck via Fowler; Marmelab</td><td>Short loops: the spec changes in small deltas (OpenSpec), and the gates run on every change</td></tr>
+<tr><td>Specs drift; agents ignore them</td><td>Thoughtworks; Böckeler</td><td><b>Executable traceability</b>, as Pact and BDD do: the spec is checked in CI, so it cannot drift silently. This is our four gates</td></tr>
+<tr><td>Behaviour is "the elephant in the room"; AI-written tests are not good enough</td><td>Böckeler, "Harness engineering"</td><td>This is exactly what the AOAS and AgentTwin address: behaviour judged by world state, from the spec</td></tr>
+</table></div>
+
+<h3>A.4 The older practices underneath</h3>
+<ul class="t">
+<li><b>BDD/Gherkin</b>: examples are the tests, so the documentation stays true.</li>
+<li><b>Pact and OpenAPI</b>: the contract is verified in CI, and <code>can-i-deploy</code> blocks a release that breaks it. This is the best existing pattern for a spec that stays alive.</li>
+<li><b>Regulated industries</b> (DO-178C, ISO 26262, IEC 62304): requirement → design → code → test → evidence, every link two-way, rigour tiered by risk. <b>This is the model for our chain in §4.</b></li>
+<li><b>arc42 and ADRs</b>: architecture docs kept in the repo next to the code.</li>
+</ul>
+
+<h3>A.5 Agent formats: two families, never joined</h3>
+<div class="tbl"><table>
+<tr><th>Family</th><th>Examples</th><th>Answers</th></tr>
+<tr><td><b>Assembly</b></td><td>Oracle Open Agent Spec, Microsoft Agent Framework and Copilot declarative agents, Google ADK config, CrewAI, A2A agent cards</td><td>How the agent is built: model, prompt, tools, flow</td></tr>
+<tr><td><b>Constraints at run time</b></td><td>NeMo Guardrails (Colang), <b>AWS AgentCore Policy</b> (Cedar; its own example is "a refund agent may refund under $500"), OPA/Rego proxies, the AgentSpec research DSL</td><td>What the agent may not do, enforced live</td></tr>
+<tr><td><b>Neither</b></td><td>—</td><td>Joining the two, tracing both back to requirements, owed actions, judging by world state, SLOs and runbooks, compliance crosswalks, the Ops role</td></tr>
+</table></div>
+
+<h3>A.6 So where are we?</h3>
+<p>The survey confirms the delta. Nobody covers: <b>behavioural obligations</b> as first-class spec items, <b>authority limits</b> traced back to requirements, <b>judging by world state</b>, <b>operations</b> (SLOs, cost budgets, runbooks), <b>compliance crosswalks</b> for agents, or an <b>Ops role</b>. Those are exactly the AOAS, AAC, AHC, AgentTwin and the Ops profile. Everything else (folders, workflow, requirement syntax, examples, assembly format, runtime policy engines) we <b>adopt</b>.</p>
+
 <h2>0 · If you are the Architect, BA or Ops: what you actually do</h2>
 <p><b>The problem today:</b> the material is spread across five repos (AAC, AHC, AgentTwin, clean-ai-engineering, stack profiles), and nothing tells a first-liner which part concerns them. <b>The fix:</b> you never open the catalogs. You work in <b>one folder per agent</b>. The catalogs and crosswalks show up there in two forms: as <b>questions in your template</b> and as a <b>to-do list from one status command</b>.</p>
 
-<h3>0.1 Adopt the workflow shell too: GitHub Spec Kit</h3>
-<p>Spec-driven development already has open tooling. <b>GitHub Spec Kit</b> (MIT; works with Claude Code and Copilot) gives each feature a folder and a fixed sequence: <i>constitution → specify → plan → tasks → implement</i>, plus clarify and analyze. <b>AWS Kiro</b> uses the same shape: <code>requirements.md</code> in EARS, <code>design.md</code>, <code>tasks.md</code>. We adopt Spec Kit's folder and commands and plug our pieces into it, rather than invent a workflow:</p>
+<h3>0.1 The workflow: OpenSpec's living model, with borrowed parts</h3>
+<p>Revised after the survey (§A). Spec Kit keeps specs per branch, which is spec-first; our AOAS must stay true for the life of the agent, because the gates read it on every build. <b>OpenSpec</b> (MIT) is built for that: a source-of-truth folder, plus one folder per change with deltas merged back when the change is done. We adopt its structure and borrow Spec Kit's constitution and clarify markers, Kiro's EARS, BMAD's role split and SPDD's rule ("fix the spec first"). <b>To confirm by trial:</b> one day running OpenSpec and Spec Kit side by side on an agent #3 slice, before Phase 1 commits.</p>
 <div class="tbl"><table>
-<tr><th>Spec Kit step</th><th>Our piece plugged in</th><th>Who</th></tr>
-<tr><td><b>constitution</b></td><td><b>Generated</b>: the pinned AAC and AHC versions, the four gates, the PROJECT_BIBLE principles, the stack profile. Nobody writes it</td><td>(tool)</td></tr>
-<tr><td><b>specify</b> → <code>requirements.md</code></td><td>Our Agent Requirements template: 29148 headings, EARS rules, Gherkin examples, parameters, risk class</td><td>BA</td></tr>
-<tr><td><b>clarify</b></td><td>Turns the archetype's owed obligations into the questions still unanswered ("a payout agent needs an authority limit: what is it, and who owns it?")</td><td>BA, Arch</td></tr>
-<tr><td>(new step) <b>contract</b> → <code>agent.aoas.yaml</code></td><td>AI-drafted from the requirements; the BA approves a <b>plain-language rendering</b>, not the YAML</td><td>BA approves, Arch checks</td></tr>
-<tr><td><b>plan</b> → <code>design.md</code> + <code>harness-profile.yaml</code></td><td>arc42 template (sections 4–8 generated from AHC); the harness profile extends a stack profile</td><td>Arch</td></tr>
-<tr><td>(new step) <b>operate</b> → <code>ops-profile.yaml</code></td><td>Ops template: SLOs prefilled per archetype, alert routing, runbooks, parameter owners, retention, desk hours</td><td>Ops</td></tr>
-<tr><td><b>tasks</b> → <code>tasks.md</code></td><td><b>Generated</b>: our brief (<code>tools/brief.js</code>), split into tasks</td><td>(tool) → Dev</td></tr>
-<tr><td><b>analyze</b></td><td><b>Our status check</b>: traceability, unanswered obligations, crosswalk gaps, per role</td><td>everyone</td></tr>
-<tr><td><b>implement</b></td><td>The coding agent, then the four gates</td><td>Dev, Tester, PE</td></tr>
+<tr><th>Step</th><th>Our piece</th><th>Who</th></tr>
+<tr><td><b>constitution</b> (from Spec Kit)</td><td><b>Generated</b>: pinned AAC and AHC versions, the four gates, PROJECT_BIBLE principles, the stack profile, and the <b>rigour tier</b> from archetype and risk class</td><td>(tool)</td></tr>
+<tr><td><b>proposal</b> (OpenSpec)</td><td>Why this agent or this change; risk class; which roles must sign</td><td>BA, Arch</td></tr>
+<tr><td><b>requirements</b></td><td>Our Agent Requirements template: 29148 headings, EARS rules, Gherkin examples, parameters, customer wording</td><td>BA</td></tr>
+<tr><td><b>clarify</b> (from Spec Kit)</td><td>The archetype's owed obligations become open questions in business words ("a payout agent needs an authority limit: what is it, who owns it?")</td><td>BA, Arch</td></tr>
+<tr><td><b>contract</b> (ours)</td><td>The AOAS, AI-drafted from the requirements; the BA approves a plain-language rendering, not the YAML</td><td>BA approves, Arch checks</td></tr>
+<tr><td><b>design</b></td><td>arc42 (sections 4–8 generated from AHC); harness profile extending a stack profile; decision records</td><td>Arch</td></tr>
+<tr><td><b>operate</b> (ours; no tool has it)</td><td>Ops profile: SLOs prefilled per archetype, cost budgets, alert routing, runbooks, parameter owners, retention, desk hours</td><td>Ops</td></tr>
+<tr><td><b>tasks</b></td><td><b>Generated</b>: our brief, split into tasks; AGENTS.md points the coding agent at it</td><td>(tool) → Dev</td></tr>
+<tr><td><b>status</b> (Spec Kit's analyze)</td><td>Per role: unanswered, untraced, gaps</td><td>everyone</td></tr>
+<tr><td><b>implement and verify</b></td><td>The coding agent, then the four gates (the "can-i-deploy" of agents)</td><td>Dev, Tester, PE</td></tr>
+<tr><td><b>archive</b> (OpenSpec)</td><td>The change's deltas merge into the source-of-truth spec; the compliance report is regenerated</td><td>(tool)</td></tr>
 </table></div>
 
 <h3>0.2 The one folder</h3>
 <pre>agents/motor-claims-fnol/
-  .specify/memory/constitution.md   generated   pins AAC, AHC, gates, stack
-  requirements.md                   BA          what the business wants, in EARS + Gherkin
-  agent.aoas.yaml                   BA + Arch   the behaviour contract (AI-drafted, approved)
-  design.md                         Arch        arc42; most sections generated
-  harness-profile.yaml              Arch        extends stacks/azure.yaml; archetypes; accepted gaps
-  ops-profile.yaml                  Ops         SLOs, alerts, runbooks, parameter owners
-  agent.agentspec.yaml              generated   portable definition (Oracle Open Agent Spec)
-  tasks.md                          generated   the build brief, for the developer
-  compliance.html                   generated   each standard clause: met by what, evidence, gaps</pre>
+  constitution.md                   generated   pins AAC, AHC, gates, stack, rigour tier
+  AGENTS.md                         generated   the coding agent's entry point
+  specs/                            the source of truth, always current
+    requirements.md                 BA          EARS rules, Gherkin examples, parameters
+    agent.aoas.yaml                 BA + Arch   the behaviour contract
+    design.md                       Arch        arc42; most sections generated
+    harness-profile.yaml            Arch        extends stacks/azure.yaml; archetypes; accepted gaps
+    ops-profile.yaml                Ops         SLOs, budgets, alerts, runbooks, parameter owners
+  changes/2026-11-raise-payout-limit/   one folder per change, merged on archive
+    proposal.md  deltas/  tasks.md
+  generated/
+    agent.agentspec.yaml            Oracle Open Agent Spec: the assembly half
+    policy.cedar                    authority limits for a runtime policy engine (optional)
+    brief.md  compliance.html  test-report.html</pre>
 
 <h3>0.3 Each role, step by step</h3>
 <div class="tbl"><table>
@@ -82,6 +143,7 @@ ul.t{margin:6px 0;padding-left:20px} ul.t li{margin:3px 0}
 <tr><td>Used by</td><td>The gates, AgentTwin, the brief, the compliance report</td><td>A runtime: WayFlow, LangGraph and others</td></tr>
 <tr><td>Proof</td><td colspan="2">The same AgentTwin world and the same gates judge the agent <b>whichever way it was built</b>: our harness in Python, or a declarative runtime. This is code-to-interface at the agent level: the build route is an adapter</td></tr>
 </table></div>
+<p><b>The third family, runtime constraints</b> (NeMo Guardrails, AWS AgentCore Policy in Cedar, OPA): the AOAS's <code>authority</code> and <code>preconditions</code> can be <b>generated</b> into such a policy, so a policy engine enforces them live, while the gates still prove them in tests. Adopt where the stack has an engine; never hand-write the policy.</p>
 <p><b>Recommendation:</b> generate the Agent Spec file for all three agents (cheap, and it makes them portable), and build agent #3 <b>both ways</b> in Phase 4 if time allows. Whether a declarative runtime can carry approvals, budgets and owed actions as well as our harness does is itself a finding worth publishing.</p>
 
 <h2>1 · The four layers</h2>
@@ -282,6 +344,7 @@ ul.t{margin:6px 0;padding-left:20px} ul.t li{margin:3px 0}
 <h2>Change log</h2>
 <div class="tbl"><table>
 <tr><th>Date</th><th>Change</th></tr>
+<tr><td>13 Oct 2026</td><td>Added §A from a survey of spec-driven development (research/SDD-SURVEY-2026-10.md). §0 revised: OpenSpec's living model replaces Spec Kit as the workflow (Spec Kit's constitution and clarify kept); rigour tiered by risk; AGENTS.md; generated runtime policy (Cedar/OPA) as the third agent-format family.</td></tr>
 <tr><td>13 Oct 2026</td><td>Added §0: the first-liner workflow in one folder per agent, adopting GitHub Spec Kit as the shell; per-role steps; declarative agent formats (Oracle Open Agent Spec and others) as the assembly half beside the AOAS.</td></tr>
 <tr><td>13 Oct 2026</td><td>Corrected: AAC already has four crosswalks (OWASP LLM, NIST AI RMF, ISO 42001, EU AI Act). Added §4b on where each piece lives and how standards reach generated code (through obligations and conventions in the brief).</td></tr>
 <tr><td>13 Oct 2026</td><td>Plan created after the owner asked that a third agent adopt all relevant industry standards, with our work limited to adopting, adding what is missing, and connecting the dots.</td></tr>
