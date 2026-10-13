@@ -31,10 +31,20 @@ ul.t{margin:6px 0;padding-left:20px} ul.t li{margin:3px 0}
 <body>
 <main>
 <h1>Standards Adoption Plan</h1>
-<p class="muted"><b>Read in order:</b> A (how the industry does it) → 0 (what you do) → 1–4 (standards and how they connect) → 5 (the plan).</p>
+<p class="muted"><b>Read in order:</b> At a glance → A (how the industry does it) → 0 (what you do) → 1–4 (standards and how they connect) → 5 (the plan).</p>
 <p class="muted">How a team specifies a new agent by <b>adopting</b> industry standards and our open catalogs, writing only what is genuinely its own, and handing developers, testers and platform engineers generated artefacts. Draft 1, 13 Oct 2026. Owner: Basant. Delivery: after the 28 Oct grant submission.</p>
 
 <div class="note"><b>The rule:</b> cite, don't restate. Every standard below is adopted by reference: we point at its clauses, use its tooling, fill its templates or follow its conventions. We write only two things: <b>what no standard says</b> (agent-specific obligations, capabilities, the behaviour contract, the test world) and <b>the connections between them</b> (crosswalks and traceability). <b>The proof:</b> a third agent is specified this way, and we measure how much was adopted versus written.</div>
+
+
+<h2>At a glance · what we adopt, borrow and build</h2>
+<div class="tbl"><table>
+<tr><th>Kind</th><th>What</th><th>How</th></tr>
+<tr><td><span class="pill done">Adopt whole</span></td><td><b>OpenSpec</b> (folder and change workflow) · <b>EARS</b> (rule wording) · <b>Gherkin</b> (examples) · <b>arc42</b> + ADRs (architecture) · <b>Oracle Open Agent Spec</b> (assembly file) · <b>MCP</b>, OpenAPI, A2A (interfaces) · <b>OpenTelemetry GenAI</b> (traces) · <b>SRE SLOs</b> (Ops) · <b>FinOps FOCUS</b> (cost) · <b>AGENTS.md</b> (coding agent entry) · <b>Cedar/OPA</b> where the stack has a policy engine</td><td>Use the tool or the format as published</td></tr>
+<tr><td><span class="pill done">Adopt by citation</span></td><td>ISO 29148, 29119, 25010/25059, 42010, 42001, 23894 · NIST AI RMF · EU AI Act · OWASP LLM and agentic · MITRE ATLAS · DPDP, GDPR · sector rules</td><td>Crosswalks to our ids (four already exist in AAC)</td></tr>
+<tr><td><span class="pill part">Borrow an idea</span></td><td>Spec Kit's constitution and clarify markers · Kiro's requirements → property tests · BMAD's role split · SPDD's "fix the spec first" · Pact's can-i-deploy · aviation's risk-tiered rigour and two-way trace</td><td>Named and credited in the templates and tools</td></tr>
+<tr><td><span class="pill m">Build (the delta)</span></td><td>AAC · AHC · AOAS · AgentTwin · the four gates · BA, Arch and Ops templates applying the standards to agents · the Ops profile · the crosswalk register and compliance report · the status check · generators (Agent Spec, Cedar, arc42 sections, brief)</td><td>Only what the survey (§A.6) found nobody covers, plus the connections</td></tr>
+</table></div>
 
 <h2>A · Learn first: how the industry does spec-driven development</h2>
 <p class="muted">Summary of a survey made on 13 Oct 2026. Full report with sources: <code>research/SDD-SURVEY-2026-10.md</code>.</p>
@@ -258,6 +268,21 @@ ul.t{margin:6px 0;padding-left:20px} ul.t li{margin:3px 0}
 <p>The gates then prove the result, without trusting the coder: the features gate checks requirement → statement → test; the compliance report checks clause → obligation → evidence.</p>
 
 <h2>5 · The plan</h2>
+<h3>5.0 End to end, with everything else that is running</h3>
+<p class="muted">Three lanes share one person's time. Dates assume more than an hour a day from Basant, with Claude doing the bulk of the writing and building. The grant comes first until 28 Oct.</p>
+<div class="tbl"><table>
+<tr><th>When</th><th>Grant and research</th><th>FNOL agent on Azure</th><th>Specifying agents (this plan)</th></tr>
+<tr><td><b>13–28 Oct</b></td><td><b>Main lane.</b> Claude API key → real fixer runs on INC-0001 and T-114; budget, bio, sprint answer; DOIs; write-up and video; submit 28 Oct. Cite the existing NIST crosswalk</td><td>Paused</td><td><b>Learn only:</b> the reading list (deep-dive page, Session 7, about 5 hours). No building</td></tr>
+<tr><td><b>29 Oct–7 Nov</b></td><td>Wait for decisions</td><td><b>Main lane.</b> Tier 3 run (<code>azd up</code>), Tier 4 live checks, Tier 4b evaluation loop, Tier 5 guided tour</td><td>Phase 0: adoption policy, crosswalk format, which ISO standards to buy, the <b>one-day OpenSpec vs Spec Kit trial</b></td></tr>
+<tr><td><b>10–21 Nov</b></td><td></td><td>Fixes from live running only</td><td>Phase 1: templates (BA, Arch, Ops), AOAS parameters and requirement links. <b>Pilot</b>: move the FNOL agent's spec into the one-folder layout to test the templates on a real agent</td></tr>
+<tr><td><b>24 Nov–12 Dec</b></td><td></td><td></td><td>Phase 2: the remaining crosswalks (ISO 23894 and 25059, OWASP agentic, ATLAS, DPDP/GDPR, OpenTelemetry, insurance overlay)</td></tr>
+<tr><td><b>15 Dec–9 Jan</b></td><td></td><td></td><td>Phase 3: status check, clarify questions, EARS checker, Gherkin round trip, traceability gate, generators, compliance report (holiday weeks included)</td></tr>
+<tr><td><b>12 Jan–6 Feb</b></td><td></td><td></td><td>Phase 4: <b>agent #3 from zero</b> by people who did not write the catalogs; measured</td></tr>
+<tr><td><b>9–13 Feb</b></td><td></td><td></td><td>Phase 5: publish the Agent Spec Playbook, templates, crosswalks and the case study</td></tr>
+<tr><td><b>From mid-Feb</b></td><td>If funded: the six-month study (thirty simulated days, three conditions)</td><td>Phase 2 tiers 6–14 (Chatwoot, library clean-up, evaluation on Azure, hardening), re-done with the playbook</td><td>Maintain; re-review crosswalks when standards change</td></tr>
+</table></div>
+<div class="note"><b>One decision to watch:</b> if the grant is awarded before February, the study and Phases 3–4 compete for the same time. The study wins (it is funded and dated); Phases 3–4 move back by its length, or agent #3 becomes the study's second agent under test.</div>
+<h3>5.1 The phases in detail</h3>
 
 <div class="phase"><h3>Phase 0 · Foundations</h3><div class="when">1 week · after 28 Oct</div>
 <ul class="t">
@@ -344,6 +369,7 @@ ul.t{margin:6px 0;padding-left:20px} ul.t li{margin:3px 0}
 <h2>Change log</h2>
 <div class="tbl"><table>
 <tr><th>Date</th><th>Change</th></tr>
+<tr><td>13 Oct 2026</td><td>Added "At a glance" (adopt, borrow, build) and §5.0, a dated end-to-end plan across the grant, the FNOL agent and this plan; pilot the templates on the FNOL agent in Phase 1.</td></tr>
 <tr><td>13 Oct 2026</td><td>Added §A from a survey of spec-driven development (research/SDD-SURVEY-2026-10.md). §0 revised: OpenSpec's living model replaces Spec Kit as the workflow (Spec Kit's constitution and clarify kept); rigour tiered by risk; AGENTS.md; generated runtime policy (Cedar/OPA) as the third agent-format family.</td></tr>
 <tr><td>13 Oct 2026</td><td>Added §0: the first-liner workflow in one folder per agent, adopting GitHub Spec Kit as the shell; per-role steps; declarative agent formats (Oracle Open Agent Spec and others) as the assembly half beside the AOAS.</td></tr>
 <tr><td>13 Oct 2026</td><td>Corrected: AAC already has four crosswalks (OWASP LLM, NIST AI RMF, ISO 42001, EU AI Act). Added §4b on where each piece lives and how standards reach generated code (through obligations and conventions in the brief).</td></tr>
