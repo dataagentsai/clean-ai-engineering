@@ -1,0 +1,20 @@
+{
+  "title": "Clean AI Engineering: principles, specification formats and gates for building AI agents as testable software",
+  "upload_type": "software",
+  "description": "The umbrella of a family of open specifications for AI agents: the principles, the Spec Charter that routes each statement to the right specification, the Baseline of software practice cited rather than restated, the draft per-agent specification format (AOAS), and the four gates (behaviour, features, structure, harness) with the cycle that routes every failure back to a specification. It joins the AI Assurance Catalog (what must be true), the AI Harness Catalog (what must exist) and AgentTwin (what an agent must face).",
+  "creators": [
+    {
+      "affiliation": "DataAgents.ai",
+      "name": "Choudhary, Basant"
+    }
+  ],
+  "keywords": [
+    "AI agents",
+    "AI engineering",
+    "specification",
+    "agent evaluation",
+    "LLM applications"
+  ],
+  "license": "Apache-2.0",
+  "notes": "Code under Apache-2.0 (LICENSE); specification text under CC-BY-4.0 (LICENSE-SPEC.txt)."
+}
