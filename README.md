@@ -1,5 +1,7 @@
 # Clean AI Engineering
 
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.23366162.svg)](https://doi.org/10.5281/zenodo.23366162)
+
 A method for building AI agents as ordinary, testable software. This repository
 holds the method's principles, its specification formats, the four gates an
 agent must pass, and the cycle that turns each failure into a fix in a spec.
@@ -40,7 +42,7 @@ test AI agents:
 | [Reference Agent](https://github.com/dataagentsai/reference-agent) | the reference implementation: one agent built and tested to all of the above |
 | [AgentTwin Lab](https://github.com/dataagentsai/agenttwin-lab) | the lab: a world that keeps running for days, for testing long-running agents |
 
-**How to cite:** cite the release you used. Metadata is in
+**How to cite:** DOI [10.5281/zenodo.23366162](https://doi.org/10.5281/zenodo.23366162) (all versions; Zenodo also gives each release its own). cite the release you used. Metadata is in
 [CITATION.cff](CITATION.cff); GitHub's "Cite this repository" button renders it
 as APA or BibTeX.
 
