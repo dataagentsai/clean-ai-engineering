@@ -3,7 +3,7 @@ message: "If you use this work, please cite it as below."
 type: software
 title: "Clean AI Engineering: principles, specification formats and gates for building AI agents as testable software"
 version: "0.1.0"
-date-released: "2026-10-11"
+date-released: "2026-10-14"
 authors:
   - given-names: Basant
     family-names: Choudhary
