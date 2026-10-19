@@ -12,7 +12,7 @@ subject:
   archetypes: [A6]   # the first agent planned on it is the support agent
 
 catalog:
-  ahc: "0.3.0"
+  ahc: "0.3.1"
 
 harness:
   loop: { owner: framework, adapter: langgraph }

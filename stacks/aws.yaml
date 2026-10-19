@@ -43,7 +43,7 @@ subject:
   archetypes: [A6]
 
 catalog:
-  ahc: "0.3.0"
+  ahc: "0.3.1"
 
 # Mumbai, because the owner is in India: the lowest latency for the person
 # testing, and data stays in the country. Every product named below was checked

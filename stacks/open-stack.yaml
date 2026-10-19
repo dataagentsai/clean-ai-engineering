@@ -20,7 +20,7 @@ subject:
   archetypes: [A6]   # the shapes built on this stack so far; each agent declares its own
 
 catalog:
-  ahc: "0.3.0"
+  ahc: "0.3.1"
 
 harness:
   loop: { owner: in-house, adapter: bounded-react-loop, x_status: current, x_why: "decided 2026-09-16: the loop is the kept delta" }

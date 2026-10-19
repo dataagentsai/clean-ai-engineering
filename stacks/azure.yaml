@@ -28,7 +28,7 @@ subject:
   archetypes: [A6]
 
 catalog:
-  ahc: "0.3.0"
+  ahc: "0.3.1"
 
 harness:
   loop: { owner: in-house, adapter: bounded-react-loop, x_why: "decision A of the architecture: our hand-written loop on Container Apps; the step budget, no-progress check and cost ceiling stay visible" }
