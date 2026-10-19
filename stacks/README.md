@@ -65,6 +65,7 @@ repository.
 | [`langgraph.yaml`](langgraph.yaml) | LangGraph (`framework`) | placeholder | T-036 |
 | [`claude-agent-sdk.yaml`](claude-agent-sdk.yaml) | Claude Agent SDK (`framework`) | placeholder | T-037 |
 | [`azure.yaml`](azure.yaml) | **our loop**, with Pydantic AI as the model layer; Azure services where the group's architecture decided | **target**: the motor-claims FNOL agent is the first on it | T-099, T-019 |
+| [`aws.yaml`](aws.yaml) | **our loop**, with Pydantic AI as the model layer; the same ports as `azure.yaml`, bound to AWS services in Mumbai | **target, on paper**: proposed 19 Oct 2026, no account and nothing deployed; the owner decides the open choices | T-123 |
 | [`claude-family.yaml`](claude-family.yaml) | **our loop**; the Anthropic SDK end to end, the rest inherited from the Open Stack | **later**: cycle 7 | T-043, T-004 |
 
 A placeholder names the stack and who owns the loop, and nothing else. Its ports

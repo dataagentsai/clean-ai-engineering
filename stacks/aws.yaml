@@ -1,0 +1,266 @@
+# AWS: the Open Stack's harness, bound to AWS services, for T-123 step 1
+# (FNOL on AWS, our loop unchanged). Written on paper on 19 Oct 2026: no AWS
+# account exists and nothing here is deployed.
+#
+# Extends the Open Stack, so its thresholds and every binding it does not name
+# are inherited; each binding named here says why it differs. It names the same
+# ports azure.yaml names, so the two clouds can be read side by side. The loop
+# stays ours, as on Azure. Pydantic AI is the model layer underneath it, never
+# the loop. Only the stack changes: the AOAS, the world and the scenarios stay
+# as they are on Azure.
+#
+# `x_status: target` throughout: proposed, not yet built and not yet decided by
+# the owner. T-123 builds it; step 2 writes the AWS adapters in agent_harness.
+#
+# `x_dev` is the cheapest development choice where it differs from production.
+# Every price was read on 19 Oct 2026 from aws.amazon.com or from the AWS Price
+# List API for Asia Pacific (Mumbai), ap-south-1; the publication date of the
+# price file is given where it was read from one. A line marked `x_verify` holds
+# a claim that could not be confirmed from an official AWS page, and says what to
+# check.
+#
+# The AWS free tier changed for accounts created on or after 15 July 2025
+# (aws.amazon.com/free and the Free Tier FAQ, 19 Oct 2026). A new account picks a
+# Free plan or a Paid plan. Both start with $100 of credits and can earn up to
+# $100 more. The Free plan lasts six months or until the credits run out,
+# whichever comes first, offers only a subset of services, and suspends the
+# account at the end unless it is upgraded. More than 30 services stay always
+# free within monthly limits on both plans. Offers that say "12 months for new
+# customers" on a service's pricing page describe the older programme.
+apiVersion: harness-profile/v1
+
+extends: open-stack.yaml
+
+subject:
+  name: aws
+  description: >-
+    The Open Stack's harness on AWS: our loop and contracts on ECS with Fargate,
+    models only through the AgentCore Gateway, state and knowledge in RDS for
+    PostgreSQL, identity in Cognito and IAM roles, secrets in Secrets Manager,
+    telemetry through an OpenTelemetry collector into CloudWatch and X-Ray.
+    Open source where it keeps the exit cheap: Pydantic AI as the model layer,
+    DBOS for durable waits, pgvector, Chatwoot, AgentTwin.
+  archetypes: [A6]
+
+catalog:
+  ahc: "0.3.0"
+
+# Mumbai, because the owner is in India: the lowest latency for the person
+# testing, and data stays in the country. Every product named below was checked
+# for ap-south-1 except where a line says otherwise.
+x_region: ap-south-1
+
+harness:
+  loop: { owner: in-house, adapter: bounded-react-loop, x_why: "as on Azure: our hand-written loop, here in a container on ECS with Fargate; the step budget, no-progress check and cost ceiling stay visible. AWS's own agent runtimes (AgentCore Runtime, Bedrock Agents) are not used for the loop, because the loop is the kept delta" }
+
+decisions: {}
+thresholds: {}
+
+bindings:
+  model:
+    approach: gateway
+    adapter: agentcore-gateway
+    x_why: >-
+      The AWS counterpart of Azure's APIM AI gateway: one door, one identity and
+      one bill for every model call. An AgentCore Gateway inference target can
+      sit in front of any OpenAI-compatible provider, holds the provider's key
+      in its own credential store, and enforces per-caller and per-model token
+      limits in tokens per minute, which is the nearest AWS has to APIM's
+      llm-token-limit (docs.aws.amazon.com/bedrock-agentcore, gateway rate
+      limits and inference provider targets, 19 Oct 2026). AgentCore Gateway is
+      available in Asia Pacific (Mumbai) according to the AgentCore Regions
+      table.
+    x_model_layer: pydantic-ai-direct    # as on Azure: called through Pydantic AI's model requests, inside our LLMClient port; only that module imports pydantic_ai
+    x_backend: groq                      # Bedrock later, as a second inference target on the same gateway: a backend change, not a code change
+    x_dev: >-
+      The AgentCore Gateway with one provider inference target pointing at
+      Groq's OpenAI-compatible API, which is free. Gateway operations are priced
+      at $0.005 per 1,000 invocations and customer-defined rate limits cost
+      nothing extra (aws.amazon.com/bedrock/agentcore/pricing, 19 Oct 2026); the
+      page lists no separate charge for inference requests or tokens.
+    x_note: >-
+      What AWS lacks next to APIM. Token limits count input plus output tokens
+      with a general-purpose tokenizer, so they are approximate; the only window
+      is one minute, so there is no daily or monthly token quota like APIM's
+      token-quota; and rate limits fail open by default, so a limit is a cost
+      guard, never a security boundary. Our per-task cost meter (cost_ledger)
+      stays the hard ceiling. Alternatives weighed: LiteLLM proxy as a Fargate
+      task keeps the Open Stack's own adapter, needs no override and is fully
+      portable, but costs a running task and is one more thing we operate;
+      API Gateway HTTP API ($1.05 per million requests in Mumbai, Price List
+      API published 13 Oct 2026) only forwards, knows nothing about tokens, and
+      caps an integration at 30 seconds (API Gateway HTTP API quotas page),
+      which a slow model call can exceed.
+    x_verify: >-
+      Check three things in the AWS console before step 2. That a model request
+      through an inference target is billed as one $0.005-per-1,000 invocation
+      and not at another rate. The Mumbai rate, since the pricing page names no
+      region. That Groq works as a provider target, since it has no built-in
+      connector: endpoint https://api.groq.com, path /v1/chat/completions,
+      providerPath /openai/v1/chat/completions, API-key credential as a Bearer
+      header.
+    x_status: target
+    x_item: T-123
+  state:
+    approach: cloud-native
+    adapter: rds-postgresql
+    x_why: "managed PostgreSQL: the same engine the Open Stack runs, operated by AWS, as Azure's Flexible Server is"
+    x_dev: >-
+      RDS for PostgreSQL, db.t4g.micro, Single-AZ, not publicly accessible.
+      $0.021 an hour running (about $0.50 a day, about $15.30 a month if never
+      stopped) and $0.131 per GB-month of gp3 storage, so 20 GB costs about
+      $2.62 a month even while stopped (AWS Price List API, ap-south-1,
+      published 6 Oct 2026). Stopped when idle; RDS starts a stopped instance
+      again by itself after seven days (RDS user guide, stopping an instance,
+      19 Oct 2026). The new-account credits pay for it in the first months.
+    x_note: >-
+      Aurora Serverless v2 was weighed: $0.18 per ACU-hour and $0.11 per
+      GB-month of storage in Mumbai (same price file), and it can scale to zero
+      ACUs and pause, resuming in about 15 seconds (Aurora user guide, auto
+      pause). It does not pause while a connection is open, and DBOS keeps one
+      open while the application runs, so in practice it pauses only when the
+      container is stopped too, which a stopped RDS instance already gives.
+    x_verify: "the RDS pricing page still advertises 750 free hours a month for one year; check whether that applies to an account on the July 2025 credit plan or only to older accounts"
+    x_status: target
+    x_item: T-123
+  retrieval:
+    approach: open-source
+    adapter: pgvector
+    x_why: "knowledge in the same PostgreSQL, as on Azure: one store, one backup, and no OpenSearch or Bedrock Knowledge Base bill. RDS for PostgreSQL 18.4 ships pgvector 0.8.2 (RDS PostgreSQL release notes, 19 Oct 2026)"
+    x_dev: "the same RDS instance as state; no extra cost"
+    x_status: target
+    x_item: T-123
+  workflow:
+    approach: open-source
+    adapter: dbos
+    x_why: "as on Azure: durable waits as a library on the PostgreSQL we already run, so no new infrastructure and a plain-Postgres exit. Step Functions was not chosen because it would move the waits out of our code and into an AWS-only service"
+    x_dev: "the same RDS instance as state; no extra cost"
+    x_note: "the approval and escalation waits; the turn stays in our loop"
+    x_status: target
+    x_item: T-123
+  approval:
+    approach: open-source
+    adapter: dbos-workflows
+    x_why: "as on Azure: a payout waits for a handler as a DBOS workflow, and the decision is a message our rule validates"
+    x_dev: "the same RDS instance as state; no extra cost"
+    x_note: "a notification tells the handler there is work; the decision happens in the system, never by a link. Which notifier (email, Teams, Slack) is the insurer's choice and is not an AWS binding"
+    x_status: target
+    x_item: T-123
+  identity:
+    approach: cloud-native
+    adapter: cognito
+    x_why: "Cognito user pools for policyholders and handlers, and IAM roles for workloads (the ECS task role), which is the AWS form of Azure's managed identity"
+    x_dev: >-
+      A Cognito user pool on the Lite or Essentials tier: 10,000 monthly active
+      users free for direct and social sign-in, a free tier that does not expire
+      (aws.amazon.com/cognito/pricing, 19 Oct 2026). Machine-to-machine token
+      requests have no free tier; the page's example price is $0.00225 per
+      token request in US East.
+    x_note: "the order system verifies the token itself and takes whose call it is from a claim, as on every stack"
+    x_verify: "Azure has an on-behalf-of exchange to the claims system. Check whether Cognito supports OAuth token exchange (RFC 8693) or whether that exchange needs AgentCore Identity or our own small service"
+    x_status: target
+    x_item: T-123
+  secrets:
+    approach: cloud-native
+    adapter: secrets-manager
+    x_why: "as on Azure with Key Vault: no secret in configuration, and the task reads its secrets through its IAM role. RDS can keep its own master password in Secrets Manager and rotate it"
+    x_dev: >-
+      Systems Manager Parameter Store, SecureString parameters on the standard
+      tier: standard parameters and standard-throughput API calls cost nothing
+      (aws.amazon.com/systems-manager/pricing, 19 Oct 2026). Secrets Manager is
+      $0.40 per secret a month and $0.05 per 10,000 API calls in Mumbai (Price
+      List API, published 11 Sep 2026), which matters only once rotation does.
+      Both are read through the same secrets port, so the change is a binding,
+      not code.
+    x_verify: "a SecureString is encrypted with KMS; check whether the AWS-managed key's requests stay inside KMS's free request allowance for a single dev task"
+    x_status: target
+    x_item: T-123
+  telemetry:
+    approach: cloud-native
+    adapter: otel-to-cloudwatch
+    x_why: >-
+      Our agent.* spans unchanged, sent by an OpenTelemetry collector (the AWS
+      Distro for OpenTelemetry, or the upstream contrib collector with the
+      sigv4auth extension) to CloudWatch's OTLP endpoints: traces to X-Ray's
+      OTLP endpoint, logs to CloudWatch Logs (CloudWatch user guide, OTLP
+      endpoints, 19 Oct 2026). The endpoints take OTLP over HTTP only, not gRPC.
+      We never use the X-Ray SDKs or daemon: they have been in maintenance since
+      25 Feb 2026 and lose support on 25 Feb 2027 (X-Ray document history).
+    x_dev: >-
+      CloudWatch's always-free allowance: 5 GB of logs, 10 custom metrics, 10
+      alarms and 3 dashboards a month (aws.amazon.com/cloudwatch/pricing,
+      19 Oct 2026). X-Ray in Mumbai keeps 100,000 traces stored and 1,000,000
+      traces read free a month, then $5 per million stored (Price List API,
+      published 11 Sep 2026). The collector runs as a sidecar in the agent's
+      Fargate task, so it adds memory to the task and nothing else.
+    x_note: "step 5 of T-123 reads these traces back for the eval harness, through an X-Ray or CloudWatch TraceSource; the Open Stack's Langfuse stays available for comparison while that is built"
+    x_verify: >-
+      X-Ray's OTLP traces need Transaction Search turned on, which stores spans
+      in CloudWatch Logs and indexes 1% of them free. The pricing page's example
+      rates ($0.35 per GB ingested for the first 10 TB, $0.75 per million spans
+      indexed) name no region; check the Mumbai rates, and check whether the
+      three-month free trial of Transaction Search applies to a new account.
+    x_status: target
+    x_item: T-123
+  config:
+    approach: cloud-native
+    adapter: appconfig
+    x_why: "as on Azure with App Configuration: thresholds and feature flags outside the image, with AppConfig's own staged deployment and rollback on a CloudWatch alarm"
+    x_dev: >-
+      AppConfig itself: it has no free tier, but it charges $0.0000002 per
+      configuration request and $0.0008 per configuration received
+      (aws.amazon.com/systems-manager/pricing, 19 Oct 2026), so one task polling
+      every 45 seconds costs about a cent a month. Parameter Store standard
+      parameters are the free fallback.
+    x_status: target
+    x_item: T-123
+  # tool_runtime (our MCP servers, as Fargate tasks behind the same gateway) and
+  # eval_task (AgentTwin): inherited unchanged. AgentCore Evaluations is not
+  # adopted; like Foundry's evaluation on Azure, it could add generic judges for
+  # reporting only, until calibrated (AAC-0084).
+  # policy, recorder, cost_ledger, trigger, admission: inherited, because they
+  # are ours on every stack. channel: inherited (Chatwoot); Amazon Connect is not
+  # proposed.
+
+accepted_gaps: []
+
+x_hosting:
+  approach: cloud-native
+  adapter: ecs-fargate
+  x_why: >-
+    The agent, the MCP servers and the desk as containers on ECS with Fargate,
+    the counterpart of Azure Container Apps. App Runner is ruled out: it closed
+    to new customers and AWS recommends ECS Express Mode instead (App Runner
+    developer guide, availability change, 19 Oct 2026). Lambda is ruled out for
+    the agent, because DBOS needs a long-running process to resume workflows.
+    ECS Express Mode is ECS on Fargate with an Application Load Balancer made
+    for you, at no charge beyond the resources it creates.
+  x_dev: >-
+    One ECS service on Fargate with ARM (Graviton), 0.25 vCPU and 0.5 GB:
+    $0.02383 per vCPU-hour and $0.00261 per GB-hour in Mumbai (Price List API,
+    published 11 Sep 2026), about $0.0073 an hour or $5.30 a month if always on,
+    plus $0.005 an hour for its public IPv4 address (Price List API, published
+    16 Oct 2026). Desired count set to zero when idle. No load balancer in dev:
+    an Application Load Balancer is $0.0239 an hour in Mumbai, about $17.40 a
+    month before capacity units, which is more than everything else here.
+  x_note: "without a load balancer the dev task has no stable HTTPS name. API Gateway HTTP API with a VPC link to a Cloud Map service would give one cheaply, but caps a request at 30 seconds, below the stack's 60-second turn deadline: that works only if the channel's webhook is acknowledged before the turn runs"
+  x_status: target
+x_registry:
+  approach: cloud-native
+  adapter: aws-agent-registry
+  x_note: "agent catalogue, with the catalogue in Git, as on Azure with API Center"
+  x_dev: "omitted: the catalogue lives in Git only. AWS Agent Registry is not offered in Asia Pacific (Mumbai) according to the AgentCore Regions table (19 Oct 2026)"
+  x_verify: "its general availability and its free tier (reported as 5,000 records and 1,000,000 searches a month) come from third-party articles only; check the AgentCore pricing page before relying on them"
+  x_status: target
+x_images:
+  approach: open-source
+  adapter: github-container-registry
+  x_why: "as on Azure: free for public images, and Fargate can pull from it. Amazon ECR when images must stay private"
+  x_dev: "GitHub Container Registry, public. ECR private storage is $0.10 per GB-month in Mumbai (Price List API, published 11 Sep 2026); its pricing page offers 500 MB a month free for one year to new customers, which may be the older programme"
+  x_status: target
+x_edge:
+  approach: cloud-native
+  adapter: cloudfront-waf
+  x_why: "CloudFront with AWS WAF, the counterpart of Front Door with its WAF"
+  x_dev: "omitted, as on Azure. If wanted, CloudFront's flat-rate Free plan costs $0 a month for 1,000,000 requests and 100 GB of transfer with WAF and DDoS protection included (CloudFront flat-rate pricing plans, docs.aws.amazon.com, 19 Oct 2026)"
+  x_status: target
