@@ -9,8 +9,22 @@
 # the loop. Only the stack changes: the AOAS, the world and the scenarios stay
 # as they are on Azure.
 #
-# `x_status: target` throughout: proposed, not yet built and not yet decided by
-# the owner. T-123 builds it; step 2 writes the AWS adapters in agent_harness.
+# `x_status: target` throughout: decided, not yet built. T-123 builds it; step 2
+# writes the AWS adapters in agent_harness.
+#
+# The owner's decisions, 19 Oct 2026 (each the recommendation offered):
+# 1. Model gateway: AgentCore Gateway in front of Groq, the counterpart of APIM.
+#    Its billing per model call and Groq as a custom backend are confirmed in
+#    the console before step 3 (the model binding's x_verify).
+# 2. State: RDS for PostgreSQL, not Aurora Serverless v2, which never pauses
+#    while DBOS holds a connection open.
+# 3. HTTPS in dev: API Gateway HTTP API in front of the task, on condition that
+#    the channel's webhook is acknowledged before the turn runs (its 30-second
+#    cap is below the 60-second turn deadline). If it is not, an Application
+#    Load Balancer runs only during test sessions. Checked at step 3.
+# 4. Account: the Paid plan with a budget alarm, not the Free plan, which
+#    excludes some services and suspends the account after six months.
+# 5. Agent registry: none; the catalogue stays in Git.
 #
 # `x_dev` is the cheapest development choice where it differs from production.
 # Every price was read on 19 Oct 2026 from aws.amazon.com or from the AWS Price
@@ -49,6 +63,7 @@ catalog:
 # testing, and data stays in the country. Every product named below was checked
 # for ap-south-1 except where a line says otherwise.
 x_region: ap-south-1
+x_account: "Paid plan with a budget alarm (owner, 19 Oct 2026); the account is the owner's to open"
 
 harness:
   loop: { owner: in-house, adapter: bounded-react-loop, x_why: "as on Azure: our hand-written loop, here in a container on ECS with Fargate; the step budget, no-progress check and cost ceiling stay visible. AWS's own agent runtimes (AgentCore Runtime, Bedrock Agents) are not used for the loop, because the loop is the kept delta" }
@@ -243,6 +258,7 @@ x_hosting:
     16 Oct 2026). Desired count set to zero when idle. No load balancer in dev:
     an Application Load Balancer is $0.0239 an hour in Mumbai, about $17.40 a
     month before capacity units, which is more than everything else here.
+  x_https_dev: "API Gateway HTTP API in front of the task if the channel's webhook is acknowledged before the turn runs; otherwise an Application Load Balancer during test sessions only (owner, 19 Oct 2026; checked at T-123 step 3)"
   x_note: "without a load balancer the dev task has no stable HTTPS name. API Gateway HTTP API with a VPC link to a Cloud Map service would give one cheaply, but caps a request at 30 seconds, below the stack's 60-second turn deadline: that works only if the channel's webhook is acknowledged before the turn runs"
   x_status: target
 x_registry:
