@@ -4,6 +4,70 @@
 no repository keeps another list. `reference-agent/TODO.md` was merged in and
 deleted on 2026-09-16. Item numbers never change, because commits cite them.
 
+## Start here: the robustness march (the live todo)
+
+*Agreed with the owner on 19–20 Oct 2026. Every progress report is given against
+this list. Update it whenever an item starts or finishes.*
+
+**The goal:** make all the shared parts solid (the specs AHC, AAC and AOAS, the
+agent harness, AgentTwin and the eval harness). We take one working agent, the
+motor claims FNOL agent, and change one thing at a time: its framework, its
+cloud, its shape. Whatever breaks is fixed in the shared part, never patched in
+the agent alone. Problems found along the way are fixed as part of the step that
+found them.
+
+✅ done · ▶ now · ☐ not started · 👤 needs the owner
+
+### Step 0 · Set up the measuring stick
+
+Fixed tests for the parts a framework has to plug into, written and frozen
+*before* any framework swap, so a swap is judged against tests nobody bent
+afterwards (T-048).
+
+- ✅ Policy port: interface, 5 frozen tests. Fixed on the way: a rule could hang for ever; an allow gave no reason (19 Oct)
+- ✅ Cost port: interface, 5 frozen tests; the loop's cost meter records through it; a retry counts against the same task (19 Oct)
+- ▶ Approval port: interface and frozen tests, including a way to stop a run that is already going (nothing can today)
+- ☐ Cost port, the last wiring: a cost ledger chosen in configuration, and the retry layer reporting attempt numbers
+- ☐ Freeze the baseline: record the commits and test fingerprints every framework is measured against
+
+### Step 1 · Swap the framework (on the Mac, free except the Claude steps)
+
+The same FNOL agent with a different loop owner each time. Each one is measured
+against Step 0's tests and its gaps are written up.
+
+- ☐ Pydantic AI owns the loop (Groq)
+- ☐ LangGraph owns the loop (Groq) (T-036)
+- ☐ Claude Agent SDK owns the loop (uses the $100 Claude credit; spend limit set first) (T-037)
+- ☐ Our loop with the Claude SDK as the model layer (uses the credit) (T-043)
+- ☐ Publish what each framework does not give you (AHC's coverage delta)
+
+### Step 2 · Swap the cloud (runs alongside Step 1)
+
+The same FNOL agent and our own loop, on another cloud (T-123, T-124).
+
+- ✅ AWS plan written on paper, every price checked (19 Oct)
+- ✅ The owner's five AWS decisions recorded: AgentCore Gateway, RDS, API Gateway for HTTPS, Paid plan with a budget alarm, no agent registry (19 Oct)
+- 👤 Open an AWS account on the Paid plan with a budget alarm
+- ☐ AWS adapters in the agent harness, each passing Step 0's tests
+- ☐ Deploy the thin path (gateway, container, Postgres, traces), then run the four gates against it
+- ☐ The eval harness reads the AWS traces and writes its verdicts back
+- ☐ GCP, the same way
+- 👤 Azure free credit ends ~12 Nov: tear down and keep the Bicep files (recommended)
+
+### Step 3 · New kinds of agent (after Steps 1 and 2 have each run once)
+
+- ☐ Subagents: Spark cost analyst on the Claude Agent SDK
+- ☐ Agent-to-agent (A2A): FNOL calls a small garage agent built on another framework
+- ☐ Simpler AI apps: a router, search over documents, data extraction
+- ☐ A task that waits for days: invoice reconciliation
+
+### Fixes found along the way
+
+- ✅ AgentTwin's setup command crashed on some id formats (T-122, 19 Oct)
+- ✅ The reference agent's build had been failing since 13 Oct: two files too long, a stale AHC version pin (19 Oct)
+- ☐ AgentTwin makes wrong ids for rows created during a run (T-125)
+- ☐ Two τ²-bench example worlds do not set up (T-126)
+
 ## The goal
 
 **Make every spec and every binding production grade, by building agents of
