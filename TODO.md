@@ -26,8 +26,8 @@ afterwards (T-048).
 
 - ✅ Policy port: interface, 5 frozen tests. Fixed on the way: a rule could hang for ever; an allow gave no reason (19 Oct)
 - ✅ Cost port: interface, 5 frozen tests; the loop's cost meter records through it; a retry counts against the same task (19 Oct)
-- ▶ Approval port: interface and frozen tests, including a way to stop a run that is already going (nothing can today)
-- ☐ Cost port, the last wiring: a cost ledger chosen in configuration, and the retry layer reporting attempt numbers
+- ✅ Approval port: interface and 6 frozen tests, run on both our engines (Temporal and DBOS). A person can now withdraw a waiting approval and it is never carried out. Fixed on the way: a customer could have been told a withdrawn or unknown-state refund was paid, in both agents (20 Oct)
+- ▶ Cost port, the last wiring: a cost ledger chosen in configuration, and the retry layer reporting attempt numbers
 - ☐ Freeze the baseline: record the commits and test fingerprints every framework is measured against
 
 ### Step 1 · Swap the framework (on the Mac, free except the Claude steps)
@@ -60,6 +60,7 @@ The same FNOL agent and our own loop, on another cloud (T-123, T-124).
 - ☐ Agent-to-agent (A2A): FNOL calls a small garage agent built on another framework
 - ☐ Simpler AI apps: a router, search over documents, data extraction
 - ☐ A task that waits for days: invoice reconciliation
+- ☐ Stop a running agent loop from outside (per run, or a whole class of runs), checked between steps. Needed by the long-running agents above, not by today's (AHC-0054)
 
 ### Fixes found along the way
 
@@ -67,6 +68,8 @@ The same FNOL agent and our own loop, on another cloud (T-123, T-124).
 - ✅ The reference agent's build had been failing since 13 Oct: two files too long, a stale AHC version pin (19 Oct)
 - ☐ AgentTwin makes wrong ids for rows created during a run (T-125)
 - ☐ Two τ²-bench example worlds do not set up (T-126)
+- ☐ FNOL's claims system has 5 type-check errors, older than this march
+- ☐ The escalation desk is still typed as the Temporal class, the other half of FNOL's F-20
 
 ## The goal
 
