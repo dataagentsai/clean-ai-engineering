@@ -18,7 +18,7 @@ found them.
 
 ✅ done · ▶ now · ☐ not started · 👤 needs the owner
 
-### Step 0 · Set up the measuring stick
+### Step 0 · Set up the measuring stick ✅ (20 Oct)
 
 Fixed tests for the parts a framework has to plug into, written and frozen
 *before* any framework swap, so a swap is judged against tests nobody bent
@@ -27,15 +27,15 @@ afterwards (T-048).
 - ✅ Policy port: interface, 5 frozen tests. Fixed on the way: a rule could hang for ever; an allow gave no reason (19 Oct)
 - ✅ Cost port: interface, 5 frozen tests; the loop's cost meter records through it; a retry counts against the same task (19 Oct)
 - ✅ Approval port: interface and 6 frozen tests, run on both our engines (Temporal and DBOS). A person can now withdraw a waiting approval and it is never carried out. Fixed on the way: a customer could have been told a withdrawn or unknown-state refund was paid, in both agents (20 Oct)
-- ▶ Cost port, the last wiring: a cost ledger chosen in configuration, and the retry layer reporting attempt numbers
-- ☐ Freeze the baseline: record the commits and test fingerprints every framework is measured against
+- ✅ Cost port, the last wiring: the cost ledger is now built from configuration like every other port (the profile had named it all along and nothing built it); each FNOL turn records its spend there; a retried model call is counted as a retry; the ledger holds a bounded window so a long-running server cannot grow without limit (20 Oct)
+- ✅ Freeze the baseline: commits and test fingerprints recorded in AHC's `docs/PORTS-AS-A-STANDARD.md` (ai-harness-catalog c2c7f53); the tests refuse to run if a case file is edited (20 Oct)
 
 ### Step 1 · Swap the framework (on the Mac, free except the Claude steps)
 
 The same FNOL agent with a different loop owner each time. Each one is measured
 against Step 0's tests and its gaps are written up.
 
-- ☐ Pydantic AI owns the loop (Groq)
+- ▶ Pydantic AI owns the loop (Groq)
 - ☐ LangGraph owns the loop (Groq) (T-036)
 - ☐ Claude Agent SDK owns the loop (uses the $100 Claude credit; spend limit set first) (T-037)
 - ☐ Our loop with the Claude SDK as the model layer (uses the credit) (T-043)
@@ -70,6 +70,7 @@ The same FNOL agent and our own loop, on another cloud (T-123, T-124).
 - ☐ Two τ²-bench example worlds do not set up (T-126)
 - ☐ FNOL's claims system has 5 type-check errors, older than this march
 - ☐ The escalation desk is still typed as the Temporal class, the other half of FNOL's F-20
+- ☐ A turn's cost unit is a random id, not the run id, so the ledger cannot yet be joined to the trace
 
 ## The goal
 
