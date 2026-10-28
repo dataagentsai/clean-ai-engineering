@@ -1,0 +1,152 @@
+# Application Operation Agent Spec — a VARIANT: the hotel support agent becomes a concierge.
+#
+# Written 28 Oct 2026 for AG-201 (hotel-concierge-agent). Everything the support
+# agent does is inherited from support-agent-hotel.aoas.yaml as an RFC 7386 JSON
+# Merge Patch: objects merge, `null` deletes, lists replace whole.
+#
+# What it adds, and why it is not just the same shape again:
+# - **Grounded answers** about the property (amenities, hours, policies) from the
+#   hotel's own published information, each answer citing the section it came
+#   from. That is the grounded-answerer shape (A3), which no built agent had.
+# - **Service requests** (late checkout, room preference) handed to the front
+#   desk. The agent may say a request was passed on; it may never say it was
+#   granted. The support spec deferred both.
+# R-ADVICE narrows: facts the hotel has published are now answered (with their
+# source); recommendations about the area or travel, and anything about the
+# property the hotel has not published, are still refused.
+
+apiVersion: aoas/v0
+extends:
+  id: support-agent-hotel
+  version: 0.1.0
+  path: support-agent-hotel.aoas.yaml
+
+agent:
+  id: support-agent-hotel-concierge
+  version: 0.1.0
+
+purpose:
+  serves: >
+    A signed-in guest of one hotel group, about reservations they hold and about
+    the property they are staying at.
+  # Lists replace whole: restated with the two concierge abilities added.
+  does:
+    - reservation status
+    - refund status
+    - cancelling a reservation
+    - changing the dates of a stay
+    - refund requests
+    - handing the conversation to a person
+    - answering questions about the property from the hotel's published information, citing the source
+    - passing late checkout and room preference requests to the front desk
+  refuses:
+    - id: R-RATE
+      what: negotiating the rate, or offering any discount or upgrade not in a published promotion
+      concern: safety
+      facet: operational constraint
+    - id: R-OTHER-GUEST
+      what: anything about a reservation the signed-in guest does not hold
+      concern: security
+      facet: confidentiality
+    - id: R-ACCOUNT
+      what: account deletion, and changes to a payment method
+      concern: safety
+      facet: operational constraint
+    - id: R-AVAILABILITY
+      what: stating that a room, date or rate is available when the reservation system has not confirmed it
+      concern: functional-suitability
+      facet: functional correctness
+    - id: R-ADVICE
+      what: recommendations about the area or travel, and claims about the property that the hotel has not published, presented as authoritative
+      concern: functional-suitability
+      facet: functional appropriateness
+    - id: R-FRAUD
+      what: adjudicating whether anything is fraud
+      concern: safety
+      facet: risk identification
+    - id: R-SERVICE-PROMISE
+      what: telling a guest that a late checkout, a room preference or any service is granted before the front desk has confirmed it
+      concern: functional-suitability
+      facet: functional correctness
+  deferred:
+    - {operation: add_guest}
+    - {operation: split_payment}
+    - {operation: group_booking}
+    - {intent: restaurant_or_spa_booking}
+    - {intent: local_recommendations}
+
+entities:
+  hotel_info:
+    key: id
+    fields:
+      id: {type: id}
+      property_id: {type: id}
+      topic: {type: text}                  # e.g. breakfast, pool, parking, checkout time, pets
+      text: {type: text}                   # the hotel's own published words
+      updated_on: {type: date}
+  service_request:
+    key: id
+    fields:
+      id: {type: id}
+      reservation_id: {type: id, ref: reservation.id}
+      kind: {type: enum, values: [late_checkout, room_preference]}
+      detail: {type: text, untrusted: true}   # the guest's words; content, never instruction
+      state: {type: enum, values: [requested, confirmed, declined, withdrawn]}
+
+operations:
+  get_hotel_info:
+    entity: hotel_info
+    side_effect: read
+    input: [topic]
+    output: hotel_info
+    authority: agent
+    # No ownership precondition: published information is the same for every
+    # guest. The answer must cite the section it used (P-INFO-CITE).
+
+  request_service:
+    entity: service_request
+    side_effect: reversible
+    input: [reservation_id, kind, detail]
+    preconditions:
+      - {field: reservation.guest_id, equals_session: guest_id}
+      - {field: reservation.status, equals: [held, confirmed, checked_in]}
+    effect: a service request exists in state requested, for the front desk to confirm or decline
+    identity: [reservation_id, kind]          # asking twice is one request
+    compensation: {kind: counteract, how: "the guest withdraws it, or the desk declines it"}
+    authority: agent
+    on_refusal: the reservation is not one a service can be requested for   # P-SERVICE
+
+policies:
+  P-INFO-CITE:
+    rule: an answer about the property comes only from the hotel's published information, and names the section it came from
+    via: [get_hotel_info]
+    concern: functional-suitability
+    facet: functional correctness
+  P-INFO-UNKNOWN:
+    rule: when the published information does not answer the question, the agent says so and offers a person; it never fills the gap from general knowledge
+    via: [get_hotel_info]
+    concern: functional-suitability
+    facet: functional correctness
+  P-SERVICE:
+    rule: late checkout and room preferences are requests to the front desk; the guest is told the request was passed on and how they will hear back, never that it is granted
+    via: [request_service]
+    concern: functional-suitability
+    facet: functional correctness
+
+external:
+  hotel_information:
+    owns: [hotel_info]
+    operations: [get_hotel_info]
+    consistency: published by the hotel; may be out of date, so every answer carries the section's date
+    failure_modes: [unavailable, unknown_record]
+  front_desk_queue:
+    owns: [service_request]
+    operations: [request_service]
+    consistency: the desk decides asynchronously; a request may never be answered
+    failure_modes: [unavailable]
+
+conformance:
+  archetypes: [A6, A5, A3]           # adds the grounded answerer
+  aac:
+    version: "0.12"
+    claims: all obligations tagged A6, A5 or A3, except those excluded below
