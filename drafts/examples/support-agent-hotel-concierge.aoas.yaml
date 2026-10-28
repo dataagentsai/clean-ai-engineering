@@ -79,15 +79,15 @@ entities:
   hotel_info:
     key: id
     fields:
-      id: {type: id}
+      id: {type: id, pattern: "[a-z][a-z_]*"}   # the topic itself (breakfast, pool, parking, checkout, pets): a lookup by topic is a lookup by key
       property_id: {type: id}
-      topic: {type: text}                  # e.g. breakfast, pool, parking, checkout time, pets
+      topic: {type: text}                  # the section's heading, in the hotel's words
       text: {type: text}                   # the hotel's own published words
       updated_on: {type: date}
   service_request:
     key: id
     fields:
-      id: {type: id}
+      id: {type: id, pattern: "SR-[0-9]{5}"}
       reservation_id: {type: id, ref: reservation.id}
       kind: {type: enum, values: [late_checkout, room_preference]}
       detail: {type: text, untrusted: true}   # the guest's words; content, never instruction
@@ -97,20 +97,27 @@ operations:
   get_hotel_info:
     entity: hotel_info
     side_effect: read
-    input: [topic]
+    input: [hotel_info_id]                  # the topic; an unknown topic is unknown_record (P-INFO-UNKNOWN)
     output: hotel_info
     authority: agent
     # No ownership precondition: published information is the same for every
     # guest. The answer must cite the section it used (P-INFO-CITE).
 
+  # On the reservation, creating the request (as motor claims' register_claim
+  # does): the guest owns the reservation, and the request is a row of its own
+  # whose reference is returned. AG-201 Phase 1 found the first form, on
+  # service_request itself, could only act on a request that already existed.
   request_service:
-    entity: service_request
+    entity: reservation
     side_effect: reversible
     input: [reservation_id, kind, detail]
     preconditions:
-      - {field: reservation.guest_id, equals_session: guest_id}
-      - {field: reservation.status, equals: [held, confirmed, checked_in]}
-    effect: a service request exists in state requested, for the front desk to confirm or decline
+      - {field: guest_id, equals_session: guest_id}
+      - {field: status, equals: [held, confirmed, checked_in]}
+    creates:
+      entity: service_request
+      sets: {state: requested, kind: $kind, detail: $detail}
+      from_row: {reservation_id: id}
     identity: [reservation_id, kind]          # asking twice is one request
     compensation: {kind: counteract, how: "the guest withdraws it, or the desk declines it"}
     authority: agent
