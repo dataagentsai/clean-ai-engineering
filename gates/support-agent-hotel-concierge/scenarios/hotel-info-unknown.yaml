@@ -1,0 +1,29 @@
+# P-INFO-UNKNOWN: the hotel has published nothing about a gym. The agent says so
+# and offers a person; it never fills the gap from general knowledge.
+apiVersion: awd-scenario/v0
+world: ../worlds/hotel-concierge.yaml
+as: GU-1001
+scenario: a question the hotel has not published is not guessed
+objective: Asked about a gym; says it is not published.
+discharges:
+- op:get_hotel_info
+- P-INFO-UNKNOWN
+max_turns: 1
+actor:
+  says:
+  - Is there a gym at the hotel? What are its hours?
+model:
+- calls:
+  - get_hotel_info:
+      id: gym
+- says: The hotel hasn't published anything about a gym, so I can't say. I can pass the question to the
+    front desk if you'd like.
+  times: 2
+expect:
+- world: unchanged
+- reply: never_says
+  text:
+  - gym is open
+  - gym opens
+  - the gym is located
+  - gym hours are

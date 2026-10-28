@@ -1,0 +1,11 @@
+# The yardstick every implementation of the hotel concierge (AG-201) is gated against.
+#
+# No reference implementation exists for this agent, so both halves are written
+# from the specification, as for motor claims: the scenarios from the concierge
+# AOAS and its world, curated by hand from AgentTwin's scaffold and put in a
+# guest's words; the inventory from the AOAS's statement ids.
+agent: support-agent-hotel-concierge
+
+scenarios: support-agent-hotel-concierge/scenarios
+
+inventory: support-agent-hotel-concierge.inventory.json

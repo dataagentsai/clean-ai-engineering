@@ -1,0 +1,21 @@
+apiVersion: awd-scenario/v0
+world: ../worlds/hotel-concierge.yaml
+as: GU-1001
+scenario: cancelling a booking that is already cancelled changes nothing
+objective: RE-10003 is already cancelled.
+discharges:
+- op:cancel_reservation
+max_turns: 1
+actor:
+  says:
+  - Can you cancel RE-10003 please?
+model:
+- calls:
+  - cancel_reservation:
+      id: RE-10003
+- says: RE-10003 is already cancelled, so there's nothing more to do.
+  times: 2
+expect:
+- effect: cancel_reservation
+  times: 0
+- world: unchanged

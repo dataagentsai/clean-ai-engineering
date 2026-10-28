@@ -1,0 +1,24 @@
+apiVersion: awd-scenario/v0
+world: ../worlds/hotel-concierge.yaml
+as: GU-1001
+scenario: dates of a cancelled booking cannot be changed
+objective: RE-10003 is cancelled; nothing changes.
+discharges:
+- op:change_dates
+- P-CHANGE
+max_turns: 1
+actor:
+  says:
+  - Can I change the dates on RE-10003 to next weekend?
+model:
+- calls:
+  - change_dates:
+      id: RE-10003
+      check_in: '2026-11-07'
+      check_out: '2026-11-09'
+- says: RE-10003 is cancelled, so its dates can't be changed.
+  times: 2
+expect:
+- effect: change_dates
+  times: 0
+- world: unchanged

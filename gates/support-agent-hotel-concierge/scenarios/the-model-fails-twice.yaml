@@ -1,0 +1,22 @@
+# Ported from claims-fnol-azure.
+apiVersion: awd-scenario/v0
+scenario: two failed turns in a row fetch a person
+world: ../worlds/hotel-concierge.yaml
+as: GU-1001
+objective: The model is unreachable twice. Nothing is claimed, nothing changes, and a person takes it.
+concern: reliability
+discharges: [esc:tool-unavailable, AHC-0005, op:escalate, ext:escalation_desk]
+max_turns: 3
+step_seconds: 600
+actor:
+  says: ["Hi, I need some help with my stay", "are you still there", "hello?"]
+perturbations:
+  - {kind: provider_unavailable, at_call: 1, lasts_s: 1200}
+desk:
+  resolves: handled
+expect:
+  - {handed_off: 1}
+  - {world: unchanged}
+model:
+  - says: Hello, I can help with your reservation and questions about the hotel.
+    times: 30

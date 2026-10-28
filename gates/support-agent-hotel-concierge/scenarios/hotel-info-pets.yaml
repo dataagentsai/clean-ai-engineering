@@ -1,0 +1,23 @@
+apiVersion: awd-scenario/v0
+world: ../worlds/hotel-concierge.yaml
+as: GU-1001
+scenario: a pets question gets the hotel's own answer
+objective: Answered from the pets section.
+discharges:
+- op:get_hotel_info
+- P-INFO-CITE
+max_turns: 1
+actor:
+  says:
+  - Can we bring our dog?
+model:
+- calls:
+  - get_hotel_info:
+      id: pets
+- says: I'm sorry, pets aren't allowed at the hotel, except assistance dogs. (From the hotel's Pets information,
+    updated 2026-09-15.)
+  times: 2
+expect:
+- called: get_hotel_info
+  times: 1
+- world: unchanged

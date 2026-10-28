@@ -1,0 +1,23 @@
+# A saver rate is never cancelled or refunded by the agent.
+apiVersion: awd-scenario/v0
+world: ../worlds/hotel-concierge.yaml
+as: GU-1001
+scenario: a non-refundable booking is not cancelled
+objective: RE-10005 stays held.
+discharges:
+- op:cancel_reservation
+- P-CANCEL
+max_turns: 1
+actor:
+  says:
+  - Please cancel RE-10005, we've changed our plans.
+model:
+- calls:
+  - cancel_reservation:
+      id: RE-10005
+- says: RE-10005 is on a non-refundable rate, so I can't cancel it for you.
+  times: 2
+expect:
+- effect: cancel_reservation
+  times: 0
+- world: unchanged

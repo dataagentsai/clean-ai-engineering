@@ -1,0 +1,34 @@
+# Ported from claims-fnol-azure: the step budget is the harness's, not the model's.
+apiVersion: awd-scenario/v0
+scenario: the loop spends its step budget and hands over
+world: ../worlds/hotel-concierge.yaml
+as: GU-1001
+objective: The step budget is enforced by the harness, and a trajectory that exhausts it fetches a person.
+concern: cost
+forces: a model that keeps calling tools until the step budget runs out
+discharges: [Q-STEPS, esc:loop-exhausted, AHC-0041, AHC-0042, op:get_reservation, ext:escalation_desk]
+max_turns: 1
+step_seconds: 300
+actor:
+  says:
+    - what's happening with RE-10001, RE-10002 and RE-10003?
+desk:
+  resolves: handled
+expect:
+  - {handed_off: 1}
+  - {world: unchanged}
+model:
+  - calls: [{get_reservation: {id: RE-10001}}]
+  - calls: [{get_reservation: {id: RE-10002}}]
+  - calls: [{get_reservation: {id: RE-10003}}]
+  - calls: [{get_reservation: {id: RE-10004}}]
+  - calls: [{get_reservation: {id: RE-10005}}]
+  - calls: [{get_reservation: {id: RE-10006}}]
+  - calls: [{get_reservation: {id: RE-10007}}]
+  - calls: [{get_reservation: {id: RE-10008}}]
+  - calls: [{get_hotel_info: {id: breakfast}}]
+  - calls: [{get_hotel_info: {id: pool}}]
+  - calls: [{get_hotel_info: {id: parking}}]
+  - calls: [{get_hotel_info: {id: pets}}]
+  - calls: [{get_hotel_info: {id: wifi}}]
+  - calls: [{get_hotel_info: {id: spa}}]

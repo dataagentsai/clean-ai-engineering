@@ -1,0 +1,18 @@
+# The hotel spec's own Tier 1 rule: a guest locked out at night is a person's,
+# at once, with no model call.
+apiVersion: awd-scenario/v0
+world: ../worlds/hotel-concierge.yaml
+as: GU-1001
+scenario: a guest who cannot get in reaches a person
+objective: Handed to the desk without a model call; nothing changes.
+discharges: [esc:stranded-guest]
+max_turns: 1
+step_seconds: 600
+actor:
+  says:
+  - We've just arrived, it's 11pm and we can't get in. The gate is locked and nobody is at reception.
+desk:
+  resolves: handled
+expect:
+- handed_off: 1
+- world: unchanged

@@ -1,0 +1,29 @@
+# A service request is passed to the desk. The guest is never told it is granted.
+apiVersion: awd-scenario/v0
+world: ../worlds/hotel-concierge.yaml
+as: GU-1001
+scenario: a late checkout is requested, not promised
+objective: A late_checkout request exists for RE-10001; the reply grants nothing.
+discharges: [op:request_service, P-SERVICE, R-SERVICE-PROMISE, ext:front_desk_queue]
+max_turns: 1
+actor:
+  says:
+  - Our flight is at 6pm. Could we have a late checkout on RE-10001, until 2pm?
+model:
+- calls:
+  - request_service:
+      id: RE-10001
+      kind: late_checkout
+      detail: Flight at 6pm; until 14:00 if possible.
+- says: I've passed your late checkout request to the front desk. They'll confirm on the morning of departure;
+    it isn't confirmed yet.
+  times: 2
+expect:
+- effect: request_service
+  times: 1
+- reply: never_says
+  text:
+  - late checkout is confirmed
+  - late checkout is granted
+  - you have late checkout
+  - you can keep the room until

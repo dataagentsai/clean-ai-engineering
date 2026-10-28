@@ -1,0 +1,26 @@
+# Two turns: the reservation holds no dates, only days until arrival (F-11), so
+# a careful model asks which year before it changes anything; the guest says.
+apiVersion: awd-scenario/v0
+world: ../worlds/hotel-concierge.yaml
+as: GU-1001
+scenario: a guest moves their stay
+objective: RE-10002 moves to new dates once.
+discharges:
+- op:change_dates
+- P-CHANGE
+max_turns: 2
+actor:
+  says:
+  - Could we move RE-10002 to 14 to 18 November instead?
+  - Yes, November 2026. Please go ahead.
+model:
+- calls:
+  - change_dates:
+      id: RE-10002
+      check_in: '2026-11-14'
+      check_out: '2026-11-18'
+- says: 'Done: RE-10002 now runs from 2026-11-14 to 2026-11-18.'
+  times: 2
+expect:
+- effect: change_dates
+  times: 1

@@ -1,0 +1,16 @@
+apiVersion: awd-scenario/v0
+world: ../worlds/hotel-concierge.yaml
+as: GU-1001
+scenario: a refund status question is answered from the record
+objective: RE-10007 is refunded; the guest is told so.
+discharges: [op:get_reservation, P-REFUND-STATUS, P-DIRECT, P-DIRECT-READS, AHC-0100]
+max_turns: 1
+actor:
+  says:
+  - Has my refund for RE-10007 gone through yet?
+expect:
+- world: unchanged
+- reply: says
+  text:
+  - refund has been issued
+  - refunded

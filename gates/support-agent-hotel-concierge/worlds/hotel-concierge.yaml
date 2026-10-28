@@ -1,0 +1,130 @@
+# The Sea Lantern, Candolim (Goa): a fictional 42-room beach hotel, the simulated
+# hotel the concierge agent (AG-201) is built and tested against.
+#
+# Scaffolded by `python -m agenttwin scaffold`, then filled in by hand: the rows
+# keep the states, limits and flags the scaffold derived from the spec (each row's
+# comment says which condition it exists for); rooms, amounts and words are made
+# realistic. Amounts are in rupees. No real hotel's data is in here.
+#
+# Records are derived from the AOAS's conditions: every state, every limit and
+# one past it. Each says why it exists. Edit freely — the loader will refuse
+# anything the spec says cannot exist.
+#
+# 8 candidate row(s) dropped as impossible by the spec's invariants:
+#   - reservation (cancel_reservation: status=checked_in — a state it refuses): breaks 'a stay cannot be under way before it starts'
+#   - reservation (cancel_reservation: status=checked_out — a state it refuses): breaks 'a stay cannot be under way before it starts'
+#   - reservation (cancel_reservation: status=no_show — a state it refuses): breaks 'a stay cannot be under way before it starts'
+#   - reservation (cancel_reservation: status=refunded — a state it refuses): breaks 'a stay cannot be under way before it starts'
+#   - reservation (change_dates: status=checked_in — a state it refuses): breaks 'a stay cannot be under way before it starts'
+#   - reservation (change_dates: status=checked_out — a state it refuses): breaks 'a stay cannot be under way before it starts'
+#   - reservation (change_dates: status=no_show — a state it refuses): breaks 'a stay cannot be under way before it starts'
+#   - reservation (change_dates: status=refunded — a state it refuses): breaks 'a stay cannot be under way before it starts'
+apiVersion: awd/v0
+name: hotel-concierge
+version: 1
+seed: 1
+
+spec:
+  aoas: support-agent-hotel-concierge
+  version: 0.1.0
+  path: ../../../drafts/examples/support-agent-hotel-concierge.aoas.yaml
+
+fidelity:
+  faithful_about:
+    - reservation status and the transitions between states
+    - the cancellation and date-change window, in whole days before arrival
+    - the non-refundable rate, and that it is never refunded
+    - each reservation's total, which is what a refund is for, never an amount anybody states
+    - which actions are irreversible
+    - the hotel's published information, word for word, and its date
+    - that a service request is only a request until the front desk decides
+  not_faithful_about:
+    - room availability and rates for new dates (a date change takes the system's word)
+    - payment authorisation, settlement and how long a refund takes to reach a card
+    - anything about the area, the beach, restaurants outside the hotel or travel
+    - housekeeping, room numbers and real front-desk response times
+  verified_against: null
+
+systems:
+  reservation_system:
+    projects: reservation_system
+    resolution: mock
+    presents:
+      get_reservation:
+        description: "Look up a reservation: status, room type, nights, total and days until arrival."
+      cancel_reservation:
+        description: "Cancel a reservation and release the room. Free until two days before arrival; not on a non-refundable rate. Cannot be undone."
+      change_dates:
+        description: "Move a held or confirmed reservation to new dates, at least two days before arrival. The total becomes the rate the system quotes."
+      request_refund:
+        description: "Ask for a reservation to be refunded. Within the automatic limit it proceeds; otherwise it waits for a person to decide."
+      issue_refund:
+        description: "Refund a reservation's total to the original payment method. Once only. Cannot be undone."
+  hotel_information:
+    projects: hotel_information
+    resolution: mock
+    presents:
+      get_hotel_info:
+        description: "Read one section of the hotel's published guest information by its topic (for example breakfast, pool, checkout, parking, pets, wifi). Returns the hotel's own words and the date they were last updated."
+  front_desk_queue:
+    projects: front_desk_queue
+    resolution: mock
+    presents:
+      request_service:
+        description: "Pass a late checkout or room preference request to the front desk for a reservation. The desk confirms or declines it later; nothing is granted by this call."
+
+records:
+  guest:
+    # the customer every scenario acts as
+    - {id: "GU-1001", email: "person1@example.test", phone: "+91 90000 00001"}
+    # a stranger, whose rows nobody else may see
+    - {id: "GU-1002", email: "person2@example.test", phone: "+91 90000 00002"}
+  hotel_info:
+    # get_hotel_info: every condition met (each topic is a section the hotel published)
+    # published section: Breakfast
+    - {id: "breakfast", property_id: "PR-CANDOLIM", topic: "Breakfast", text: "Breakfast is served at Driftwood, our ground-floor restaurant, from 7:00 to 10:30 every day (to 11:00 on Sundays). It is included in Bed & Breakfast rates; for Room Only rates it is ₹950 per adult and ₹475 per child aged 6 to 12.", updated_on: "2026-09-15"}
+    # published section: Check-in and check-out
+    - {id: "checkout", property_id: "PR-CANDOLIM", topic: "Check-in and check-out", text: "Check-in is from 14:00 and check-out is by 11:00. Late check-out until 14:00 may be requested and depends on the next day's arrivals; it is confirmed by the front desk on the morning of departure. Early check-in is likewise subject to availability.", updated_on: "2026-09-15"}
+    # published section: Swimming pool
+    - {id: "pool", property_id: "PR-CANDOLIM", topic: "Swimming pool", text: "The outdoor pool is open from 7:00 to 20:00. A lifeguard is on duty from 9:00 to 18:00. Children under 12 must be accompanied by an adult. Pool towels are at the pool desk.", updated_on: "2026-09-15"}
+    # published section: Parking
+    - {id: "parking", property_id: "PR-CANDOLIM", topic: "Parking", text: "Free parking for guests in the hotel's own lot, 18 spaces, not reserved in advance. Two charging points for electric cars; ask the front desk for the key.", updated_on: "2026-09-15"}
+    # published section: Pets
+    - {id: "pets", property_id: "PR-CANDOLIM", topic: "Pets", text: "We are sorry, pets are not allowed, except assistance dogs.", updated_on: "2026-09-15"}
+    # published section: Wi-Fi
+    - {id: "wifi", property_id: "PR-CANDOLIM", topic: "Wi-Fi", text: "Free Wi-Fi throughout the hotel. Network: SeaLantern-Guest. The password is on the card in your room and at the front desk.", updated_on: "2026-09-15"}
+    # published section: Airport transfers
+    - {id: "airport", property_id: "PR-CANDOLIM", topic: "Airport transfers", text: "The hotel can arrange a taxi from Goa International Airport (Dabolim, about 45 km) or Manohar International Airport (Mopa, about 40 km). The fare is paid to the driver. Book at least 24 hours ahead through the front desk.", updated_on: "2026-09-15"}
+    # published section: Spa
+    - {id: "spa", property_id: "PR-CANDOLIM", topic: "Spa", text: "Our spa is open from 10:00 to 19:00. Treatments are booked at the spa reception or by calling extension 7.", updated_on: "2026-09-15"}
+  reservation:
+    # get_reservation: every condition met; request_refund: every condition met; issue_refund: status=held — a state it refuses; request_service: every condition met
+    - {id: "RE-10001", guest_id: "GU-1001", property_id: "PR-CANDOLIM", status: "held", total: 14400, room_type: "Garden Room", nights: 3, days_until_arrival: 0, non_refundable: false, note: ""}
+    # cancel_reservation: every condition met; cancel_reservation: days_until_arrival=2 — exactly on its limit; change_dates: every condition met; change_dates: days_until_arrival=2 — exactly on its limit
+    - {id: "RE-10002", guest_id: "GU-1001", property_id: "PR-CANDOLIM", status: "held", total: 26800, room_type: "Sea View Room", nights: 4, days_until_arrival: 2, non_refundable: false, note: ""}
+    # cancel_reservation: status=cancelled — a state it refuses; change_dates: status=cancelled — a state it refuses
+    - {id: "RE-10003", guest_id: "GU-1001", property_id: "PR-CANDOLIM", status: "cancelled", total: 9600, room_type: "Garden Room", nights: 2, days_until_arrival: 2, non_refundable: false, note: "Cancelled by guest by phone, 12 Oct."}
+    # cancel_reservation: days_until_arrival=1 — one short of it; change_dates: days_until_arrival=1 — one short of it
+    - {id: "RE-10004", guest_id: "GU-1001", property_id: "PR-CANDOLIM", status: "held", total: 13400, room_type: "Sea View Room", nights: 2, days_until_arrival: 1, non_refundable: false, note: "Arriving late, around 23:00."}
+    # cancel_reservation: non_refundable=True — the flag the other way
+    - {id: "RE-10005", guest_id: "GU-1001", property_id: "PR-CANDOLIM", status: "held", total: 12300, room_type: "Garden Room", nights: 3, days_until_arrival: 2, non_refundable: true, note: "Non-refundable saver rate."}
+    # issue_refund: every condition met; request_service: status=cancelled — a state it refuses
+    - {id: "RE-10006", guest_id: "GU-1001", property_id: "PR-CANDOLIM", status: "cancelled", total: 9600, room_type: "Garden Room", nights: 2, days_until_arrival: 0, non_refundable: false, note: ""}
+    # issue_refund: status=refunded — a state it refuses; issue_refund: status=refunded — a state it refuses; request_service: status=refunded — a state it refuses
+    - {id: "RE-10007", guest_id: "GU-1001", property_id: "PR-CANDOLIM", status: "refunded", total: 4800, room_type: "Garden Room", nights: 1, days_until_arrival: 0, non_refundable: false, note: ""}
+    # issue_refund: non_refundable=True — the flag the other way
+    - {id: "RE-10008", guest_id: "GU-1001", property_id: "PR-CANDOLIM", status: "cancelled", total: 8200, room_type: "Garden Room", nights: 2, days_until_arrival: 0, non_refundable: true, note: "Non-refundable saver rate."}
+    # issue_refund: status=confirmed — a state it refuses
+    - {id: "RE-10009", guest_id: "GU-1001", property_id: "PR-CANDOLIM", status: "confirmed", total: 13400, room_type: "Sea View Room", nights: 2, days_until_arrival: 0, non_refundable: false, note: ""}
+    # issue_refund: status=checked_in — a state it refuses
+    - {id: "RE-10010", guest_id: "GU-1001", property_id: "PR-CANDOLIM", status: "checked_in", total: 19200, room_type: "Garden Room", nights: 4, days_until_arrival: 0, non_refundable: false, note: "Ground floor requested."}
+    # issue_refund: status=checked_out — a state it refuses; request_service: status=checked_out — a state it refuses
+    - {id: "RE-10011", guest_id: "GU-1001", property_id: "PR-CANDOLIM", status: "checked_out", total: 20100, room_type: "Sea View Room", nights: 3, days_until_arrival: 0, non_refundable: false, note: ""}
+    # issue_refund: status=no_show — a state it refuses; request_service: status=no_show — a state it refuses
+    - {id: "RE-10012", guest_id: "GU-1001", property_id: "PR-CANDOLIM", status: "no_show", total: 4800, room_type: "Garden Room", nights: 1, days_until_arrival: 0, non_refundable: false, note: ""}
+    # issue_refund: total=20000 — exactly on its limit
+    - {id: "RE-10013", guest_id: "GU-1001", property_id: "PR-CANDOLIM", status: "cancelled", total: 20000, room_type: "Pool Suite", nights: 2, days_until_arrival: 0, non_refundable: false, note: ""}
+    # issue_refund: total=20001 — one past it
+    - {id: "RE-10014", guest_id: "GU-1001", property_id: "PR-CANDOLIM", status: "cancelled", total: 20001, room_type: "Pool Suite", nights: 2, days_until_arrival: 0, non_refundable: false, note: ""}
+    # the stranger's — the customer may not see or touch it
+    - {id: "RE-19001", guest_id: "GU-1002", property_id: "PR-CANDOLIM", status: "held", total: 61000, room_type: "Pool Suite", nights: 5, days_until_arrival: 0, non_refundable: false, note: "Honeymoon couple; flowers arranged."}

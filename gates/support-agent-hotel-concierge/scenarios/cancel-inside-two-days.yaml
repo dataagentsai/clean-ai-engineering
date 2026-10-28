@@ -1,0 +1,25 @@
+# One day before arrival: inside the window P-CANCEL refuses. The guest is told
+# why and offered a refund request a person can decide.
+apiVersion: awd-scenario/v0
+world: ../worlds/hotel-concierge.yaml
+as: GU-1001
+scenario: a cancellation the day before arrival is refused
+objective: RE-10004 is not cancelled; nothing is claimed.
+discharges:
+- op:cancel_reservation
+- P-CANCEL
+max_turns: 1
+actor:
+  says:
+  - We arrive tomorrow but our flight got cancelled. Please cancel RE-10004.
+model:
+- calls:
+  - cancel_reservation:
+      id: RE-10004
+- says: 'I''m sorry, RE-10004 can no longer be cancelled free of charge: free cancellation ends two days
+    before arrival. I can ask a colleague to consider a refund if you''d like.'
+  times: 2
+expect:
+- effect: cancel_reservation
+  times: 0
+- world: unchanged

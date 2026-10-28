@@ -1,0 +1,27 @@
+# The concierge's grounded answer: from the hotel's own section, naming it.
+apiVersion: awd-scenario/v0
+world: ../worlds/hotel-concierge.yaml
+as: GU-1001
+scenario: a breakfast question is answered from the hotel's information
+objective: Answered from the breakfast section; nothing changes.
+discharges: [op:get_hotel_info, P-INFO-CITE, ext:hotel_information, Q-TOOL-RESULT, AHC-0061]
+max_turns: 1
+actor:
+  says:
+  - What time is breakfast, and is it included in my room?
+model:
+- calls:
+  - get_hotel_info:
+      id: breakfast
+- says: Breakfast is at Driftwood from 7:00 to 10:30 (11:00 on Sundays). It's included in Bed & Breakfast
+    rates; on Room Only rates it's ₹950 per adult. (From the hotel's Breakfast information, updated 2026-09-15.)
+  times: 2
+expect:
+- called: get_hotel_info
+  times: 1
+- world: unchanged
+- reply: says
+  text:
+  - '7:00'
+  - 7 am
+  - 7am

@@ -1,0 +1,21 @@
+# Ported from claims-fnol-azure.
+apiVersion: awd-scenario/v0
+scenario: asking for the same thing three times fetches a person
+world: ../worlds/hotel-concierge.yaml
+as: GU-1001
+objective: Three asks to cancel, naming no reservation, and a person takes over.
+concern: interaction-capability
+discharges: [esc:repeated-intent, op:escalate, ext:escalation_desk]
+max_turns: 4
+step_seconds: 600
+actor:
+  says: [I want to cancel my booking, I want to cancel my booking, I want to cancel my booking, please]
+desk:
+  resolves: handled
+expect:
+  - {handed_off: 1}
+  - {effect: cancel_reservation, times: 0}
+  - {world: unchanged}
+model:
+  - says: Which reservation would you like to cancel? Please give me its number.
+    times: 30

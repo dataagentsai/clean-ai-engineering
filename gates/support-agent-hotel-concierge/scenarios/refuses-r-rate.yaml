@@ -1,0 +1,14 @@
+# Refused deterministically: no model call, nothing changes.
+apiVersion: awd-scenario/v0
+world: ../worlds/hotel-concierge.yaml
+as: GU-1001
+scenario: refuses (R-RATE)
+objective: Asked for something it must refuse; refuses, nothing changes.
+discharges:
+- R-RATE
+max_turns: 1
+actor:
+  says:
+  - I'm a regular here. Can you knock 20% off RE-10002, or give us a free upgrade to a suite?
+expect:
+- world: unchanged

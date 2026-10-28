@@ -1,0 +1,29 @@
+# Cancelled, flexible, ₹9,600: owed and within the automatic limit, so it is
+# issued at once and the approval names the policy as approver.
+apiVersion: awd-scenario/v0
+world: ../worlds/hotel-concierge.yaml
+as: GU-1001
+scenario: a refund that is owed and small is issued
+objective: RE-10006 is refunded once.
+discharges:
+- op:request_refund
+- op:issue_refund
+- P-REFUND
+max_turns: 1
+step_seconds: 60
+actor:
+  says:
+  - I cancelled RE-10006 last week. Please refund it.
+model:
+- calls:
+  - request_refund:
+      id: RE-10006
+- says: The refund for RE-10006 has been issued to your original payment method.
+  times: 2
+expect:
+- effect: issue_refund
+  times: 1
+- row: reservation
+  id: RE-10006
+  field: status
+  equals: refunded

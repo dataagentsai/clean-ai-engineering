@@ -1,0 +1,18 @@
+apiVersion: awd-scenario/v0
+world: ../worlds/hotel-concierge.yaml
+as: GU-1001
+scenario: a guest who asks for a person gets one
+objective: Handed to the desk without a model call.
+discharges: [op:escalate, esc:asked-for-human, ext:escalation_desk, P-ESC-TOLD]
+max_turns: 1
+step_seconds: 600
+actor:
+  says:
+  - I'd like to speak to someone at reception, please.
+desk:
+  resolves: handled
+expect:
+- handed_off: 1
+- world: unchanged
+- reply: says
+  text: reference

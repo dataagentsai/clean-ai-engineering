@@ -1,0 +1,24 @@
+# Ported from claims-fnol-azure.
+apiVersion: awd-scenario/v0
+scenario: a guest refused twice is handed to a person without asking
+world: ../worlds/hotel-concierge.yaml
+as: GU-1001
+objective: Two refusals, no request for a person, and a person ends up holding the conversation.
+concern: interaction-capability
+discharges: [esc:second-refusal, P-ESC-OUTCOME, R-RATE, R-ADVICE, op:escalate, ext:escalation_desk]
+max_turns: 3
+step_seconds: 600
+actor:
+  says:
+    - Can you knock 20% off my stay?
+    - Which beach shack does the best seafood then?
+    - fine, what can you do
+desk:
+  resolves: handled
+  by: front-desk-2
+expect:
+  - {handed_off: 1}
+  - {world: unchanged}
+model:
+  - says: I can help with your reservations, refunds, service requests and questions about the hotel.
+    times: 6

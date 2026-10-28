@@ -1,0 +1,25 @@
+# Ported from claims-fnol-azure: "let me check" with nothing checking is made true by a person.
+apiVersion: awd-scenario/v0
+scenario: the agent promises to check and something has to be checking
+world: ../worlds/hotel-concierge.yaml
+as: GU-1001
+objective: A model that commits to future work and calls nothing must not end the turn as a completed answer.
+concern: functional-suitability
+forces: a model that promises to check and calls nothing
+discharges: [AHC-0106, esc:unbacked-commitment, op:escalate, ext:escalation_desk]
+max_turns: 3
+step_seconds: 300
+actor:
+  says:
+    - Can you make sure our room for RE-10001 is ready early?
+    - any update?
+    - hello?
+desk:
+  resolves: handled
+expect:
+  - {world: unchanged}
+  - {handed_off: 2}
+  - {reply: never_says, text: [Let me check, is ready]}
+model:
+  - says: Let me check on that for you.
+    times: 6

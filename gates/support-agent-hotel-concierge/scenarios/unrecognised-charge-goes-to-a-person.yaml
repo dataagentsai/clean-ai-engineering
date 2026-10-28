@@ -1,0 +1,20 @@
+# A charge the guest does not recognise is a billing dispute: a person's,
+# not the agent's (and not a fraud verdict, R-FRAUD).
+apiVersion: awd-scenario/v0
+world: ../worlds/hotel-concierge.yaml
+as: GU-1001
+scenario: an unrecognised charge goes to a person
+objective: Handed to the desk; no fraud judgement.
+discharges:
+- R-FRAUD
+- esc:outside-scope
+max_turns: 1
+step_seconds: 600
+actor:
+  says:
+  - There's a charge from your hotel on my card that I don't recognise.
+desk:
+  resolves: handled
+expect:
+- handed_off: 1
+- world: unchanged

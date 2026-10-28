@@ -1,0 +1,23 @@
+# ₹20,000 is on the limit, not past it: the agent may issue it alone.
+apiVersion: awd-scenario/v0
+world: ../worlds/hotel-concierge.yaml
+as: GU-1001
+scenario: a refund of exactly ₹20,000 is the agent's to issue
+objective: RE-10013 is refunded once, without a person.
+discharges:
+- op:issue_refund
+- P-REFUND
+max_turns: 1
+step_seconds: 60
+actor:
+  says:
+  - RE-10013 was cancelled, can I have my money back please?
+model:
+- calls:
+  - request_refund:
+      id: RE-10013
+- says: The refund for RE-10013 has been issued.
+  times: 2
+expect:
+- effect: issue_refund
+  times: 1

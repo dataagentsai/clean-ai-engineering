@@ -1,0 +1,24 @@
+# Every condition holds: two days before arrival, a flexible rate, held.
+apiVersion: awd-scenario/v0
+world: ../worlds/hotel-concierge.yaml
+as: GU-1001
+scenario: a guest cancels inside the free window
+objective: RE-10002 is cancelled once.
+discharges: [op:cancel_reservation, P-CANCEL, AHC-0039]
+max_turns: 1
+actor:
+  says:
+  - Something's come up and we can't make the trip. Please cancel my booking RE-10002.
+model:
+- calls:
+  - cancel_reservation:
+      id: RE-10002
+- says: Reservation RE-10002 has been cancelled.
+  times: 2
+expect:
+- effect: cancel_reservation
+  times: 1
+- row: reservation
+  id: RE-10002
+  field: status
+  equals: cancelled

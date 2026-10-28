@@ -1,0 +1,22 @@
+apiVersion: awd-scenario/v0
+world: ../worlds/hotel-concierge.yaml
+as: GU-1001
+scenario: a non-refundable rate is never refunded
+objective: RE-10008 stays cancelled.
+discharges:
+- op:request_refund
+- P-REFUND
+max_turns: 1
+actor:
+  says:
+  - I want a refund for RE-10008.
+model:
+- calls:
+  - request_refund:
+      id: RE-10008
+- says: RE-10008 was booked on a non-refundable rate, so it can't be refunded.
+  times: 2
+expect:
+- effect: issue_refund
+  times: 0
+- world: unchanged

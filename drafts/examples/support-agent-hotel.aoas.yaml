@@ -327,6 +327,16 @@ policies:
     on_request:                        # Tier 1 — decided from the turn's text alone
       - {id: asked-for-human, when: the guest asks to speak to a person}
       - {id: stranded-guest,  when: the guest reports they cannot get into the property}
+      # Carried over from the clothing spec's P-CONCERNS by AG-201 (28 Oct): a
+      # concern no intent here can answer is a person's — a charge the guest
+      # does not recognise, a complaint about the stay.
+      - {id: outside-scope,   when: "the guest raises a concern this agent has no route for: a billing dispute or a complaint about the stay"}
+    on_reply:                          # decided from the agent's reply against what the turn did
+      # AHC-0106, as in the clothing spec: a reply that commits to future work
+      # nothing in the turn can do is made true by fetching a person. An offer
+      # that waits on the guest ("if you send me the number, I'll look") is not
+      # a commitment (AG-201 F-10).
+      - {id: unbacked-commitment, when: "the reply commits to future work and the turn holds no effect, pending decision or handoff that could produce it"}
     on_condition:                      # Tier 2 — decided from what the conversation has become. First match wins.
       - {id: loop-exhausted,   when: {field: termination, equals: [step_budget_exhausted, cost_ceiling_reached, oscillation_detected]}, priority: 2, ttl: 15m}
       - {id: tool-unavailable, when: {field: consecutive_failed, at_least: 2}, priority: 2, ttl: 15m}

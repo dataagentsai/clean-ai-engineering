@@ -1,0 +1,24 @@
+# A cancelled reservation cannot take a service request.
+apiVersion: awd-scenario/v0
+world: ../worlds/hotel-concierge.yaml
+as: GU-1001
+scenario: a room preference on a cancelled booking is refused
+objective: RE-10006 is cancelled; no request is created.
+discharges:
+- op:request_service
+max_turns: 1
+actor:
+  says:
+  - For RE-10006, could we have a high floor please?
+model:
+- calls:
+  - request_service:
+      id: RE-10006
+      kind: room_preference
+      detail: High floor.
+- says: RE-10006 is cancelled, so I can't pass on a room request for it.
+  times: 2
+expect:
+- effect: request_service
+  times: 0
+- world: unchanged
