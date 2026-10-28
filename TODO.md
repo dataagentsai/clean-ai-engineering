@@ -71,6 +71,14 @@ The same FNOL agent and our own loop, on another cloud (T-123, T-124).
 - ☐ FNOL's claims system has 5 type-check errors, older than this march
 - ☐ The escalation desk is still typed as the Temporal class, the other half of FNOL's F-20
 - ☐ A turn's cost unit is a random id, not the run id, so the ledger cannot yet be joined to the trace
+- ✅ AgentTwin speaks Claude's Messages API and serves several systems from one server (AG-201 F-1, F-9; agenttwin PR #1, 28 Oct). 👤 merge it
+- ✅ The hotel spec lacked `outside-scope` and `unbacked-commitment`; a hotel service request could not be created; hotel information is keyed by topic (AG-201 F-5, F-12; 28 Oct)
+- ☐ The harness's permission (scope) names are a clothing shop's (`orders:write`); a hotel cannot name its own (AG-201 F-3) (T-127)
+- ☐ A second agent of the same shape is a ~4,200-line fork of the clothing agent, not configuration: a "support agent kit" between the harness and a domain (AG-201 F-6; motor claims was 3,300) (T-128)
+- ☐ The unkept-promise rule reads a conditional offer ("send me your number and I'll look it up") as a promise; fixed in AG-201, port to the reference (AG-201 F-10) (T-129)
+- ☐ The harness sends `customer_id` where a spec's session field is named otherwise (`guest_id`); every row was invisible and "nothing changed" checks passed for the wrong reason. A suite should fail loudly when no row is ever visible (AG-201 F-8) (T-130)
+- ☐ Hotel spec: no `list_reservations` (the opening cannot show bookings) and no reservation dates (Claude rightly asked which year) (AG-201 F-4, F-11) (T-131)
+- ☐ Hotel spec against real PMSs (OPERA, Apaleo, Mews): a refund that is a staff task never reaches `refunded`; `held` exists in no vendor; `non_refundable` is never a plain field; ownership by guest id does not carry to Apaleo; no idempotency key on `change_dates` and `request_service` (AG-201 F-13, pms/README.md) (T-132)
 
 ## The goal
 
@@ -442,11 +450,11 @@ sharpens T-022 before cycle 4).
 | **G2.1** | ✅ Hotel AOAS written (T-011) | clean-ai-engineering | — | — |
 | **T-022** | Fix the five AOAS frictions it found | clean-ai-engineering | hours | T-013 |
 | **T-019** ✅ | Extract the mechanism library the hotel agent installs | reference-agent | days | — |
-| **G2.2** | Hotel world and scenarios | agenttwin | days | T-044 |
-| **G2.3** | Generate the hotel agent, and pass the gates | new repo | weeks | T-019, G2.2, T-034, T-035 |
+| **G2.2** ✅ | Hotel world and scenarios: The Sea Lantern, 39 scenarios (AG-201, 28 Oct) | hotel-concierge-agent, gates/ | days | T-044 |
+| **G2.3** ✅ | The hotel agent passes the four gates (AG-201, 28 Oct): built by forking the clothing agent, not generated; also live on Claude | hotel-concierge-agent | weeks | T-019, G2.2, T-034, T-035 |
 | **G2.4** | Fix universal gaps in the spec, then re-run the support agent's suite | all specs | — | G2.3 |
 | **G2.5** | AOAS earns its own repository | clean-ai-engineering | — | G2.3 |
-| **G2.6** | Measure the reuse against the prediction | reference-agent | a day | G2.3 |
+| **G2.6** | Measure the reuse against the prediction. First number: a ~4,200-line fork (AG-201 F-6, T-128) | reference-agent | a day | G2.3 |
 
 ### Cycle 5 · Spark cost analyst · A6 · A8 · Claude Agent SDK: the shape changes
 
