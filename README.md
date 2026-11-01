@@ -2,6 +2,8 @@
 
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.23366162.svg)](https://doi.org/10.5281/zenodo.23366162)
 
+Open source (Apache 2.0) · Website: [cleandataengineering.ai/research](https://cleandataengineering.ai/research/) · Part of [Clean Data Engineering](https://cleandataengineering.ai/)
+
 A method for building AI agents as ordinary, testable software. This repository
 holds the method's principles, its specification formats, the four gates an
 agent must pass, and the cycle that turns each failure into a fix in a spec.
