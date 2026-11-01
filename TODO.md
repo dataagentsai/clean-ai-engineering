@@ -2070,6 +2070,9 @@ new domain.
 
 #### G5 · The same lab for a data platform: source to conversation, running itself
 
+> **Moved (2 Nov 2026, decision D7):** G5's working list now lives in `TODO.md` of the clean-data-engineering
+> repository, next to its plan. This section is kept for history.
+
 Raised 2026-09-30 by Basant. **The claim it has to earn, for clients:** *a data
 platform that keeps itself running* — sources to bronze, silver and gold, a
 semantic layer, dashboards and a conversation UI on top, and when something
