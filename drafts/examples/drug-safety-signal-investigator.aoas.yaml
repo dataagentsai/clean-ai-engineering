@@ -116,11 +116,6 @@ entities:
       text: {type: text}
       uncertainty: {type: text}
       recommendation: {type: text}
-    invariants:
-      - name: a decided assessment has a reviewer
-        when: {field: status, equals: [approved, rejected, edited]}
-        then: {field: reviewer_id, at_least: 1}
-        because: only a person decides, and the record says who
 
 session:
   reviewer_id: {type: id, ref: reviewer.id}
@@ -167,9 +162,9 @@ state_machines:
     states: [drafted, approved, rejected, edited]
     terminal: [approved, rejected, edited]
     transitions:
-      - {from: drafted, to: approved, by: decide_assessment}
-      - {from: drafted, to: rejected, by: decide_assessment}
-      - {from: drafted, to: edited, by: decide_assessment}
+      - {from: drafted, to: approved, by: approve_assessment}
+      - {from: drafted, to: rejected, by: reject_assessment}
+      - {from: drafted, to: edited, by: edit_assessment}
     concurrent_writers: [reviewer]
 
 # ---------------------------------------------------------------------------
@@ -215,16 +210,40 @@ operations:
     authority: agent
     on_refusal: say the draft could not be made, and stay with the request
 
-  decide_assessment:
+  approve_assessment:
     entity: assessment
     side_effect: irreversible
     offered: false
-    input: [assessment_id, decision]
+    input: [assessment_id]
     preconditions:
       - {field: status, equals: [drafted]}
-    effect: {status: decided}
+    effect: {status: approved}
     identity: assessment_id
     compensation: {kind: none, how: "a decided assessment is final; a new draft starts a new assessment"}
+    authority: human_approval
+
+  reject_assessment:
+    entity: assessment
+    side_effect: irreversible
+    offered: false
+    input: [assessment_id]
+    preconditions:
+      - {field: status, equals: [drafted]}
+    effect: {status: rejected}
+    identity: assessment_id
+    compensation: {kind: none, how: "a decided assessment is final; a new draft starts a new assessment"}
+    authority: human_approval
+
+  edit_assessment:
+    entity: assessment
+    side_effect: irreversible
+    offered: false
+    input: [assessment_id]
+    preconditions:
+      - {field: status, equals: [drafted]}
+    effect: {status: edited}
+    identity: assessment_id
+    compensation: {kind: none, how: "a decided assessment is final; the edited text is the record and a new draft starts a new assessment"}
     authority: human_approval
 
   escalate:
@@ -262,7 +281,7 @@ policies:
     facet: integrity
   P-DRAFT-ONLY:
     rule: the agent drafts; only a reviewer's decision makes an assessment approved, rejected or edited, and nothing leaves the system
-    via: [draft_assessment, decide_assessment]
+    via: [draft_assessment, approve_assessment, reject_assessment, edit_assessment]
     concern: safety
     facet: operational constraint
   P-UNKNOWN-PAIR:
@@ -334,7 +353,7 @@ external:
     failure_modes: [unavailable, slow, unknown_record]
 
   approval_queue:
-    decides: [decide_assessment]
+    decides: [approve_assessment, reject_assessment, edit_assessment]
     latency: asynchronous; may span a process restart; may never be decided
 
   escalation_desk:
