@@ -73,6 +73,8 @@ The same FNOL agent and our own loop, on another cloud (T-123, T-124).
 - ☐ A turn's cost unit is a random id, not the run id, so the ledger cannot yet be joined to the trace
 - ✅ AgentTwin speaks Claude's Messages API and serves several systems from one server (AG-201 F-1, F-9; agenttwin PR #1, 28 Oct). 👤 merge it
 - ✅ The hotel spec lacked `outside-scope` and `unbacked-commitment`; a hotel service request could not be created; hotel information is keyed by topic (AG-201 F-5, F-12; 28 Oct)
+- ☐ No Databricks stack existed: added `stacks/databricks.yaml` (19 Nov, from AG-113). Open: which Free Edition refusals are limits and which are temporary, and how MLflow lays traces out in Unity Catalog (T-133)
+- ☐ The stacks and the Open Stack assume a durable-wait library (Temporal, DBOS) for approval waits (AHC-0058); no such library runs inside a Databricks job, so a wait there is "the run ends, a new run starts on the decision". Decide whether AHC-0058 should state the contract (state survives, the decision is a message, resume is idempotent) without assuming a library (T-134)
 - ☐ The harness's permission (scope) names are a clothing shop's (`orders:write`); a hotel cannot name its own (AG-201 F-3) (T-127)
 - ☐ A second agent of the same shape is a ~4,200-line fork of the clothing agent, not configuration: a "support agent kit" between the harness and a domain (AG-201 F-6; motor claims was 3,300) (T-128)
 - ☐ The unkept-promise rule reads a conditional offer ("send me your number and I'll look it up") as a promise; fixed in AG-201, port to the reference (AG-201 F-10) (T-129)

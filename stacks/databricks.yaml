@@ -1,0 +1,55 @@
+# Databricks: the Open Stack's harness, bound to Databricks services.
+#
+# Added 19 Nov 2026 from the drug-safety agent build (AG-113, ~/databricks-drug-safety-agent): the
+# stack set had Azure, AWS and open stacks but none for the platform the group's data work already runs on.
+# Extends the Open Stack; each binding named here says why it differs. The loop stays ours
+# (decision A, as on Azure): Mosaic AI Agent Framework is the packaging and tracing layer around it, not the loop.
+#
+# `x_status: target` throughout: decided, not yet built. `x_dev` is the Free Edition choice where it differs
+# from production. Free Edition refused Vector Search, custom Model Serving and a SQL warehouse start on
+# 19 Nov 2026 ("try again later"); the cause is unconfirmed, so each x_dev below is a fallback to retire, not a limit to accept.
+apiVersion: harness-profile/v1
+
+extends: open-stack.yaml
+
+subject:
+  name: databricks
+  description: >-
+    The Open Stack's harness on Databricks: our loop and contracts running as a job or app, models only through
+    Foundation Model APIs behind AI Gateway, tools as Unity Catalog functions, state and knowledge in Delta,
+    identity and permissions in Unity Catalog, telemetry in MLflow tracing into Unity Catalog tables.
+  archetypes: [A6]
+
+catalog:
+  ahc: "0.3.1"
+
+harness:
+  loop: { owner: in-house, adapter: bounded-react-loop, x_why: "same as Azure (decision A): the step budget and stop rules are ours; Agent Framework's ResponsesAgent is the interface the loop is wrapped in, so the agent can be logged, traced and served", x_status: target }
+
+decisions: {}
+thresholds: {}
+
+bindings:
+  model:
+    approach: gateway
+    adapter: ai-gateway-foundation-model-apis
+    x_why: "one door for model traffic: rate limits, guardrails and usage logging at AI Gateway, not in each agent"
+    x_backend: "databricks-gpt-oss-120b first, databricks-meta-llama-3-3-70b-instruct second; both listed on the Free Edition workspace 19 Nov 2026"
+    x_dev: "Foundation Model APIs called directly; AI Gateway on a custom or external endpoint needs Model Serving, which was refused on Free Edition"
+    x_status: target
+  tool_runtime: { approach: cloud-native, adapter: unity-catalog-functions, x_why: "tools are governed objects: permissions, lineage and audit come with them, and the model can call only what is registered (no raw SQL)", x_dev: "needs a SQL warehouse; start refused 19 Nov 2026", x_status: target }
+  state:        { approach: cloud-native, adapter: delta-tables-unity-catalog, x_why: "conversation, case and approval state as governed Delta tables; Lakebase (managed Postgres) when low-latency row updates matter", x_status: target }
+  retrieval:    { approach: cloud-native, adapter: vector-search, x_why: "index synced from a Delta table inherits its permissions", x_dev: "embeddings stored in Delta and searched by a Unity Catalog function; Vector Search endpoint creation refused 19 Nov 2026", x_status: target }
+  workflow:     { approach: cloud-native, adapter: lakeflow-jobs, x_why: "scheduled and triggered runs with retries; a wait for a person is a job that ends and a new run that starts on the decision, as no durable-wait library runs inside Databricks jobs", x_status: target }
+  approval:     { approach: cloud-native, adapter: databricks-apps-delta, x_why: "the approve or reject screen is a Databricks App; the decision is a row in a Delta table that our rule validates", x_dev: "a review file if Apps cannot be created", x_status: target }
+  identity:     { approach: cloud-native, adapter: unity-catalog-service-principal, x_why: "the agent runs as a service principal with grants on exactly its tools and tables; the reviewer's identity comes from the workspace login", x_status: target }
+  secrets:      { approach: cloud-native, adapter: databricks-secret-scopes, x_why: "no secret in code or job parameters", x_status: target }
+  telemetry:    { approach: cloud-native, adapter: mlflow-tracing, x_why: "MLflow traces for every turn; our agent.* span names carried as span names and attributes; the eval harness reads them back through a trace source", x_note: "how MLflow lays traces out in Unity Catalog is unverified on Free Edition; the eval-harness Databricks track (E2) settles it", x_status: target }
+  config:       { approach: cloud-native, adapter: asset-bundles-job-parameters, x_why: "thresholds and flags as bundle variables, versioned with the code", x_status: target }
+  # policy, recorder, cost_ledger, trigger, admission, channel, eval_task: inherited. cost_ledger can read
+  # system.billing tables for actual spend; the agent's own ledger stays the per-turn source.
+
+accepted_gaps: []
+
+x_hosting: { approach: cloud-native, adapter: lakeflow-job-or-databricks-app, x_why: "batch investigations run as jobs; an interactive desk runs as an App", x_dev: "serverless job; custom Model Serving is not used to host the agent" }
+x_registry: { approach: cloud-native, adapter: unity-catalog-models-and-functions, x_note: "agent versions and tools registered in Unity Catalog; certification gate is ours (AAC)" }
