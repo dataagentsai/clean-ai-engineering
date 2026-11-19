@@ -3,7 +3,7 @@ apiVersion: awd-scenario/v0
 scenario: get label mentions answers from the record
 world: ../worlds/drug-safety-signal-investigator.yaml
 as: RE-1001
-objective: 'Asked about LA-10001: nothing changes, nothing said is false.'
+objective: 'Asked about lisinopril: nothing changes, nothing said is false.'
 discharges:
 - op:get_label_mentions
 max_turns: 1
@@ -13,10 +13,9 @@ actor:
 model:
 - calls:
   - get_label_mentions:
-      id: LA-10001
       drug: lisinopril
       event: ANGIOEDEMA
-- says: Here is what I found for LA-10001.
+- says: Here is what I found for lisinopril.
   times: 2
 expect:
 - called: get_label_mentions

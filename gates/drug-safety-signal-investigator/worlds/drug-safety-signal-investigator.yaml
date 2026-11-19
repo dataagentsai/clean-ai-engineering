@@ -54,15 +54,15 @@ records:
     # a stranger, whose assessments nobody else may see
     - {id: "RE-1002", name: "Reviewer Two"}
   drug_event:
-    - {id: "DE-0001", drug: "lisinopril", event: "ANGIOEDEMA", cases: 7015, drug_without_event: 309818, other_with_event: 37265, other_without_event: 20700061, fetched: "2026-11-19"}
-    - {id: "DE-0002", drug: "atorvastatin", event: "RHABDOMYOLYSIS", cases: 2280, drug_without_event: 250115, other_with_event: 39459, other_without_event: 20762305, fetched: "2026-11-19"}
-    - {id: "DE-0003", drug: "metformin", event: "LACTIC ACIDOSIS", cases: 19916, drug_without_event: 426742, other_with_event: 12505, other_without_event: 20594996, fetched: "2026-11-19"}
+    - {id: "lisinopril:ANGIOEDEMA", drug: "lisinopril", event: "ANGIOEDEMA", cases: 7015, drug_without_event: 309818, other_with_event: 37265, other_without_event: 20700061, fetched: "2026-11-19"}
+    - {id: "atorvastatin:RHABDOMYOLYSIS", drug: "atorvastatin", event: "RHABDOMYOLYSIS", cases: 2280, drug_without_event: 250115, other_with_event: 39459, other_without_event: 20762305, fetched: "2026-11-19"}
+    - {id: "metformin:LACTIC ACIDOSIS", drug: "metformin", event: "LACTIC ACIDOSIS", cases: 19916, drug_without_event: 426742, other_with_event: 12505, other_without_event: 20594996, fetched: "2026-11-19"}
   label:
-    - {id: "LA-10001", drug: "lisinopril", effective_time: "20261001", text: "WARNINGS General Lisinopril Anaphylactoid and Possibly Related Reactions: Presumably because angiotensin-converting enzyme inhibitors affect the metabolism of e"}
-    - {id: "LA-10002", drug: "atorvastatin", effective_time: "20250828", text: "5 WARNINGS AND PRECAUTIONS Myopathy and Rhabdomyolysis: Risk factors include age 65 years or greater, uncontrolled hypothyroidism, renal impairment, concomitant"}
-    - {id: "LA-10003", drug: "metformin", effective_time: "20260812", text: "5 WARNINGS AND PRECAUTIONS Lactic Acidosis: See boxed warning . ( 5.1 ) Pancreatitis: There have been postmarketing reports of acute pancreatitis, including fat"}
+    - {id: "lisinopril", drug: "lisinopril", effective_time: "20261001", text: "WARNINGS General Lisinopril Anaphylactoid and Possibly Related Reactions: Presumably because angiotensin-converting enzyme inhibitors affect the metabolism of e"}
+    - {id: "atorvastatin", drug: "atorvastatin", effective_time: "20250828", text: "5 WARNINGS AND PRECAUTIONS Myopathy and Rhabdomyolysis: Risk factors include age 65 years or greater, uncontrolled hypothyroidism, renal impairment, concomitant"}
+    - {id: "metformin", drug: "metformin", effective_time: "20260812", text: "5 WARNINGS AND PRECAUTIONS Lactic Acidosis: See boxed warning . ( 5.1 ) Pancreatitis: There have been postmarketing reports of acute pancreatitis, including fat"}
   assessment:
     # a draft awaiting a decision, on a pair that is on the label
-    - {id: "ASM-010001", drug_event_id: "DE-0001", reviewer_id: "RE-1001", status: "drafted", cases: 7015, prr: 12.32, on_label: true, text: "Lisinopril and angioedema: disproportionate reporting; the label already warns.", uncertainty: "Spontaneous reports cannot show causation.", recommendation: "Already labelled; no further action suggested."}
+    - {id: "ASM-010001", drug_event_id: "lisinopril:ANGIOEDEMA", reviewer_id: "RE-1001", status: "drafted", cases: 7015, prr: 12.32, on_label: true, text: "Lisinopril and angioedema: disproportionate reporting; the label already warns.", uncertainty: "Spontaneous reports cannot show causation.", recommendation: "Already labelled; no further action suggested."}
     # the stranger's — the scientist may not see or touch it
-    - {id: "ASM-019001", drug_event_id: "DE-0002", reviewer_id: "RE-1002", status: "drafted", cases: 2280, prr: 1.0, on_label: true, text: "Atorvastatin and rhabdomyolysis draft.", uncertainty: "Spontaneous reports cannot show causation.", recommendation: "Review."}
+    - {id: "ASM-019001", drug_event_id: "atorvastatin:RHABDOMYOLYSIS", reviewer_id: "RE-1002", status: "drafted", cases: 2280, prr: 1.0, on_label: true, text: "Atorvastatin and rhabdomyolysis draft.", uncertainty: "Spontaneous reports cannot show causation.", recommendation: "Review."}

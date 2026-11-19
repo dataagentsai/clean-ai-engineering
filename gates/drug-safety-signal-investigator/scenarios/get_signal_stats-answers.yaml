@@ -3,7 +3,7 @@ apiVersion: awd-scenario/v0
 scenario: get signal stats answers from the record
 world: ../worlds/drug-safety-signal-investigator.yaml
 as: RE-1001
-objective: 'Asked about DE-0001: nothing changes, nothing said is false.'
+objective: 'Asked about lisinopril:ANGIOEDEMA: nothing changes, nothing said is false.'
 discharges:
 - op:get_signal_stats
 max_turns: 1
@@ -13,10 +13,9 @@ actor:
 model:
 - calls:
   - get_signal_stats:
-      id: DE-0001
       drug: lisinopril
       event: ANGIOEDEMA
-- says: Here is what I found for DE-0001.
+- says: Here is what I found for lisinopril:ANGIOEDEMA.
   times: 2
 expect:
 - called: get_signal_stats

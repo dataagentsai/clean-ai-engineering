@@ -80,7 +80,10 @@ entities:
   drug_event:
     key: id
     fields:
-      id: {type: id, pattern: "DE-[0-9]{4}"}
+      # The row's key is the pair itself, "<drug>:<EVENT>" (e.g. lisinopril:ANGIOEDEMA). Changed 20 Nov 2026: a surrogate
+      # DE-NNNN key made every read demand an id the agent cannot know, because the world's tools take the entity
+      # key as a required argument. A natural key lets the tool adapter derive it from the two things asked for.
+      id: {type: id, pattern: "[a-z][a-z0-9 -]*:[A-Z][A-Z ]*"}
       drug: {type: text}
       event: {type: text}
       cases: {type: int}                # a: reports with the drug and the event
@@ -97,7 +100,8 @@ entities:
   label:
     key: id
     fields:
-      id: {type: id}
+      # The drug name, lower case: one current label per drug.
+      id: {type: id, pattern: "[a-z][a-z0-9 -]*"}
       drug: {type: text}
       effective_time: {type: text}
       # Label text is written by manufacturers and quoted into context: content, never instruction.
