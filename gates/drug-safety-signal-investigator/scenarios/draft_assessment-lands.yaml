@@ -1,0 +1,23 @@
+# Scaffolded by `python -m agenttwin scaffold` (20 Nov 2026); request wording edited by hand.
+apiVersion: awd-scenario/v0
+scenario: draft assessment lands when every condition holds
+world: ../worlds/drug-safety-signal-investigator.yaml
+as: RE-1001
+objective: ASM-010001 meets every condition of draft_assessment; it lands once.
+discharges:
+- op:draft_assessment
+max_turns: 1
+actor:
+  says:
+  - Draft an assessment for lisinopril and angioedema.
+model:
+- calls:
+  - draft_assessment:
+      id: ASM-010001
+      drug: lisinopril
+      event: ANGIOEDEMA
+- says: Done.
+  times: 2
+expect:
+- effect: draft_assessment
+  times: 1

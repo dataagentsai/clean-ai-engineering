@@ -1,0 +1,10 @@
+# The yardstick every implementation of drug-safety-signal-investigator is gated against (AG-113).
+#
+# No reference implementation exists, so both halves are written from the specification: the scenarios from the
+# AOAS (scaffolded by `agenttwin scaffold`, then curated), the world from REAL rows of the openFDA data the first
+# build ingested, the inventory from the AOAS's statement ids.
+agent: drug-safety-signal-investigator
+
+scenarios: drug-safety-signal-investigator/scenarios
+
+inventory: drug-safety-signal-investigator.inventory.json

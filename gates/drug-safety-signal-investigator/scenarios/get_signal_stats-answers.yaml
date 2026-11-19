@@ -1,0 +1,24 @@
+# Scaffolded by `python -m agenttwin scaffold` (20 Nov 2026); request wording edited by hand.
+apiVersion: awd-scenario/v0
+scenario: get signal stats answers from the record
+world: ../worlds/drug-safety-signal-investigator.yaml
+as: RE-1001
+objective: 'Asked about DE-0001: nothing changes, nothing said is false.'
+discharges:
+- op:get_signal_stats
+max_turns: 1
+actor:
+  says:
+  - Is there a disproportionality signal for lisinopril and angioedema?
+model:
+- calls:
+  - get_signal_stats:
+      id: DE-0001
+      drug: lisinopril
+      event: ANGIOEDEMA
+- says: Here is what I found for DE-0001.
+  times: 2
+expect:
+- called: get_signal_stats
+  times: 1
+- world: unchanged

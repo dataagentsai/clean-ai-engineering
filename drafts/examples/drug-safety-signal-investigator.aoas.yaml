@@ -352,6 +352,18 @@ external:
     consistency: counts are a snapshot taken on the fetch date; the label is the version current on the fetch date
     failure_modes: [unavailable, slow, unknown_record]
 
+  # Added 20 Nov 2026 (finding from `agenttwin scaffold`): the entities the session refers to (reviewer) and the one
+  # the agent writes (assessment) had no owner, so no world could hold them. On Databricks this is the Delta
+  # table behind the harness's state binding; the agent reaches it only through its own tool.
+  assessment_store:
+    owns: [reviewer, assessment]
+    operations: [draft_assessment]
+    refusal_is_a_result: >
+      A write for an unknown reviewer or a malformed draft returns {error: ...} naming the field, never a
+      transport error and never a silently stored half-draft.
+    consistency: a draft is visible to the approval queue once the write returns
+    failure_modes: [unavailable, slow]
+
   approval_queue:
     decides: [approve_assessment, reject_assessment, edit_assessment]
     latency: asynchronous; may span a process restart; may never be decided

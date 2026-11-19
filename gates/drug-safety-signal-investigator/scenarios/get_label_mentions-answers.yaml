@@ -1,0 +1,24 @@
+# Scaffolded by `python -m agenttwin scaffold` (20 Nov 2026); request wording edited by hand.
+apiVersion: awd-scenario/v0
+scenario: get label mentions answers from the record
+world: ../worlds/drug-safety-signal-investigator.yaml
+as: RE-1001
+objective: 'Asked about LA-10001: nothing changes, nothing said is false.'
+discharges:
+- op:get_label_mentions
+max_turns: 1
+actor:
+  says:
+  - Does the lisinopril label already mention angioedema?
+model:
+- calls:
+  - get_label_mentions:
+      id: LA-10001
+      drug: lisinopril
+      event: ANGIOEDEMA
+- says: Here is what I found for LA-10001.
+  times: 2
+expect:
+- called: get_label_mentions
+  times: 1
+- world: unchanged
