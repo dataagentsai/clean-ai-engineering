@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>One package: build, test and release an agent</title>
+<style>
+:root{color-scheme:light}
+body{margin:0;background:#fff;color:#1c2430;font:16px/1.55 -apple-system,Segoe UI,sans-serif}
+main{max-width:1040px;margin:0 auto;padding:32px 20px 60px}
+h1{font-size:28px;margin:0 0 6px}h2{font-size:20px;margin:38px 0 10px}
+p{margin:8px 0}.sub{color:#5a6675}
+.wrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:14.5px}
+th,td{border:1px solid #d8dee6;padding:7px 9px;text-align:left;vertical-align:top}
+th{background:#f4f6f9}
+.flow{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:14px 0}
+.step{border:2px solid #33415c;border-radius:14px 6px 14px 6px;padding:10px}
+.step b{display:block}.step span{font-size:13px;color:#5a6675}
+code,pre{font-family:ui-monospace,Menlo,monospace;font-size:13.5px}
+pre{background:#f4f6f9;border:1px solid #d8dee6;border-radius:8px;padding:12px;overflow-x:auto}
+.have{color:#146c43;font-weight:600}.part{color:#8a5a00;font-weight:600}.gap{color:#a02828;font-weight:600}
+</style>
+</head>
+<body>
+<main>
+<h1>One package: build, test and release an agent</h1>
+<p class="sub">Design draft, 28 November 2026. Nothing here is built unless marked "Have". Statuses come from reading the repositories, not from running them. Work items: T-136 to T-138 in TODO.md.</p>
+
+<p><b>The promise:</b> a developer installs one thing, describes the agent, and gets a running agent with safety controls on, a simulated world to test it, checks that run in testing and in production, and a report saying whether it is safe to release.</p>
+<p><b>The position:</b> build with any framework; use ours to show the agent is safe to release. Today this is supported only by the Pydantic AI adapter.</p>
+
+<h2>1. The journey</h2>
+<div class="flow">
+<div class="step"><b>1 · Describe</b><span>What the agent may do, as a specification (AOAS)</span></div>
+<div class="step"><b>2 · Create</b><span>A project with the harness wired in</span></div>
+<div class="step"><b>3 · Guard</b><span>Safety controls switched on by a profile</span></div>
+<div class="step"><b>4 · Simulate</b><span>AgentTwin: customers, systems, faults, attacks</span></div>
+<div class="step"><b>5 · Evaluate</b><span>Checks on every reply, action and conversation</span></div>
+<div class="step"><b>6 · Gate</b><span>Four gates and an evidence report</span></div>
+<div class="step"><b>7 · Deploy</b><span>Same agent, chosen cloud adapters</span></div>
+<div class="step"><b>8 · Watch and fix</b><span>Live findings become new tests</span></div>
+</div>
+
+<div class="wrap"><table>
+<tr><th>Step</th><th>Proposed command</th><th>What exists</th><th>Status</th><th>What to build</th></tr>
+<tr><td>Describe</td><td><code>suite spec check</code></td><td>AOAS draft, schema, validator, examples</td><td class="part">Partly</td><td>Short guided form that writes a first AOAS</td></tr>
+<tr><td>Create</td><td><code>suite new</code></td><td>Generation brief; world scaffold</td><td class="part">Partly</td><td>Starter kit between harness and domain (T-128)</td></tr>
+<tr><td>Guard</td><td>profile file</td><td>Policy positions, approvals, budgets, kill switch, redaction</td><td class="part">Partly</td><td>Default profiles; security checks</td></tr>
+<tr><td>Simulate</td><td><code>suite test</code></td><td>AgentTwin worlds, faults, attacks, state checks</td><td class="have">Have</td><td>Run it from the package</td></tr>
+<tr><td>Evaluate</td><td><code>suite eval</code></td><td>evalharness checks, patterns, adapters, hooks</td><td class="part">Partly</td><td>Online worker, security pack, rest of cost rules</td></tr>
+<tr><td>Gate</td><td><code>suite gate</code></td><td>tools/gates.py, assurance coverage report</td><td class="part">Partly</td><td>One report; a CI step that fails the release</td></tr>
+<tr><td>Deploy</td><td><code>suite deploy</code></td><td>Stack files; Open Stack, Azure and AWS adapters</td><td class="part">Partly</td><td>One proven path first; the others stay manual</td></tr>
+<tr><td>Watch and fix</td><td><code>suite watch</code></td><td>Online watch, weekly report</td><td class="part">Partly</td><td>Turn a finding into a draft scenario</td></tr>
+</table></div>
+<p class="sub">"suite" is a placeholder name.</p>
+
+<h2>2. What is inside the install</h2>
+<div class="wrap"><table>
+<tr><th>Part</th><th>Job</th><th>How it ships</th></tr>
+<tr><td>Command line (new, small)</td><td>Runs the journey; holds no logic of its own</td><td>Core</td></tr>
+<tr><td>Agent harness</td><td>Runs the agent and enforces controls</td><td>Core, with heavy dependencies moved to extras</td></tr>
+<tr><td>AgentTwin</td><td>The simulated world</td><td>Core test dependency</td></tr>
+<tr><td>Eval harness</td><td>Checks and verdicts</td><td>Core; each vendor is an extra</td></tr>
+<tr><td>Catalogs (AHC, AAC) and gates</td><td>What must exist and what must be true</td><td>Versioned data inside the package, so no sibling checkouts</td></tr>
+<tr><td>Framework adapters</td><td>Another framework owns the loop</td><td>Extras: Pydantic AI (exists), LangGraph (T-036), Claude Agent SDK (T-037)</td></tr>
+<tr><td>Cloud adapters</td><td>Models, identity, state, secrets, traces</td><td>Extras: azure, aws, databricks</td></tr>
+</table></div>
+<p>The repositories stay separate. The package pins one tested set of versions. Resolving a profile calls a Node.js tool today; it needs a Python version or a pre-resolved file.</p>
+<pre>pip install "agent-suite[starter]"     # placeholder name
+suite new refunds-agent
+suite test                             # scripted model: no key, no cloud
+suite gate                             # pass or fail, with reasons</pre>
+
+<h2>3. Safety controls built in</h2>
+<p>One rule decides the default. A check written in plain code may <b>block</b> from the first day. A check that uses a model's judgement starts in <b>shadow</b> (records only) and may block after it has an owner and measured evidence.</p>
+<div class="wrap"><table>
+<tr><th>Control</th><th>Where it acts</th><th>Default</th><th>Status</th></tr>
+<tr><td>Known prompt-injection phrases</td><td>Before the model; after a tool</td><td>Block or hold writes</td><td class="part">Partly: a phrase list, not a classifier</td></tr>
+<tr><td>Tool allowed for this user, arguments within limits</td><td>Before a tool</td><td>Block</td><td class="part">Partly: cross-customer data check planned</td></tr>
+<tr><td>Human approval for risky actions</td><td>Before a tool</td><td>Block until decided</td><td class="have">Have</td></tr>
+<tr><td>Claims an action that never happened</td><td>Reply and conversation</td><td>Shadow</td><td class="part">Partly: phrase version in the eval harness</td></tr>
+<tr><td>Personal data in replies and traces</td><td>Reply; export</td><td>Redact</td><td class="part">Partly: more Indian formats planned</td></tr>
+<tr><td>Harmful content</td><td>Model input and output</td><td>Cloud provider's service</td><td class="part">Partly: needs Azure or AWS; none in the open stack</td></tr>
+<tr><td>Secrets and unsafe links in output</td><td>Reply</td><td>Block</td><td class="gap">Gap</td></tr>
+<tr><td>Cost ceiling and step limit</td><td>Between model calls</td><td>Block</td><td class="have">Have</td></tr>
+<tr><td>Stop the whole agent</td><td>Start of each turn</td><td>Switch, on</td><td class="have">Have</td></tr>
+<tr><td>Stop a run already in progress</td><td>Between steps</td><td>On demand</td><td class="gap">Gap</td></tr>
+<tr><td>Forget a person's data</td><td>Stored data</td><td>On request</td><td class="have">Have</td></tr>
+</table></div>
+<p><b>One overlap to settle first:</b> the agent harness has its own policy positions and the eval harness has its own hooks. Proposal: the harness is the only place that <i>enforces</i> in agents built on it; eval harness checks plug into those positions. The eval harness hooks remain for agents built without our harness.</p>
+
+<h2>4. Evaluations</h2>
+<div class="wrap"><table>
+<tr><th>When</th><th>What runs</th><th>Result</th></tr>
+<tr><td>While building</td><td>Scripted scenarios in AgentTwin, judged by what changed in the world</td><td>Fast, free, repeatable</td></tr>
+<tr><td>Before release</td><td>Live model, repeated runs for reliability, attack cases, judge checks</td><td>Gate verdict</td></tr>
+<tr><td>While serving</td><td>The inline controls above</td><td>Block, redact or record</td></tr>
+<tr><td>After serving</td><td>Domain rules, cost rules and sampled judge checks on traces</td><td>Verdicts and a weekly report</td></tr>
+</table></div>
+<p>All four write one result format. Missing evidence reads "could not judge", never "pass".</p>
+
+<h2>5. The assurance report</h2>
+<p>One file per release: each obligation the agent owes, the test or live check that shows it, the accepted gaps with an owner and a review date, and the versions of the specification, catalogs, model and prompts. It states that the grading is the project's own, not an outside audit.</p>
+
+<h2>6. Three levels, so it stays easy</h2>
+<div class="wrap"><table>
+<tr><th>Profile</th><th>For</th><th>Turns on</th></tr>
+<tr><td>starter</td><td>First hour, on a laptop</td><td>Scripted model, in-memory stores, blocking controls, a few scenarios</td></tr>
+<tr><td>standard</td><td>A team's real agent</td><td>Database, identity, approvals, traces, live evaluations, four gates</td></tr>
+<tr><td>regulated</td><td>Audited use</td><td>Standard plus locked rules, evidence report, retention and erasure checks</td></tr>
+</table></div>
+
+<h2>7. Build order</h2>
+<p>This design is tested first, by walking the claims agent and the hotel agent through every step on paper. Building starts after that and after the current framework-swap step.</p>
+<div class="wrap"><table>
+<tr><th>Stage</th><th>Builds</th><th>Done when</th></tr>
+<tr><td>P0 Design test</td><td>Nothing</td><td>Both walk-throughs are written and every contradiction is resolved</td></tr>
+<tr><td>P1 One install</td><td>Packaging, catalogs as data, command line for test and gate</td><td>A clean machine runs the example with no sibling checkout and no key</td></tr>
+<tr><td>P2 Create</td><td>Starter kit and <code>suite new</code></td><td>A new agent in a new domain reaches a gate verdict without copying the reference agent</td></tr>
+<tr><td>P3 Guard</td><td>Default profiles, settled overlap, security pack</td><td>An attack set runs with controls off and on, and both numbers are published</td></tr>
+<tr><td>P4 Evaluate and watch</td><td>Online worker, finding to scenario</td><td>A live failure becomes a failing test, then a passing one</td></tr>
+<tr><td>P5 Any framework</td><td>LangGraph and Claude Agent SDK adapters</td><td>The frozen port tests pass unchanged, and the gaps are published</td></tr>
+<tr><td>P6 Outsider proof</td><td>Docs and fixes only</td><td>Someone who did not write it goes from install to gate verdict within one hour</td></tr>
+</table></div>
+
+<h2>8. What we will not build</h2>
+<div class="wrap"><table>
+<tr><th>Option</th><th>Verdict</th><th>Reason</th></tr>
+<tr><td>Command line, starter kit, default profiles, one report</td><td><b>Pursue</b></td><td>This is the missing joining work</td></tr>
+<tr><td>Own safety classifiers</td><td><b>Drop</b></td><td>Adopt existing services and open models behind a port</td></tr>
+<tr><td>Own dashboard or trace store</td><td><b>Drop</b></td><td>Write into the tools a team already uses</td></tr>
+<tr><td>Own graph or multi-agent engine</td><td><b>Drop</b></td><td>Let an adapted framework own that loop</td></tr>
+<tr><td>Merging all repositories</td><td><b>Drop</b></td><td>One pinned package gives the same experience</td></tr>
+</table></div>
+
+<h2>9. Decisions assumed, for the owner to change</h2>
+<div class="wrap"><table>
+<tr><th>#</th><th>Question</th><th>Assumed</th></tr>
+<tr><td>D1</td><td>Who is the first user?</td><td>A Python developer building an agent that takes actions</td></tr>
+<tr><td>D2</td><td>Must the specification come first?</td><td>Yes, but starter writes a small one for you</td></tr>
+<tr><td>D3</td><td>Is our loop still the default?</td><td>Yes; other frameworks are extras</td></tr>
+<tr><td>D4</td><td>First deployment path?</td><td>The open stack with Docker Compose</td></tr>
+<tr><td>D5</td><td>Package name?</td><td>Undecided; check availability before choosing</td></tr>
+</table></div>
+</main>
+</body>
+</html>
